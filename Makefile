@@ -7,11 +7,11 @@ vulkanExamples: $(SPVS) obj/main.o
 
 clean:
 	rm *.spv
-	rm *.o
+	rm obj/*.o
 	rm -f vulkanExamples
 
 obj/main.o: examples/main.cpp
-	g++ -c $^ -o $@
+	g++ -Iinclude -c $^ -o $@
 
 fragment.spv: fragment.glsl
 	glslc -fshader-stage=fragment $^ -o $@
