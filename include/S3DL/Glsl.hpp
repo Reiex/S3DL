@@ -4,18 +4,20 @@
 #include <initializer_list>
 #include <ostream>
 
+#include <S3DL/types.hpp>
+
 namespace s3dl
 {
     template<typename T, unsigned int n, typename C>
     struct _vec
     {
         T& operator[](unsigned int i);
-        T const& operator[](unsigned int i) const;
+        const T& operator[](unsigned int i) const;
 
-        C operator+=(_vec<T, n, C> const& v);
-        C operator-=(_vec<T, n, C> const& v);
-        C operator*=(_vec<T, n, C> const& v);
-        C operator/=(_vec<T, n, C> const& v);
+        C operator+=(const _vec<T, n, C>& v);
+        C operator-=(const _vec<T, n, C>& v);
+        C operator*=(const _vec<T, n, C>& v);
+        C operator/=(const _vec<T, n, C>& v);
 
         C operator+=(T x);
         C operator-=(T x);
@@ -24,50 +26,50 @@ namespace s3dl
     };
 
     template<typename T, unsigned int n, typename C>
-    std::ostream& operator<<(std::ostream& stream, _vec<T, n, C> const& v);
+    std::ostream& operator<<(std::ostream& stream, _vec<T, n, C>& v);
 
     template<typename C>
-    C cross(_vec<float, 3, C> const& u, _vec<float, 3, C> const& v);
+    C cross(const _vec<float, 3, C>& u, const _vec<float, 3, C>& v);
     template<unsigned int n, typename C>
-    float dot(_vec<float, n, C> const& u, _vec<float, n, C> const& v);
+    float dot(const _vec<float, n, C>& u, const _vec<float, n, C>& v);
     template<unsigned int n, typename C>
-    float length(_vec<float, n, C> const& v);
+    float length(const _vec<float, n, C>& v);
     template<unsigned int n, typename C>
-    float distance(_vec<float, n, C> const& u, _vec<float, n, C> const& v);
+    float distance(const _vec<float, n, C>& u, const _vec<float, n, C>& v);
     template<unsigned int n, typename C>
-    C normalize(_vec<float, n, C> const& v);
+    C normalize(const _vec<float, n, C>& v);
     template<unsigned int n, typename C>
-    C faceforward(_vec<float, n, C> const& u, _vec<float, n, C> const& v, _vec<float, n, C> const& w);
+    C faceforward(const _vec<float, n, C>& u, const _vec<float, n, C>& v, const _vec<float, n, C>& w);
     template<unsigned int n, typename C>
-    C reflect(_vec<float, n, C> const& u, _vec<float, n, C> const& v);
+    C reflect(const _vec<float, n, C>& u, const _vec<float, n, C>& v);
     template<unsigned int n, typename C>
-    C refract(_vec<float, n, C> const& u, _vec<float, n, C> const& v, float r);
+    C refract(const _vec<float, n, C>& u, const _vec<float, n, C>& v, float r);
 
     template<typename T, unsigned int n, typename C>
-    C operator+(_vec<T, n, C> const& u, _vec<T, n, C> const& v);
+    C operator+(const _vec<T, n, C>& u, const _vec<T, n, C>& v);
     template<typename T, unsigned int n, typename C>
-    C operator-(_vec<T, n, C> const& u, _vec<T, n, C> const& v);
+    C operator-(const _vec<T, n, C>& u, const _vec<T, n, C>& v);
     template<typename T, unsigned int n, typename C>
-    C operator*(_vec<T, n, C> const& u, _vec<T, n, C> const& v);
+    C operator*(const _vec<T, n, C>& u, const _vec<T, n, C>& v);
     template<typename T, unsigned int n, typename C>
-    C operator/(_vec<T, n, C> const& u, _vec<T, n, C> const& v);
+    C operator/(const _vec<T, n, C>& u, const _vec<T, n, C>& v);
     
     template<typename T, unsigned int n, typename C>
-    C operator+(_vec<T, n, C> const& u, T x);
+    C operator+(const _vec<T, n, C>& u, T x);
     template<typename T, unsigned int n, typename C>
-    C operator-(_vec<T, n, C> const& u, T x);
+    C operator-(const _vec<T, n, C>& u, T x);
     template<typename T, unsigned int n, typename C>
-    C operator*(_vec<T, n, C> const& u, T x);
+    C operator*(const _vec<T, n, C>& u, T x);
     template<typename T, unsigned int n, typename C>
-    C operator/(_vec<T, n, C> const& u, T x);
+    C operator/(const _vec<T, n, C>& u, T x);
     template<typename T, unsigned int n, typename C>
-    C operator+(T x, _vec<T, n, C> const& u);
+    C operator+(T x, const _vec<T, n, C>& u);
     template<typename T, unsigned int n, typename C>
-    C operator-(T x, _vec<T, n, C> const& u);
+    C operator-(T x, const _vec<T, n, C>& u);
     template<typename T, unsigned int n, typename C>
-    C operator*(T x, _vec<T, n, C> const& u);
+    C operator*(T x, const _vec<T, n, C>& u);
     template<typename T, unsigned int n, typename C>
-    C operator/(T x, _vec<T, n, C> const& u);
+    C operator/(T x, const _vec<T, n, C>& u);
 
     template<typename T>
     struct _vec2: _vec<T, 2, _vec2<T>>
@@ -76,7 +78,7 @@ namespace s3dl
         _vec2(T value);
         _vec2(T xValue, T yValue);
         _vec2(std::initializer_list<T> tab);
-        _vec2(_vec<T, 2, _vec2<T>> const& v);
+        _vec2(const _vec<T, 2, _vec2<T>>& v);
 
         T x, y;
     };
@@ -88,9 +90,9 @@ namespace s3dl
         _vec3(T value);
         _vec3(T xValue, T yValue, T zValue);
         _vec3(std::initializer_list<T> tab);
-        _vec3(_vec<T, 3, _vec3<T>> const& v);
-        _vec3(_vec2<T> const& v, T zValue);
-        _vec3(T xValue, _vec2<T> const& v);
+        _vec3(const _vec<T, 3, _vec3<T>>& v);
+        _vec3(const _vec2<T>& v, T zValue);
+        _vec3(T xValue, const _vec2<T>& v);
 
         T x, y, z;
     };
@@ -102,102 +104,80 @@ namespace s3dl
         _vec4(T value);
         _vec4(T xValue, T yValue, T zValue, T wValue);
         _vec4(std::initializer_list<T> tab);
-        _vec4(_vec<T, 4, _vec4<T>> const& v);
-        _vec4(_vec2<T> const& v, T zValue, T wValue);
-        _vec4(T xValue, _vec2<T> const& v, T wValue);
-        _vec4(T xValue, T yValue, _vec2<T> const& v);
-        _vec4(_vec2<T> const& u, _vec2<T> const& v);
-        _vec4(_vec3<T> const& v, T wValue);
-        _vec4(T xValue, _vec3<T> const& v);
+        _vec4(const _vec<T, 4, _vec4<T>>& v);
+        _vec4(const _vec2<T>& v, T zValue, T wValue);
+        _vec4(T xValue, const _vec2<T>& v, T wValue);
+        _vec4(T xValue, T yValue, const _vec2<T>& v);
+        _vec4(const _vec2<T>& u, const _vec2<T>& v);
+        _vec4(const _vec3<T>& v, T wValue);
+        _vec4(T xValue, const _vec3<T>& v);
 
         T x, y, z, w;
     };
 
-    typedef _vec2<float> vec2;
-    typedef _vec3<float> vec3;
-    typedef _vec4<float> vec4;
-
-    typedef _vec2<int32_t> ivec2;
-    typedef _vec3<int32_t> ivec3;
-    typedef _vec4<int32_t> ivec4;
-
-    typedef _vec2<uint32_t> uvec2;
-    typedef _vec3<uint32_t> uvec3;
-    typedef _vec4<uint32_t> uvec4;
-
-    typedef _vec2<uint32_t> bvec2;
-    typedef _vec3<uint32_t> bvec3;
-    typedef _vec4<uint32_t> bvec4;
-
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     struct _mat
     {
-        _mat() = default;
-        _mat(T diagValue);
-        _mat(std::initializer_list<T> diag);
-        _mat(std::initializer_list<C> columns);
+        public:
 
-        C& operator[](unsigned int i);
-        C const& operator[](unsigned int i) const;
+            _mat() = default;
+            _mat(T diagValue);
+            _mat(std::initializer_list<T> diag);
+            _mat(std::initializer_list<C> columns);
 
-        _mat<T, m, n, C, D> operator+=(_mat<T, m, n, C, D> const& M);
-        _mat<T, m, n, C, D> operator-=(_mat<T, m, n, C, D> const& M);
-        _mat<T, m, n, C, D> operator/=(_mat<T, m, n, C, D> const& M);
+            C& operator[](unsigned int i);
+            const C& operator[](unsigned int i) const;
 
-        _mat<T, m, n, C, D> operator+=(T x);
-        _mat<T, m, n, C, D> operator-=(T x);
-        _mat<T, m, n, C, D> operator/=(T x);
-        _mat<T, m, n, C, D> operator*=(T x);
+            _mat<T, m, n, C, D> operator+=(const _mat<T, m, n, C, D>& M);
+            _mat<T, m, n, C, D> operator-=(const _mat<T, m, n, C, D>& M);
+            _mat<T, m, n, C, D> operator/=(const _mat<T, m, n, C, D>& M);
 
-        T data[n][m];
+            _mat<T, m, n, C, D> operator+=(T x);
+            _mat<T, m, n, C, D> operator-=(T x);
+            _mat<T, m, n, C, D> operator/=(T x);
+            _mat<T, m, n, C, D> operator*=(T x);
+        
+        private:
+
+            T data[n][m];
     };
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    std::ostream& operator<<(std::ostream& stream, _mat<T, m, n, C, D> const& M);
+    std::ostream& operator<<(std::ostream& stream, const _mat<T, m, n, C, D>& M);
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, n, m, D, C> transpose(_mat<T, m, n, C, D> const& M);
+    _mat<T, n, m, D, C> transpose(const _mat<T, m, n, C, D>& M);
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator+(_mat<T, m, n, C, D> const& A, _mat<T, m, n, C, D> const& B);
+    _mat<T, m, n, C, D> operator+(const _mat<T, m, n, C, D>& A, const _mat<T, m, n, C, D>& B);
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator-(_mat<T, m, n, C, D> const& A, _mat<T, m, n, C, D> const& B);
+    _mat<T, m, n, C, D> operator-(const _mat<T, m, n, C, D>& A, const _mat<T, m, n, C, D>& B);
     template<typename T, unsigned int m, unsigned int n, unsigned int p, typename C, typename D, typename F>
-    _mat<T, m, p, C, F> operator*(_mat<T, m, n, C, D> const& A, _mat<T, n, p, D, F> const& B);
+    _mat<T, m, p, C, F> operator*(const _mat<T, m, n, C, D>& A, const _mat<T, n, p, D, F>& B);
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator/(_mat<T, m, n, C, D> const& A, _mat<T, m, n, C, D> const& B);
+    _mat<T, m, n, C, D> operator/(const _mat<T, m, n, C, D>& A, const _mat<T, m, n, C, D>& B);
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator+(_mat<T, m, n, C, D> const& M, T x);
+    _mat<T, m, n, C, D> operator+(const _mat<T, m, n, C, D>& M, T x);
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator-(_mat<T, m, n, C, D> const& M, T x);
+    _mat<T, m, n, C, D> operator-(const _mat<T, m, n, C, D>& M, T x);
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator*(_mat<T, m, n, C, D> const& M, T x);
+    _mat<T, m, n, C, D> operator*(const _mat<T, m, n, C, D>& M, T x);
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator/(_mat<T, m, n, C, D> const& M, T x);
+    _mat<T, m, n, C, D> operator/(const _mat<T, m, n, C, D>& M, T x);
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator+(T x, _mat<T, m, n, C, D> const& M);
+    _mat<T, m, n, C, D> operator+(T x, const _mat<T, m, n, C, D>& M);
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator-(T x, _mat<T, m, n, C, D> const& M);
+    _mat<T, m, n, C, D> operator-(T x, const _mat<T, m, n, C, D>& M);
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator*(T x, _mat<T, m, n, C, D> const& M);
+    _mat<T, m, n, C, D> operator*(T x, const _mat<T, m, n, C, D>& M);
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator/(T x, _mat<T, m, n, C, D> const& M);
+    _mat<T, m, n, C, D> operator/(T x, const _mat<T, m, n, C, D>& M);
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    C operator*(_mat<T, m, n, C, D> const& M, D const& v);
+    C operator*(const _mat<T, m, n, C, D>& M, const D& v);
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    D operator*(C const& v, _mat<T, m, n, C, D> const& M);
-
-    typedef _mat<float, 2, 2, _vec2<float>, _vec2<float>> mat2;
-    typedef _mat<float, 3, 2, _vec3<float>, _vec2<float>> mat2x3;
-    typedef _mat<float, 4, 2, _vec4<float>, _vec2<float>> mat2x4;
-    typedef _mat<float, 2, 3, _vec2<float>, _vec3<float>> mat3x2;
-    typedef _mat<float, 3, 3, _vec3<float>, _vec3<float>> mat3;
-    typedef _mat<float, 4, 3, _vec4<float>, _vec3<float>> mat3x4;
-    typedef _mat<float, 2, 4, _vec2<float>, _vec4<float>> mat4x2;
-    typedef _mat<float, 3, 4, _vec3<float>, _vec4<float>> mat4x3;
-    typedef _mat<float, 4, 4, _vec4<float>, _vec4<float>> mat4;
+    D operator*(const C& v, const _mat<T, m, n, C, D>& M);
 }
 
 #include <S3DL/GlslT.hpp>

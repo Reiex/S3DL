@@ -1117,13 +1117,17 @@ private:
     bool framebufferResized = false;
 };
 
-#include <S3DL/Glsl.hpp>
+#include <S3DL/S3DL.hpp>
 
 int main()
 {
-    s3dl::mat4x3 M({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}});
+    // s3dl::mat3x2 A({{1, 2}, {4, 5}, {7, 8}});
+    // s3dl::mat2x3 B({{3, 4, 5}, {6, 7, 8}});
 
-    std::cout << (s3dl::vec3(1.0) * M) << std::endl;
+    // std::cout << (B * A) << std::endl;
+
+    s3dl::Device device;
+    s3dl::RenderWindow window(1000, 800, "Test");
 
     // VulkanApplication app;
 
