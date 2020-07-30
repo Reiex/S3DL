@@ -161,10 +161,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\S3DL\Device.cpp" />
     <ClCompile Include="..\..\src\S3DL\Glsl.cpp" />
+    <ClCompile Include="..\..\src\S3DL\RenderWindow.cpp" />
+    <ClCompile Include="..\..\src\S3DL\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\S3DL\Device.hpp" />
     <ClInclude Include="..\..\include\S3DL\Glsl.hpp" />
+    <ClInclude Include="..\..\include\S3DL\GlslT.hpp" />
+    <ClInclude Include="..\..\include\S3DL\RenderTarget.hpp" />
+    <ClInclude Include="..\..\include\S3DL\RenderWindow.hpp" />
+    <ClInclude Include="..\..\include\S3DL\S3DL.hpp" />
+    <ClInclude Include="..\..\include\S3DL\types.hpp" />
+    <ClInclude Include="..\..\include\S3DL\Window.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
