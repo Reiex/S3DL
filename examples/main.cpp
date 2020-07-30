@@ -1121,6 +1121,10 @@ private:
 
 int main()
 {
+    s3dl::mat4x3 M({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}});
+
+    std::cout << (s3dl::vec3(1.0) * M) << std::endl;
+
     // VulkanApplication app;
 
     // try {

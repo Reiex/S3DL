@@ -314,6 +314,8 @@ namespace s3dl
     template<typename T>
     _vec3<T>::_vec3(std::initializer_list<T> tab) : _vec3(tab.begin()[0], tab.begin()[1], tab.begin()[2])
     {
+        if (tab.size() != 3)
+            throw std::range_error("Invalid initializer list size. Cannot initialize vec3 with " + std::to_string(tab.size()) + " elements.");
     }
     
     template<typename T>
@@ -348,6 +350,8 @@ namespace s3dl
     template<typename T>
     _vec4<T>::_vec4(std::initializer_list<T> tab) : _vec4(tab.begin()[0], tab.begin()[1], tab.begin()[2], tab.begin()[3])
     {
+        if (tab.size() != 4)
+            throw std::range_error("Invalid initializer list size. Cannot initialize vec4 with " + std::to_string(tab.size()) + " elements.");
     }
     
     template<typename T>
@@ -387,163 +391,277 @@ namespace s3dl
 
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D>::_mat(std::initializer_list<C const&> columns)
+    _mat<T, m, n, C, D>::_mat(T diagValue)
     {
+        for (int i(0); i < n; i++)
+            for (int j(0); j < m; j++)
+                if (i == j)
+                    data[i][j] = diagValue;
+                else
+                    data[i][j] = T(0);
+    }
 
+    template<typename T, unsigned int m, unsigned int n, typename C, typename D>
+    _mat<T, m, n, C, D>::_mat(std::initializer_list<T> diag)
+    {
+        if (diag.size() != (m > n ? n: m))
+            throw std::range_error("Cannot initialize mat" + std::to_string(n) + "x" + std::to_string(m) + " with " + std::to_string(diag.size()) + " diagonal elements.");
+
+        for (int i(0); i < n; i++)
+            for (int j(0); j < m; j++)
+                if (i == j)
+                    data[i][j] = diag.begin()[i];
+                else
+                    data[i][j] = T(0);
+    }
+
+    template<typename T, unsigned int m, unsigned int n, typename C, typename D>
+    _mat<T, m, n, C, D>::_mat(std::initializer_list<C> columns)
+    {
+        if (columns.size() != n)
+            throw std::range_error("Cannot initialize mat" + std::to_string(n) + "x" + std::to_string(m) + " with " + std::to_string(columns.size()) + " columns.");
+        
+        for (int i(0); i < n; i++)
+            for (int j(0); j < m; j++)
+                data[i][j] = columns.begin()[i][j];
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     C& _mat<T, m, n, C, D>::operator[](unsigned int i)
     {
-
+        if (i >= n)
+            throw std::range_error("Cannot access column " + std::to_string(i) + " of mat" + std::to_string(n) + "x" + std::to_string(m) + ".");
+        
+        return *((C*) &data[i]);
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     C const& _mat<T, m, n, C, D>::operator[](unsigned int i) const
     {
-
+        if (i >= n)
+            throw std::range_error("Cannot access column " + std::to_string(i) + " of mat" + std::to_string(n) + "x" + std::to_string(m) + ".");
+        
+        return *((C*) &data[i]);
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator+=(_mat<T, m, n, C, D> const& M)
     {
-
+        for (int i(0); i < n; i++)
+            (*this)[i] += M[i];
+        
+        return *this;
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator-=(_mat<T, m, n, C, D> const& M)
     {
-
+        for (int i(0); i < n; i++)
+            (*this)[i] -= M[i];
+        
+        return *this;
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator/=(_mat<T, m, n, C, D> const& M)
     {
-
+        for (int i(0); i < n; i++)
+            (*this)[i] /= M[i];
+        
+        return *this;
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator+=(T x)
     {
-
+        for (int i(0); i < n; i++)
+            (*this)[i] += x;
+        
+        return *this;
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator-=(T x)
     {
-
+        for (int i(0); i < n; i++)
+            (*this)[i] -= x;
+        
+        return *this;
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator/=(T x)
     {
-
+        for (int i(0); i < n; i++)
+            (*this)[i] /= x;
+        
+        return *this;
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator*=(T x)
     {
-
+        for (int i(0); i < n; i++)
+            (*this)[i] *= x;
+        
+        return *this;
     }
 
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     std::ostream& operator<<(std::ostream& stream, _mat<T, m, n, C, D> const& M)
     {
+        for (int i(0); i < m; i++)
+        {
+            for (int j(0); j < n-1; j++)
+                stream << M[j][i] << " ";
+            stream << M[n-1][i];
 
+            if (i != m-1)
+                stream << std::endl;
+        }
+        
+        return stream;
     }
     
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, n, m, D, C> transpose(_mat<T, m, n, C, D> const& M)
     {
+        _mat<T, n, m, D, C> R;
 
+        for (int i(0); i < n; i++)
+            for (int j(0); j < m; j++)
+                R[j][i] = M[i][j];
+    
+        return R;
     }
     
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator+(_mat<T, m, n, C, D> const& A, _mat<T, m, n, C, D> const& B)
     {
-        
+        _mat<T, m, n, C, D> R(A);
+        R += B;
+        return R;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator-(_mat<T, m, n, C, D> const& A, _mat<T, m, n, C, D> const& B)
     {
-        
+        _mat<T, m, n, C, D> R(A);
+        R -= B;
+        return R;
     }
     
     template<typename T, unsigned int m, unsigned int n, unsigned int p, typename C, typename D, typename F>
     _mat<T, m, p, C, F> operator*(_mat<T, m, n, C, D> const& A, _mat<T, n, p, D, F> const& B)
     {
-        
+        _mat<T, m, p, C, F> R;
+
+        for (int i(0); i < m; i++)
+        {
+            for (int j(0); j < p; j++)
+            {
+                R[j][i] = 0;
+                for (int k(0); k < n; k++)
+                    R[j][i] += A[k][i] * B[j][k];
+            }
+        }
+
+        return R;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator/(_mat<T, m, n, C, D> const& A, _mat<T, m, n, C, D> const& B)
     {
-        
+        _mat<T, m, n, C, D> R(A);
+        R /= B;
+        return R;
     }
     
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator+(_mat<T, m, n, C, D> const& M, T x)
     {
-        
+        _mat<T, m, n, C, D> R(M);
+        R += x;
+        return R;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator-(_mat<T, m, n, C, D> const& M, T x)
     {
-        
+        _mat<T, m, n, C, D> R(M);
+        R -= x;
+        return R;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator*(_mat<T, m, n, C, D> const& M, T x)
     {
-        
+        _mat<T, m, n, C, D> R(M);
+        R *= x;
+        return R;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator/(_mat<T, m, n, C, D> const& M, T x)
     {
-        
+        _mat<T, m, n, C, D> R(M);
+        R /= x;
+        return R;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator+(T x, _mat<T, m, n, C, D> const& M)
     {
-        
+        return M + x;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator-(T x, _mat<T, m, n, C, D> const& M)
     {
-        
+        return -(M - x);
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator*(T x, _mat<T, m, n, C, D> const& M)
     {
-        
+        return M * x;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     _mat<T, m, n, C, D> operator/(T x, _mat<T, m, n, C, D> const& M)
     {
+        _mat<T, m, n, C, D> R;
+        for (int i(0); i < m; i++)
+            for (int j(0); j < n; j++)
+                R[j][i] = x / M[j][i];
         
+        return R;
     }
     
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     C operator*(_mat<T, m, n, C, D> const& M, D const& v)
     {
-        
+        C r(0);
+        for (int i(0); i < m; i++)
+            for (int j(0); j < n; j++)
+                r[i] += M[j][i] * v[j];
+
+        return r;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     D operator*(C const& v, _mat<T, m, n, C, D> const& M)
     {
-        
+        D r(0);
+        for (int i(0); i < m; i++)
+            for (int j(0); j < n; j++)
+                r[j] += M[j][i] * v[i];
+
+        return r;
     }
 }

@@ -132,7 +132,10 @@ namespace s3dl
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
     struct _mat
     {
-        _mat(std::initializer_list<C const&> columns);
+        _mat() = default;
+        _mat(T diagValue);
+        _mat(std::initializer_list<T> diag);
+        _mat(std::initializer_list<C> columns);
 
         C& operator[](unsigned int i);
         C const& operator[](unsigned int i) const;
@@ -187,13 +190,13 @@ namespace s3dl
     D operator*(C const& v, _mat<T, m, n, C, D> const& M);
 
     typedef _mat<float, 2, 2, _vec2<float>, _vec2<float>> mat2;
-    typedef _mat<float, 3, 2, _vec2<float>, _vec3<float>> mat2x3;
-    typedef _mat<float, 4, 2, _vec2<float>, _vec4<float>> mat2x4;
-    typedef _mat<float, 2, 3, _vec3<float>, _vec2<float>> mat3x2;
+    typedef _mat<float, 3, 2, _vec3<float>, _vec2<float>> mat2x3;
+    typedef _mat<float, 4, 2, _vec4<float>, _vec2<float>> mat2x4;
+    typedef _mat<float, 2, 3, _vec2<float>, _vec3<float>> mat3x2;
     typedef _mat<float, 3, 3, _vec3<float>, _vec3<float>> mat3;
-    typedef _mat<float, 4, 3, _vec3<float>, _vec4<float>> mat3x4;
-    typedef _mat<float, 2, 4, _vec4<float>, _vec2<float>> mat4x2;
-    typedef _mat<float, 3, 4, _vec4<float>, _vec3<float>> mat4x3;
+    typedef _mat<float, 4, 3, _vec4<float>, _vec3<float>> mat3x4;
+    typedef _mat<float, 2, 4, _vec2<float>, _vec4<float>> mat4x2;
+    typedef _mat<float, 3, 4, _vec3<float>, _vec4<float>> mat4x3;
     typedef _mat<float, 4, 4, _vec4<float>, _vec4<float>> mat4;
 }
 
