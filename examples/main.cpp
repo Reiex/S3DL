@@ -1127,7 +1127,8 @@ int main()
     // std::cout << (B * A) << std::endl;
 
     s3dl::Device device;
-    s3dl::RenderWindow window(1000, 800, "Test");
+    s3dl::RenderWindow window(device, 1000, 800, "Test");
+    device.setBestAvailablePhysicalDevice(window);
 
     // VulkanApplication app;
 

@@ -12,6 +12,8 @@ namespace s3dl
 
             RenderTarget() = default;
 
+            const VkSurfaceKHR& getVulkanSurface() const;
+
         protected:
 
             VkSurfaceKHR _surface;

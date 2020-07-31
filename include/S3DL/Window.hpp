@@ -21,10 +21,6 @@ namespace s3dl
 
         protected:
 
-            Window();
-
-            static std::set<Window*> _WINDOW_LIST;
-
             GLFWwindow* _window;
             vec2 _size;
     };

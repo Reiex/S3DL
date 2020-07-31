@@ -24,11 +24,19 @@ namespace s3dl
 
     struct PhysicalDevice
     {
-        VkPhysicalDeviceProperties properties;
-        VkPhysicalDeviceFeatures features;
-        std::vector<VkExtensionProperties> extensions;
-        std::vector<VkQueueFamilyProperties> queueFamilies;
-        SwapChainSupportDetails swapSupport;
+        public:
+
+            const VkPhysicalDevice& getVulkanPhysicalDevice() const;
+
+            VkPhysicalDeviceProperties properties;
+            VkPhysicalDeviceFeatures features;
+            std::vector<VkExtensionProperties> extensions;
+            std::vector<VkQueueFamilyProperties> queueFamilies;
+            SwapChainSupportDetails swapSupport;
+        
+        private:
+
+            VkPhysicalDevice _handle;
     };
 
     class Device
@@ -40,18 +48,23 @@ namespace s3dl
 
             Device();
 
-            std::vector<PhysicalDevice> getPhysicalDevices() const;
+            static const VkInstance& getVulkanInstance();
+
+            void setBestAvailablePhysicalDevice(const RenderTarget& target);
+            std::vector<PhysicalDevice> getAvailablePhysicalDevices(const RenderTarget& target) const;
+            void setPhysicalDevice(const PhysicalDevice& device);
 
             ~Device();
 
         private:
 
+            static void createInstance();
+            static void destroyInstance();
+
             static VkInstance _VK_INSTANCE;
             static unsigned int _DEVICE_COUNT;
 
-            static void createInstance();
-            static void destroyInstance();
-        
-        friend class RenderWindow;
+            PhysicalDevice _physicalDeviceProperties;
+            VkPhysicalDevice _physicalDevice;
     };
 }

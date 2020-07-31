@@ -14,7 +14,7 @@ namespace s3dl
     {
         public:
 
-            RenderWindow(unsigned int width, unsigned int height, const std::string& title);
+            RenderWindow(const Device& device, unsigned int width, unsigned int height, const std::string& title);
 
             ~RenderWindow();
 
