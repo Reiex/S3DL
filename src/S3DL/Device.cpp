@@ -2,52 +2,54 @@
 
 namespace s3dl
 {
-    const VkPhysicalDevice& PhysicalDevice::getVulkanPhysicalDevice() const
+    PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle) :
+        _handle(handle)
+    {
+    }
+
+    VkPhysicalDevice PhysicalDevice::getVulkanPhysicalDevice() const
     {
         return _handle;
     }
 
-    std::set<std::string> Device::INSTANCE_EXTENSIONS = { };
-    std::set<std::string> Device::VALIDATION_LAYERS = { "VK_LAYER_KHRONOS_validation" };
-
-    VkInstance Device::_VK_INSTANCE;
-    unsigned int Device::_DEVICE_COUNT = 0;
-
-    Device::Device()
+    Device Device::createFromPhysicalDevice(const PhysicalDevice& physicalDevice, const RenderTarget& target)
     {
-        if (_DEVICE_COUNT == 0)
-        {
-            glfwInit();
-            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-            createInstance();
-        }
-        
-        _DEVICE_COUNT++;
+        Device device;
+
+        device._physicalDeviceProperties = physicalDevice;
+        device._physicalDevice = physicalDevice.getVulkanPhysicalDevice();
+
+        device.create(target);
+
+        return device;
     }
 
-    const VkInstance& Device::getVulkanInstance()
-    {
-        return _VK_INSTANCE;
-    }
-
-    void Device::setBestAvailablePhysicalDevice(const RenderTarget& target)
+    Device Device::createBestPossible(const RenderTarget& target)
     {
         std::vector<PhysicalDevice> availables = getAvailablePhysicalDevices(target);
 
-        setPhysicalDevice(availables[0]);
+        #ifndef NDEBUG
+        std::clog << availables.size() << " physical device(s) available(s):" << std::endl;
+        for (int i(0); i < availables.size(); i++)
+            std::clog << "- " << availables[i].properties.deviceName << std::endl;
+        #endif
+
+        // TODO: Less arbitrary way of chosing the device
+
+        return createFromPhysicalDevice(availables[0], target);
     }
 
-    std::vector<PhysicalDevice> Device::getAvailablePhysicalDevices(const RenderTarget& target) const
+    std::vector<PhysicalDevice> Device::getAvailablePhysicalDevices(const RenderTarget& target)
     {
         // Get list of all physical devices
 
         uint32_t deviceCount = 0;
-        VkResult result = vkEnumeratePhysicalDevices(_VK_INSTANCE, &deviceCount, nullptr);
+        VkResult result = vkEnumeratePhysicalDevices(Instance::getVulkanInstance(), &deviceCount, nullptr);
         if (result != VK_SUCCESS || deviceCount == 0)
             throw std::runtime_error("Failed to find GPUs with Vulkan support. VkResult: " + std::to_string(result));
 
         std::vector<VkPhysicalDevice> vulkanPhysicalDevices(deviceCount);
-        vkEnumeratePhysicalDevices(_VK_INSTANCE, &deviceCount, vulkanPhysicalDevices.data());
+        vkEnumeratePhysicalDevices(Instance::getVulkanInstance(), &deviceCount, vulkanPhysicalDevices.data());
 
         std::vector<PhysicalDevice> physicalDevices;
 
@@ -56,7 +58,7 @@ namespace s3dl
         for (int i(0); i < deviceCount; i++)
         {
             VkPhysicalDevice vulkanDevice(vulkanPhysicalDevices[i]);
-            PhysicalDevice device;
+            PhysicalDevice device(vulkanDevice);
 
             // General properties
             vkGetPhysicalDeviceProperties(vulkanDevice, &device.properties);
@@ -76,25 +78,28 @@ namespace s3dl
             device.queueFamilies.resize(queueFamilyCount);
             vkGetPhysicalDeviceQueueFamilyProperties(vulkanDevice, &queueFamilyCount, device.queueFamilies.data());
 
-            // Swap chain capabilities
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vulkanDevice, target.getVulkanSurface(), &device.swapSupport.capabilities);
-
-            // Swap chain formats support
-            uint32_t formatCount;
-            vkGetPhysicalDeviceSurfaceFormatsKHR(vulkanDevice, target.getVulkanSurface(), &formatCount, nullptr);
-            if (formatCount != 0)
+            if (target.hasVulkanSurface())
             {
-                device.swapSupport.formats.resize(formatCount);
-                vkGetPhysicalDeviceSurfaceFormatsKHR(vulkanDevice, target.getVulkanSurface(), &formatCount, device.swapSupport.formats.data());
-            }
+                // Swap chain capabilities
+                vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vulkanDevice, target.getVulkanSurface(), &device.swapSupport.capabilities);
 
-            // Swap chain present modes support
-            uint32_t presentModeCount;
-            vkGetPhysicalDeviceSurfacePresentModesKHR(vulkanDevice, target.getVulkanSurface(), &presentModeCount, nullptr);
-            if (presentModeCount != 0)
-            {
-                device.swapSupport.presentModes.resize(presentModeCount);
-                vkGetPhysicalDeviceSurfacePresentModesKHR(vulkanDevice, target.getVulkanSurface(), &presentModeCount, device.swapSupport.presentModes.data());
+                // Swap chain formats support
+                uint32_t formatCount;
+                vkGetPhysicalDeviceSurfaceFormatsKHR(vulkanDevice, target.getVulkanSurface(), &formatCount, nullptr);
+                if (formatCount != 0)
+                {
+                    device.swapSupport.formats.resize(formatCount);
+                    vkGetPhysicalDeviceSurfaceFormatsKHR(vulkanDevice, target.getVulkanSurface(), &formatCount, device.swapSupport.formats.data());
+                }
+
+                // Swap chain present modes support
+                uint32_t presentModeCount;
+                vkGetPhysicalDeviceSurfacePresentModesKHR(vulkanDevice, target.getVulkanSurface(), &presentModeCount, nullptr);
+                if (presentModeCount != 0)
+                {
+                    device.swapSupport.presentModes.resize(presentModeCount);
+                    vkGetPhysicalDeviceSurfacePresentModesKHR(vulkanDevice, target.getVulkanSurface(), &presentModeCount, device.swapSupport.presentModes.data());
+                }
             }
 
             physicalDevices.push_back(device);
@@ -103,107 +108,124 @@ namespace s3dl
         return physicalDevices;
     }
 
-    void Device::setPhysicalDevice(const PhysicalDevice& device)
+    std::vector<std::string> Device::EXTENSIONS = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+
+    const PhysicalDevice& Device::getPhysicalDeviceProperties() const
     {
-        _physicalDeviceProperties = device;
-        _physicalDevice = device.getVulkanPhysicalDevice();
+        return _physicalDeviceProperties;
     }
 
-    Device::~Device()
+    VkDevice Device::getVulkanDevice() const
     {
-        _DEVICE_COUNT--;
+        return _device;
+    }
 
-        if (_DEVICE_COUNT == 0)
+    namespace
+    {
+        struct QueueFamilies
         {
-            destroyInstance();
-            glfwTerminate();
-        }
+            uint32_t graphicsFamily;
+            uint32_t presentFamily;
+            uint32_t transferFamily;
+
+            bool hasGraphicsFamily;
+            bool hasPresentFamily;
+            bool hasTransferFamily;
+        };
     }
 
-    void Device::createInstance()
+    void Device::create(const RenderTarget& target)
     {
-        // General informations on the vulkan application
-
-        VkApplicationInfo appInfo;
-        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pNext = nullptr;
-        appInfo.pApplicationName = "S3DL Application";
-        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.pEngineName = "No Engine";
-        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_0;
-
-        VkInstanceCreateInfo createInfo;
-        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        createInfo.pNext = nullptr;
-        createInfo.pApplicationInfo = &appInfo;
-
-        // Extensions
-
-        uint32_t glfwExtensionCount = 0;
-        const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-        for (int i(0); i < glfwExtensionCount; i++)
-            INSTANCE_EXTENSIONS.insert(glfwExtensions[i]);
-
-        std::vector<const char*> extensions;
-        for (std::set<std::string>::iterator it(INSTANCE_EXTENSIONS.begin()); it != INSTANCE_EXTENSIONS.end(); it++)
-            extensions.push_back(it->c_str());
-
-        createInfo.enabledExtensionCount = extensions.size();
-        createInfo.ppEnabledExtensionNames = extensions.data();
-
-        // Validation layers (activated only if in debug mode)
-
         #ifndef NDEBUG
+        std::clog << "Physical device chosen: " << _physicalDeviceProperties.properties.deviceName << std::endl;
+        #endif
 
-        uint32_t layerCount;
-        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-        std::vector<VkLayerProperties> availableLayers(layerCount);
-        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+        // Extract indices of the different queue families that can be needed
 
-        for (std::set<std::string>::iterator it(VALIDATION_LAYERS.begin()); it != VALIDATION_LAYERS.end(); it++)
+        QueueFamilies families;
+        for (int i(0); i < _physicalDeviceProperties.queueFamilies.size(); i++)
         {
-            bool layerFound(false);
-            for (int i(0); i < layerCount; i++)
+            if (_physicalDeviceProperties.queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
-                if (*it == std::string(availableLayers[i].layerName))
+                families.graphicsFamily = i;
+                families.hasGraphicsFamily = true;
+            }
+
+            if (target.hasVulkanSurface())
+            {
+                VkBool32 support = false;
+                vkGetPhysicalDeviceSurfaceSupportKHR(_physicalDevice, i, target.getVulkanSurface(), &support);
+                if (support)
                 {
-                    layerFound = true;
-                    break;
+                    families.presentFamily = i;
+                    families.hasPresentFamily = true;
                 }
             }
 
-            if (!layerFound)
-                throw std::runtime_error("Validation layer '" + *it + "' not found in available validation layers.");
+            if (_physicalDeviceProperties.queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
+            {
+                families.transferFamily = i;
+                families.hasTransferFamily = true;
+            }
         }
 
-        std::vector<const char*> validationLayers;
-        for (std::set<std::string>::iterator it(VALIDATION_LAYERS.begin()); it != VALIDATION_LAYERS.end(); it++)
-            validationLayers.push_back(it->c_str());
+        // TODO: Choosing family queues in a better way
 
-        createInfo.enabledLayerCount = validationLayers.size();
-        createInfo.ppEnabledLayerNames = validationLayers.data();
+        if (!families.hasGraphicsFamily || (!families.hasPresentFamily && target.hasVulkanSurface()) || !families.hasTransferFamily)
+            throw std::runtime_error("Could not find all vulkan queue families required.");
 
-        #else
+        // Compute the different create infos for the queues
 
+        float queuePriority = 1.0f;
+
+        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+        std::set<uint32_t> queueFamilies = { families.graphicsFamily, families.presentFamily, families.transferFamily };
+
+        for (std::set<uint32_t>::iterator it = queueFamilies.begin(); it != queueFamilies.end(); it++)
+        {
+            VkDeviceQueueCreateInfo queueCreateInfo{};
+
+            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queueCreateInfo.pNext = nullptr;
+            queueCreateInfo.flags = 0;
+            queueCreateInfo.queueFamilyIndex = *it;
+            queueCreateInfo.queueCount = 1;
+            queueCreateInfo.pQueuePriorities = &queuePriority;
+
+            queueCreateInfos.push_back(queueCreateInfo);
+        }
+
+        // Create the device itself
+
+        VkPhysicalDeviceFeatures deviceFeatures{};
+
+        std::vector<const char*> deviceExtensions;
+        for (int i(0); i < EXTENSIONS.size(); i++)
+            deviceExtensions.push_back(EXTENSIONS[i].c_str());
+
+        VkDeviceCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        createInfo.queueCreateInfoCount = queueCreateInfos.size();
+        createInfo.pQueueCreateInfos = queueCreateInfos.data();
+        createInfo.pEnabledFeatures = &deviceFeatures;
+        createInfo.enabledExtensionCount = 0;
         createInfo.enabledLayerCount = 0;
         createInfo.ppEnabledLayerNames = nullptr;
+        createInfo.enabledExtensionCount = deviceExtensions.size();
+        createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-        #endif
-
-        // Instance creation itself
-
-        VkResult result = vkCreateInstance(&createInfo, nullptr, &_VK_INSTANCE);
+        VkResult result = vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device);
         if (result != VK_SUCCESS)
-            throw std::runtime_error("Failed to create VkInstance. VkResult: " + std::to_string(result));
+            throw std::runtime_error("Failed to create logical device. VkResult: " + std::to_string(result));
         
         #ifndef NDEBUG
-        std::clog << "VkInstance successfully created." << std::endl;
+        std::clog << "VkDevice successfully created." << std::endl;
         #endif
-    }
 
-    void Device::destroyInstance()
-    {
-        vkDestroyInstance(_VK_INSTANCE, nullptr);
+        // Extract the queues
+
+        vkGetDeviceQueue(_device, families.graphicsFamily, 0, &_queues.graphicsQueue);
+        vkGetDeviceQueue(_device, families.presentFamily, 0, &_queues.presentQueue);
+        vkGetDeviceQueue(_device, families.transferFamily, 0, &_queues.transferQueue);
     }
 }

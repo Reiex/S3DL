@@ -3,8 +3,8 @@ LDFLAGS = `pkg-config --static --libs glfw3` -lvulkan
 
 SPVS = vertex.spv fragment.spv
 
-vulkanExamples: $(SPVS) obj/main.o obj/Device.o obj/RenderWindow.o obj/Window.o obj/RenderTarget.o
-	g++ $(CFLAGS) obj/main.o obj/Device.o obj/RenderWindow.o obj/Window.o obj/RenderTarget.o -o vulkanExamples $(LDFLAGS)
+vulkanExamples: $(SPVS) obj/main.o obj/Device.o obj/RenderWindow.o obj/Window.o obj/RenderTarget.o obj/Instance.o
+	g++ $(CFLAGS) obj/main.o obj/Device.o obj/RenderWindow.o obj/Window.o obj/RenderTarget.o obj/Instance.o -o vulkanExamples $(LDFLAGS)
 
 clean:
 	-rm *.spv

@@ -26,7 +26,9 @@ namespace s3dl
     {
         public:
 
-            const VkPhysicalDevice& getVulkanPhysicalDevice() const;
+            PhysicalDevice() = default;
+            PhysicalDevice(VkPhysicalDevice handle);
+            VkPhysicalDevice getVulkanPhysicalDevice() const;
 
             VkPhysicalDeviceProperties properties;
             VkPhysicalDeviceFeatures features;
@@ -39,32 +41,42 @@ namespace s3dl
             VkPhysicalDevice _handle;
     };
 
+    struct DeviceQueues
+    {
+        VkQueue graphicsQueue;
+        VkQueue presentQueue;
+        VkQueue transferQueue;
+
+        bool hasGraphicsQueue;
+        bool hasPresentQueue;
+        bool hasTransferQueue;
+    };
+
     class Device
     {
         public:
 
-            static std::set<std::string> INSTANCE_EXTENSIONS;
-            static std::set<std::string> VALIDATION_LAYERS;
+            static Device createFromPhysicalDevice(const PhysicalDevice& physicalDevice, const RenderTarget& target);
+            static Device createBestPossible(const RenderTarget& target);
 
-            Device();
+            static std::vector<PhysicalDevice> getAvailablePhysicalDevices(const RenderTarget& target);
 
-            static const VkInstance& getVulkanInstance();
+            static std::vector<std::string> EXTENSIONS;
 
-            void setBestAvailablePhysicalDevice(const RenderTarget& target);
-            std::vector<PhysicalDevice> getAvailablePhysicalDevices(const RenderTarget& target) const;
-            void setPhysicalDevice(const PhysicalDevice& device);
-
-            ~Device();
+            const PhysicalDevice& getPhysicalDeviceProperties() const;
+            VkDevice getVulkanDevice() const;
 
         private:
 
-            static void createInstance();
-            static void destroyInstance();
+            Device() = default;
 
-            static VkInstance _VK_INSTANCE;
-            static unsigned int _DEVICE_COUNT;
+            void create(const RenderTarget& target);
 
             PhysicalDevice _physicalDeviceProperties;
             VkPhysicalDevice _physicalDevice;
+
+            VkDevice _device;
+
+            DeviceQueues _queues;
     };
 }
