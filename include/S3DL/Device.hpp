@@ -47,7 +47,7 @@ namespace s3dl
         private:
 
             static VkInstance _VK_INSTANCE;
-            static std::set<Device*> _DEVICE_LIST;
+            static unsigned int _DEVICE_COUNT;
 
             static void createInstance();
             static void destroyInstance();

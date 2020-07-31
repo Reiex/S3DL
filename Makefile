@@ -1,4 +1,4 @@
-CFLAGS = -Iinclude -D NDEBUG
+CFLAGS = -Iinclude
 LDFLAGS = `pkg-config --static --libs glfw3` -lvulkan
 
 SPVS = vertex.spv fragment.spv

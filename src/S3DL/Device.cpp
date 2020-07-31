@@ -6,14 +6,14 @@ namespace s3dl
     std::set<std::string> Device::VALIDATION_LAYERS;
 
     VkInstance Device::_VK_INSTANCE;
-    std::set<Device*> Device::_DEVICE_LIST;
+    unsigned int Device::_DEVICE_COUNT;
 
     Device::Device()
     {
-        if (_DEVICE_LIST.size() == 0)
+        if (_DEVICE_COUNT == 0)
             createInstance();
         
-        _DEVICE_LIST.insert(this);
+        _DEVICE_COUNT++;
     }
 
     std::vector<PhysicalDevice> Device::getPhysicalDevices() const
@@ -56,11 +56,9 @@ namespace s3dl
 
     Device::~Device()
     {
-        std::set<Device*>::iterator position = _DEVICE_LIST.find(this);
-        if (position != _DEVICE_LIST.end())
-            _DEVICE_LIST.erase(position);
+        _DEVICE_COUNT--;
 
-        if (_DEVICE_LIST.size() == 0)
+        if (_DEVICE_COUNT == 0)
             destroyInstance();
     }
 
@@ -70,6 +68,7 @@ namespace s3dl
 
         VkApplicationInfo appInfo;
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        appInfo.pNext = nullptr;
         appInfo.pApplicationName = "S3DL Application";
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.pEngineName = "No Engine";
@@ -78,6 +77,7 @@ namespace s3dl
 
         VkInstanceCreateInfo createInfo;
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        createInfo.pNext = nullptr;
         createInfo.pApplicationInfo = &appInfo;
 
         // Extensions
@@ -136,7 +136,7 @@ namespace s3dl
         #endif
 
         // Instance creation itself
-        
+
         VkResult result = vkCreateInstance(&createInfo, nullptr, &_VK_INSTANCE);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to create VkInstance. Error code: " + std::to_string(result));
