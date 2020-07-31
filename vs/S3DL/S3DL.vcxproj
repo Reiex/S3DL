@@ -163,6 +163,8 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\S3DL\Device.cpp" />
     <ClCompile Include="..\..\src\S3DL\Glsl.cpp" />
+    <ClCompile Include="..\..\src\S3DL\Instance.cpp" />
+    <ClCompile Include="..\..\src\S3DL\RenderTarget.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderWindow.cpp" />
     <ClCompile Include="..\..\src\S3DL\Window.cpp" />
   </ItemGroup>
@@ -170,6 +172,7 @@
     <ClInclude Include="..\..\include\S3DL\Device.hpp" />
     <ClInclude Include="..\..\include\S3DL\Glsl.hpp" />
     <ClInclude Include="..\..\include\S3DL\GlslT.hpp" />
+    <ClInclude Include="..\..\include\S3DL\Instance.hpp" />
     <ClInclude Include="..\..\include\S3DL\RenderTarget.hpp" />
     <ClInclude Include="..\..\include\S3DL\RenderWindow.hpp" />
     <ClInclude Include="..\..\include\S3DL\S3DL.hpp" />
