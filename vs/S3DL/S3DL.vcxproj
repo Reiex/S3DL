@@ -162,7 +162,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\S3DL\Device.cpp" />
-    <ClCompile Include="..\..\src\S3DL\Glsl.cpp" />
     <ClCompile Include="..\..\src\S3DL\Instance.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderTarget.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderWindow.cpp" />
