@@ -2,6 +2,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <algorithm>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
