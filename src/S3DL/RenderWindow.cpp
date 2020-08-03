@@ -76,7 +76,7 @@ namespace s3dl
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat();
         _swapChainImageFormat = surfaceFormat.format;
         VkPresentModeKHR presentMode = chooseSwapPresentMode();
-        VkExtent2D _swapChainImageextent = chooseSwapExtent();
+        _extent = chooseSwapExtent();
 
         uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
         if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
@@ -90,7 +90,7 @@ namespace s3dl
         createInfo.minImageCount = imageCount;
         createInfo.imageFormat = surfaceFormat.format;
         createInfo.imageColorSpace = surfaceFormat.colorSpace;
-        createInfo.imageExtent = _swapChainImageextent;
+        createInfo.imageExtent = _extent;
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;

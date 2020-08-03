@@ -1,7 +1,15 @@
 #pragma once
 
+#include <cstdint>
+
 namespace s3dl
 {
+    class Window;
+    class RenderTarget;
+    class RenderWindow;
+    class Device;
+
+
     template<typename T> struct _vec2;
     template<typename T> struct _vec3;
     template<typename T> struct _vec4;
@@ -34,8 +42,8 @@ namespace s3dl
     typedef _mat<float, 3, 4, _vec3<float>, _vec4<float>> mat4x3;
     typedef _mat<float, 4, 4, _vec4<float>, _vec4<float>> mat4;
 
-    class Window;
-    class RenderTarget;
-    class RenderWindow;
-    class Device;
+    class Shader;
+    class RenderSubpass;
+    class RenderPass;
+    class RenderPipeline;
 }

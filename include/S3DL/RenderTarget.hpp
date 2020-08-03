@@ -26,6 +26,7 @@ namespace s3dl
 
             std::vector<VkImage> _images;
             std::vector<VkImageView> _imageViews;
+            VkExtent2D _extent;
 
             const Device* _device;
 

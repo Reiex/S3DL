@@ -1119,17 +1119,93 @@ private:
 
 #include <S3DL/S3DL.hpp>
 
+namespace s3dl
+{
+    struct Vertex
+    {
+        float x;
+        float y;
+
+        float r;
+        float g;
+        float b;
+
+        static VkVertexInputBindingDescription getBindingDescription()
+        {
+            VkVertexInputBindingDescription bindingDescription{};
+            bindingDescription.binding = 0;
+            bindingDescription.stride = sizeof(Vertex);
+            bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+            return bindingDescription;
+        }
+
+        static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+        {
+            std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+
+            attributeDescriptions[0].binding = 0;
+            attributeDescriptions[0].location = 0;
+            attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+            attributeDescriptions[0].offset = offsetof(Vertex, x);
+
+            attributeDescriptions[1].binding = 0;
+            attributeDescriptions[1].location = 1;
+            attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+            attributeDescriptions[1].offset = offsetof(Vertex, r);
+
+            return attributeDescriptions;
+        }
+    };
+}
+
 int main()
 {
-    // s3dl::mat3x2 A({{1, 2}, {4, 5}, {7, 8}});
-    // s3dl::mat2x3 B({{3, 4, 5}, {6, 7, 8}});
-
-    // std::cout << (B * A) << std::endl;
-
     s3dl::Instance::create();
     s3dl::RenderWindow window(1000, 800, "Test");
     s3dl::Device device = s3dl::Device::createBestPossible(window);
     window.setDevice(device);
+
+    VkAttachmentReference colorAttachmentRef{};
+    colorAttachmentRef.attachment = 0;
+    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    s3dl::RenderSubpass subpass({}, {colorAttachmentRef}, {});
+
+    VkAttachmentDescription colorAttachment{};
+    colorAttachment.format = VK_FORMAT_B8G8R8A8_SRGB;
+    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    s3dl::RenderPass renderPass;
+    renderPass.addAttachment(colorAttachment);
+    renderPass.addSubpass(subpass);
+    renderPass.addDependency(VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+
+    s3dl::Shader shader(device, "vertex.spv", "fragment.spv");
+    
+
+    auto bindingDescription = s3dl::Vertex::getBindingDescription();
+    auto attributeDescriptions = s3dl::Vertex::getAttributeDescriptions();
+
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+
+    s3dl::RenderPipeline pipeline;
+    pipeline.setRenderPass(renderPass);
+    pipeline.setShader(shader);
+    pipeline.setVertexInputInfo(vertexInputInfo);
+
+    pipeline.getVulkanPipeline(device);
 
     // VulkanApplication app;
 

@@ -31,6 +31,5 @@ namespace s3dl
 
             VkSwapchainKHR _swapChain;
             VkFormat _swapChainImageFormat;
-            VkExtent2D _swapChainExtent;
     };
 }
