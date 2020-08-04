@@ -33,7 +33,7 @@ namespace s3dl
         _renderPassComputed = false;
     }
 
-    VkRenderPass RenderPass::getRenderPass(const Device& device) const
+    VkRenderPass RenderPass::getVulkanRenderPass(const Device& device) const
     {
         if (!_renderPassComputed)
         {

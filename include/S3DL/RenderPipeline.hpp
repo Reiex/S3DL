@@ -29,6 +29,7 @@ namespace s3dl
             void setRasterizerState(VkPolygonMode polygonMode = VK_POLYGON_MODE_FILL, VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT);
 
             VkPipeline getVulkanPipeline(const Device& device) const;
+            VkRenderPass getVulkanRenderPass(const Device& device) const;
 
         private:
 

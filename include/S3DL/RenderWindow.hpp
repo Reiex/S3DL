@@ -19,6 +19,8 @@ namespace s3dl
 
             RenderWindow(unsigned int width, unsigned int height, const std::string& title);
 
+            void bindPipeline(RenderPipeline& pipeline);
+
             ~RenderWindow();
 
         private:
@@ -30,7 +32,9 @@ namespace s3dl
             void createRenderImages();
             void destroyRenderImages();
 
+            void createFramebuffers();
+            void destroyFramebuffers();
+
             VkSwapchainKHR _swapChain;
-            VkFormat _swapChainImageFormat;
     };
 }

@@ -15,6 +15,16 @@ namespace s3dl
         #endif
     }
 
+    void RenderWindow::bindPipeline(RenderPipeline& pipeline)
+    {
+        RenderTarget::bindPipeline(pipeline);
+
+        if (_framebuffers.size() != 0)
+            destroyFramebuffers();
+        
+        createFramebuffers();
+    }
+
     RenderWindow::~RenderWindow()
     {
         destroyRenderImages();
@@ -74,7 +84,7 @@ namespace s3dl
         // Compute swap chain settings
         SwapChainSupportDetails swapChainSupport = _device->getPhysicalDeviceProperties().swapSupport;
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat();
-        _swapChainImageFormat = surfaceFormat.format;
+        _format = surfaceFormat.format;
         VkPresentModeKHR presentMode = chooseSwapPresentMode();
         _extent = chooseSwapExtent();
 
@@ -120,7 +130,7 @@ namespace s3dl
             createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             createInfo.image = _images[i];
             createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            createInfo.format = _swapChainImageFormat;
+            createInfo.format = _format;
             createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -144,5 +154,40 @@ namespace s3dl
     void RenderWindow::destroyRenderImages()
     {
         vkDestroySwapchainKHR(_device->getVulkanDevice(), _swapChain, nullptr);
+    }
+
+    void RenderWindow::createFramebuffers()
+    {
+        _framebuffers.resize(_imageViews.size());
+
+        for (size_t i = 0; i < _framebuffers.size(); i++)
+        {
+            VkImageView attachments[] = { _imageViews[i] };
+
+            VkFramebufferCreateInfo framebufferInfo{};
+            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebufferInfo.renderPass = _pipeline->getVulkanRenderPass(*_device);
+            framebufferInfo.attachmentCount = 1;
+            framebufferInfo.pAttachments = attachments;
+            framebufferInfo.width = _extent.width;
+            framebufferInfo.height = _extent.height;
+            framebufferInfo.layers = 1;
+
+            VkResult result = vkCreateFramebuffer(_device->getVulkanDevice(), &framebufferInfo, nullptr, &_framebuffers[i]);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to create framebuffer. VkResult: " + std::to_string(result));
+        }
+
+        #ifndef NDEBUG
+        std::clog << "VkFramebuffer successfully created for all the window images." << std::endl;
+        #endif
+    }
+
+    void RenderWindow::destroyFramebuffers()
+    {
+        for (size_t i = 0; i < _framebuffers.size(); i++)
+            vkDestroyFramebuffer(_device->getVulkanDevice(), _framebuffers[i], nullptr);
+        
+        _framebuffers.resize(0);
     }
 }

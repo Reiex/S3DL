@@ -17,6 +17,11 @@ namespace s3dl
         #endif
     }
 
+    bool Window::shouldClose() const
+    {
+        return glfwWindowShouldClose(_window);
+    }
+
     Window::~Window()
     {
         glfwDestroyWindow(_window);

@@ -45,11 +45,9 @@ namespace s3dl
     {
         VkQueue graphicsQueue;
         VkQueue presentQueue;
-        VkQueue transferQueue;
 
         bool hasGraphicsQueue;
         bool hasPresentQueue;
-        bool hasTransferQueue;
     };
 
     class Device
@@ -65,6 +63,7 @@ namespace s3dl
 
             const PhysicalDevice& getPhysicalDeviceProperties() const;
             VkDevice getVulkanDevice() const;
+            VkCommandPool getVulkanCommandPool() const;
 
         private:
 
@@ -78,5 +77,7 @@ namespace s3dl
             VkDevice _device;
 
             DeviceQueues _queues;
+
+            VkCommandPool _commandPool;
     };
 }

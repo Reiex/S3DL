@@ -20,7 +20,7 @@ namespace s3dl
             void addAttachment(const VkAttachmentDescription& attachment);
             void addDependency(unsigned int srcSubpass, unsigned int srcStage, unsigned int srcAccess, unsigned int dstSubpass, unsigned int dstStage, unsigned int dstAccess);
 
-            VkRenderPass getRenderPass(const Device& device) const;
+            VkRenderPass getVulkanRenderPass(const Device& device) const;
 
         private:
 

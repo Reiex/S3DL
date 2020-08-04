@@ -46,4 +46,6 @@ namespace s3dl
     class RenderSubpass;
     class RenderPass;
     class RenderPipeline;
+
+    class Drawable;
 }

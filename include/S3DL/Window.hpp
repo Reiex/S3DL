@@ -18,6 +18,8 @@ namespace s3dl
 
             Window(unsigned int width, unsigned int height, const std::string& title);
 
+            bool shouldClose() const;
+
             ~Window();
 
         protected:

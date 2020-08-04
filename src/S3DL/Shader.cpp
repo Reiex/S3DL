@@ -107,11 +107,13 @@ namespace s3dl
         VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         createInfo.codeSize = buffer.size();
-        createInfo.pCode = reinterpret_cast<const uint32_t*>(buffer.data());
+        createInfo.pCode = (const uint32_t*) (buffer.data());
 
         VkShaderModule shaderModule;
         VkResult result = vkCreateShaderModule(device.getVulkanDevice(), &createInfo, nullptr, &shaderModule);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to create shader module. VkResult: " + std::to_string(result));
+        
+        return shaderModule;
     }
 }

@@ -126,11 +126,9 @@ namespace s3dl
         {
             uint32_t graphicsFamily;
             uint32_t presentFamily;
-            uint32_t transferFamily;
 
             bool hasGraphicsFamily;
             bool hasPresentFamily;
-            bool hasTransferFamily;
         };
     }
 
@@ -161,17 +159,9 @@ namespace s3dl
                     families.hasPresentFamily = true;
                 }
             }
-
-            if (_physicalDeviceProperties.queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
-            {
-                families.transferFamily = i;
-                families.hasTransferFamily = true;
-            }
         }
 
-        // TODO: Choosing family queues in a better way
-
-        if (!families.hasGraphicsFamily || (!families.hasPresentFamily && target.hasVulkanSurface()) || !families.hasTransferFamily)
+        if (!families.hasGraphicsFamily || (!families.hasPresentFamily && target.hasVulkanSurface()))
             throw std::runtime_error("Could not find all vulkan queue families required.");
 
         // Compute the different create infos for the queues
@@ -179,7 +169,7 @@ namespace s3dl
         float queuePriority = 1.0f;
 
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-        std::set<uint32_t> queueFamilies = { families.graphicsFamily, families.presentFamily, families.transferFamily };
+        std::set<uint32_t> queueFamilies = { families.graphicsFamily, families.presentFamily };
 
         for (std::set<uint32_t>::iterator it = queueFamilies.begin(); it != queueFamilies.end(); it++)
         {
@@ -226,6 +216,25 @@ namespace s3dl
 
         vkGetDeviceQueue(_device, families.graphicsFamily, 0, &_queues.graphicsQueue);
         vkGetDeviceQueue(_device, families.presentFamily, 0, &_queues.presentQueue);
-        vkGetDeviceQueue(_device, families.transferFamily, 0, &_queues.transferQueue);
+
+        // Create the command pool
+
+        VkCommandPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolInfo.queueFamilyIndex = families.graphicsFamily;
+        poolInfo.flags = 0;
+
+        result = vkCreateCommandPool(_device, &poolInfo, nullptr, &_commandPool);
+        if (result != VK_SUCCESS)
+            throw std::runtime_error("Failed to create command pool. VkResult: " + std::to_string(result));
+        
+        #ifndef NDEBUG
+        std::clog << "VkCommandPool successfully created." << std::endl;
+        #endif
+    }
+
+    VkCommandPool Device::getVulkanCommandPool() const
+    {
+        return _commandPool;
     }
 }

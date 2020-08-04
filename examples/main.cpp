@@ -1161,10 +1161,14 @@ namespace s3dl
 
 int main()
 {
+    // Context initialization
+
     s3dl::Instance::create();
     s3dl::RenderWindow window(1000, 800, "Test");
     s3dl::Device device = s3dl::Device::createBestPossible(window);
     window.setDevice(device);
+    
+    // Render pass creation
 
     VkAttachmentReference colorAttachmentRef{};
     colorAttachmentRef.attachment = 0;
@@ -1187,25 +1191,41 @@ int main()
     renderPass.addSubpass(subpass);
     renderPass.addDependency(VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
+    // Shader creation
+
     s3dl::Shader shader(device, "vertex.spv", "fragment.spv");
     
+    // Vertex input description
 
     auto bindingDescription = s3dl::Vertex::getBindingDescription();
     auto attributeDescriptions = s3dl::Vertex::getAttributeDescriptions();
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+    // vertexInputInfo.vertexBindingDescriptionCount = 1;
+    // vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    // vertexInputInfo.vertexAttributeDescriptionCount = attributeDescriptions.size();
+    // vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+    
+    // Pipeline creation
 
     s3dl::RenderPipeline pipeline;
     pipeline.setRenderPass(renderPass);
     pipeline.setShader(shader);
     pipeline.setVertexInputInfo(vertexInputInfo);
 
-    pipeline.getVulkanPipeline(device);
+    window.bindPipeline(pipeline);
+    
+    // Main loop
+
+    s3dl::Drawable drawable;
+    while (!window.shouldClose())
+    {
+        glfwPollEvents();
+        window.draw(drawable);
+    }
+
+    vkDeviceWaitIdle(device.getVulkanDevice());
 
     // VulkanApplication app;
 
@@ -1217,5 +1237,5 @@ int main()
     //     return EXIT_FAILURE;
     // }
 
-    return EXIT_SUCCESS;
+    // return EXIT_SUCCESS;
 }

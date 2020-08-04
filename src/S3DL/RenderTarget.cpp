@@ -23,11 +23,15 @@ namespace s3dl
         createRenderImages();
     }
 
-    void RenderTarget::createRenderImages()
+    void RenderTarget::bindPipeline(RenderPipeline& pipeline)
     {
+        _pipeline = &pipeline;
     }
 
-    void RenderTarget::destroyRenderImages()
+    void RenderTarget::draw(const Drawable& drawable)
     {
+        VkCommandBuffer commandBuffer = drawable.getVulkanCommandBuffer(*_device, *_pipeline, _framebuffers[_currentFrame], _extent);
+
+        // Etc...
     }
 }

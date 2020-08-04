@@ -4,6 +4,26 @@ namespace s3dl
 {
     RenderPipeline::RenderPipeline() :
         _pipelineComputed(false),
+        _blendAttachment{
+            VK_FALSE,                                                     // .blendEnable
+            VK_BLEND_FACTOR_ONE,                                          // .srcColorBlendFactor
+            VK_BLEND_FACTOR_ZERO,                                         // .dstColorBlendFactor
+            VK_BLEND_OP_ADD,                                              // .colorBlendOp
+            VK_BLEND_FACTOR_ONE,                                          // .srcAlphaBlendFactor
+            VK_BLEND_FACTOR_ZERO,                                         // .dstAlphaBlendFactor
+            VK_BLEND_OP_ADD,                                              // .alphaBlendOp
+            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT  // .colorWriteMask
+        },
+        _blending{
+            VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,     // .sType
+            nullptr,                                                      // .pNext
+            0,                                                            // .flags
+            VK_FALSE,                                                     // .logicOpEnable
+            VK_LOGIC_OP_COPY,                                             // .logicOp
+            1,                                                            // .attachmentCount
+            &_blendAttachment,                                            // .pAttachments
+            {0.f, 0.f, 0.f, 0.f}                                          // .blendConstants
+        },
         _inputAssembly{
             VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,  // .sType
             nullptr,                                                      // .pNext
@@ -14,14 +34,14 @@ namespace s3dl
         _viewport{
             0.f,                                                          // .x
             0.f,                                                          // .y
-            0.f,                                                          // .width
-            0.f,                                                          // .height
+            1.f,                                                          // .width
+            1.f,                                                          // .height
             0.f,                                                          // .minDepth
             1.f                                                           // .maxDepth
         },
         _scissor{
             { 0, 0 },                                                     // .offset
-            { 0, 0 }                                                      // .extent
+            { 1, 1 }                                                      // .extent
         },
         _viewportState{
             VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,        // .sType
@@ -136,7 +156,7 @@ namespace s3dl
             pipelineInfo.pColorBlendState = &_blending;
             pipelineInfo.pDynamicState = nullptr;
             pipelineInfo.layout = _pipelineLayout;
-            pipelineInfo.renderPass = _renderPass.getRenderPass(device);
+            pipelineInfo.renderPass = _renderPass.getVulkanRenderPass(device);
             pipelineInfo.subpass = 0;
             pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
             pipelineInfo.basePipelineIndex = -1;
@@ -150,4 +170,10 @@ namespace s3dl
 
         return _pipeline;
     }
+
+    VkRenderPass RenderPipeline::getVulkanRenderPass(const Device& device) const
+    {
+        return _renderPass.getVulkanRenderPass(device);
+    }
+
 }
