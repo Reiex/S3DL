@@ -23,9 +23,10 @@ namespace s3dl
         if (_framebuffers.size() != 0)
             destroyFramebuffers();
 
-        _currentImage = getNextRenderImage(_imageAvailableSemaphore);
+        _currentImage = getNextRenderImage(_imageAvailableSemaphore[_currentFrame]);
         createFramebuffers();
-        startRecordingCommandBuffer();
+        createCommandBuffer(_commandBuffers[_currentFrame]);
+        startRecordingCommandBuffer(_commandBuffers[_currentFrame]);
     }
 
     void RenderWindow::setClearColor(vec4 color)
@@ -53,14 +54,7 @@ namespace s3dl
 
     VkPresentModeKHR RenderWindow::chooseSwapPresentMode()
     {
-        for (int i(0); i < _device->getPhysicalDeviceProperties().swapSupport.presentModes.size(); i++)
-        {
-            VkPresentModeKHR availablePresentMode = _device->getPhysicalDeviceProperties().swapSupport.presentModes[i];
-            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-                return availablePresentMode;
-        }
-
-        return VK_PRESENT_MODE_FIFO_KHR;
+        return VK_PRESENT_MODE_IMMEDIATE_KHR;
     }
 
     VkExtent2D RenderWindow::chooseSwapExtent()

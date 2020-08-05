@@ -35,10 +35,10 @@ namespace s3dl
             virtual void createFramebuffers() = 0;
             virtual void destroyFramebuffers() = 0;
 
-            void createCommandBuffer();
-            void startRecordingCommandBuffer();
-            void stopRecordingCommandBuffer();
-            void destroyCommandBuffer();
+            void createCommandBuffer(VkCommandBuffer& commandBuffer);
+            void startRecordingCommandBuffer(VkCommandBuffer& commandBuffer);
+            void stopRecordingCommandBuffer(VkCommandBuffer& commandBuffer);
+            void destroyCommandBuffer(VkCommandBuffer& commandBuffer);
 
             void createSyncTools();
             void destroySyncTools();
@@ -59,9 +59,11 @@ namespace s3dl
             unsigned int _concurrentFrames;
             unsigned int _currentImage;
             unsigned int _currentFrame;
-            VkCommandBuffer _commandBuffer;
+            std::vector<VkCommandBuffer> _commandBuffers;
             std::vector<VkClearValue> _clearValues;
-            VkSemaphore _imageAvailableSemaphore;
-            VkSemaphore _imageRenderedSemaphore;
+            std::vector<VkSemaphore> _imageAvailableSemaphore;
+            std::vector<VkSemaphore> _imageRenderedSemaphore;
+            std::vector<VkFence> _imageRenderedFence;
+            std::vector<VkFence> _frameRenderedFence;
     };
 }
