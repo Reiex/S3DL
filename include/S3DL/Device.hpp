@@ -64,6 +64,7 @@ namespace s3dl
             const PhysicalDevice& getPhysicalDeviceProperties() const;
             VkDevice getVulkanDevice() const;
             VkCommandPool getVulkanCommandPool() const;
+            const DeviceQueues& getVulkanQueues() const;
 
         private:
 

@@ -1213,6 +1213,7 @@ int main()
     pipeline.setRenderPass(renderPass);
     pipeline.setShader(shader);
     pipeline.setVertexInputInfo(vertexInputInfo);
+    pipeline.setRasterizerState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE);
 
     window.bindPipeline(pipeline);
     
@@ -1223,6 +1224,7 @@ int main()
     {
         glfwPollEvents();
         window.draw(drawable);
+        window.display();
     }
 
     vkDeviceWaitIdle(device.getVulkanDevice());

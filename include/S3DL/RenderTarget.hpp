@@ -21,14 +21,27 @@ namespace s3dl
             void bindPipeline(RenderPipeline& pipeline);
 
             void draw(const Drawable& drawable);
+            void display();
 
         protected:
 
             virtual void createRenderImages() = 0;
+            virtual unsigned int getNextRenderImage(VkSemaphore& imageAvailableSemaphore) const = 0;
+            virtual void presentRenderImage(VkSemaphore& imageRenderedSemaphore, unsigned int imageIndex) = 0;
             virtual void destroyRenderImages() = 0;
+
+            virtual void initClearColors() = 0;
 
             virtual void createFramebuffers() = 0;
             virtual void destroyFramebuffers() = 0;
+
+            void createCommandBuffer();
+            void startRecordingCommandBuffer();
+            void stopRecordingCommandBuffer();
+            void destroyCommandBuffer();
+
+            void createSyncTools();
+            void destroySyncTools();
 
             std::vector<VkImage> _images;
             std::vector<VkImageView> _imageViews;
@@ -43,6 +56,12 @@ namespace s3dl
             bool _hasSurface;
             VkSurfaceKHR _surface;
 
+            unsigned int _concurrentFrames;
+            unsigned int _currentImage;
             unsigned int _currentFrame;
+            VkCommandBuffer _commandBuffer;
+            std::vector<VkClearValue> _clearValues;
+            VkSemaphore _imageAvailableSemaphore;
+            VkSemaphore _imageRenderedSemaphore;
     };
 }

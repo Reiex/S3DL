@@ -59,7 +59,7 @@ namespace s3dl
             VK_FALSE,                                                     // .depthClampEnable
             VK_FALSE,                                                     // .rasterizerDiscardEnable
             VK_POLYGON_MODE_FILL,                                         // .polygonMode
-            VK_CULL_MODE_BACK_BIT,                                        // .cullMode
+            VK_CULL_MODE_NONE,                                            // .cullMode
             VK_FRONT_FACE_CLOCKWISE,                                      // .frontFace
             VK_FALSE,                                                     // .depthBiasEnable
             0.0f,                                                         // .depthBiasConstantFactor

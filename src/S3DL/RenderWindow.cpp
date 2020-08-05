@@ -18,11 +18,19 @@ namespace s3dl
     void RenderWindow::bindPipeline(RenderPipeline& pipeline)
     {
         RenderTarget::bindPipeline(pipeline);
+        pipeline.setViewportState({0, 0, _extent.width, _extent.height}, {0, 0, _extent.width, _extent.height});
 
         if (_framebuffers.size() != 0)
             destroyFramebuffers();
-        
+
+        _currentImage = getNextRenderImage(_imageAvailableSemaphore);
         createFramebuffers();
+        startRecordingCommandBuffer();
+    }
+
+    void RenderWindow::setClearColor(vec4 color)
+    {
+        _clearValues[0] = {color.x, color.y, color.z, color.w};
     }
 
     RenderWindow::~RenderWindow()
@@ -151,9 +159,37 @@ namespace s3dl
         #endif
     }
 
+    unsigned int RenderWindow::getNextRenderImage(VkSemaphore& imageAvailableSemaphore) const
+    {
+        uint32_t imageIndex;
+        vkAcquireNextImageKHR(_device->getVulkanDevice(), _swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+
+        return imageIndex;
+    }
+
+    void RenderWindow::presentRenderImage(VkSemaphore& imageRenderedSemaphore, unsigned int imageIndex)
+    {
+        VkResult result;
+        VkPresentInfoKHR presentInfo{};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = &imageRenderedSemaphore;
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = &_swapChain;
+        presentInfo.pImageIndices = &imageIndex;
+        presentInfo.pResults = &result;
+
+        vkQueuePresentKHR(_device->getVulkanQueues().presentQueue, &presentInfo);
+    }
+
     void RenderWindow::destroyRenderImages()
     {
         vkDestroySwapchainKHR(_device->getVulkanDevice(), _swapChain, nullptr);
+    }
+
+    void RenderWindow::initClearColors()
+    {
+        _clearValues = {{0.2f, 0.3f, 0.3f, 1.f}};
     }
 
     void RenderWindow::createFramebuffers()

@@ -120,6 +120,16 @@ namespace s3dl
         return _device;
     }
 
+    VkCommandPool Device::getVulkanCommandPool() const
+    {
+        return _commandPool;
+    }
+
+    const DeviceQueues& Device::getVulkanQueues() const
+    {
+        return _queues;
+    }
+
     namespace
     {
         struct QueueFamilies
@@ -231,10 +241,5 @@ namespace s3dl
         #ifndef NDEBUG
         std::clog << "VkCommandPool successfully created." << std::endl;
         #endif
-    }
-
-    VkCommandPool Device::getVulkanCommandPool() const
-    {
-        return _commandPool;
     }
 }

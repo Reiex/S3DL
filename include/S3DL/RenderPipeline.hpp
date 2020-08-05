@@ -26,7 +26,7 @@ namespace s3dl
             void setBlendMode(const VkPipelineColorBlendAttachmentState& blendAttachment, const VkPipelineColorBlendStateCreateInfo& blending);
             void setPrimitiveTopology(VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, bool primitiveRestartEnabled = false);
             void setViewportState(const VkViewport& viewport, const VkRect2D& scissor);
-            void setRasterizerState(VkPolygonMode polygonMode = VK_POLYGON_MODE_FILL, VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT);
+            void setRasterizerState(VkPolygonMode polygonMode = VK_POLYGON_MODE_FILL, VkCullModeFlags cullMode = VK_CULL_MODE_NONE);
 
             VkPipeline getVulkanPipeline(const Device& device) const;
             VkRenderPass getVulkanRenderPass(const Device& device) const;

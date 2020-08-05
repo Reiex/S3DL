@@ -3,6 +3,7 @@
 #include <string>
 #include <stdexcept>
 #include <algorithm>
+#include <cstdint>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -21,6 +22,8 @@ namespace s3dl
 
             void bindPipeline(RenderPipeline& pipeline);
 
+            void setClearColor(vec4 color = {0.0, 0.0, 0.0, 1.0});
+
             ~RenderWindow();
 
         private:
@@ -30,7 +33,11 @@ namespace s3dl
             VkExtent2D chooseSwapExtent();
 
             void createRenderImages();
+            unsigned int getNextRenderImage(VkSemaphore& imageAvailableSemaphore) const;
+            void presentRenderImage(VkSemaphore& imageRenderedSemaphore, unsigned int imageIndex);
             void destroyRenderImages();
+
+            void initClearColors();
 
             void createFramebuffers();
             void destroyFramebuffers();

@@ -10,13 +10,6 @@ namespace s3dl
     {
         public:
 
-            VkCommandBuffer getVulkanCommandBuffer(const Device& device, const RenderPipeline& pipeline, VkFramebuffer framebuffer, VkExtent2D extent) const;
-
-            ~Drawable();
-
         private:
-
-            mutable bool _commandCreated;
-            mutable VkCommandBuffer _commandBuffer;
     };
 }
