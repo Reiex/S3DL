@@ -130,6 +130,12 @@ namespace s3dl
         return _queues;
     }
 
+    void Device::updateProperties(const RenderTarget& target) const
+    {
+        if (target.hasVulkanSurface())
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_physicalDevice, target.getVulkanSurface(), &_physicalDeviceProperties.swapSupport.capabilities);
+    }
+
     void Device::destroy()
     {
         if (_commandPool != VK_NULL_HANDLE)

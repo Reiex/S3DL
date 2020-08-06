@@ -32,7 +32,7 @@ namespace s3dl
         protected:
 
             virtual void createRenderImages() = 0;
-            virtual unsigned int getNextRenderImage(VkSemaphore& imageAvailableSemaphore) const = 0;
+            virtual unsigned int getNextRenderImage(VkSemaphore& imageAvailableSemaphore) = 0;
             virtual void presentRenderImage(VkSemaphore& imageRenderedSemaphore, unsigned int imageIndex) = 0;
             virtual void destroyRenderImages() = 0;
 
@@ -48,6 +48,8 @@ namespace s3dl
 
             void createSyncTools();
             void destroySyncTools();
+
+            void recreate();
 
             std::vector<VkImage> _images;
             std::vector<VkImageView> _imageViews;
@@ -71,5 +73,7 @@ namespace s3dl
             std::vector<VkSemaphore> _imageRenderedSemaphore;
             std::vector<VkFence> _imageRenderedFence;
             std::vector<VkFence> _frameRenderedFence;
+
+            bool _needsResize;
     };
 }

@@ -8,7 +8,6 @@ namespace s3dl
             throw std::runtime_error("Cannot open window with size (0, 0).");
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
         _window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 

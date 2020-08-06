@@ -36,7 +36,7 @@ namespace s3dl
             VkExtent2D chooseSwapExtent();
 
             void createRenderImages();
-            unsigned int getNextRenderImage(VkSemaphore& imageAvailableSemaphore) const;
+            unsigned int getNextRenderImage(VkSemaphore& imageAvailableSemaphore);
             void presentRenderImage(VkSemaphore& imageRenderedSemaphore, unsigned int imageIndex);
             void destroyRenderImages();
 

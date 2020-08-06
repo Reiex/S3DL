@@ -87,10 +87,7 @@ namespace s3dl
             int width, height;
             glfwGetFramebufferSize(_window, &width, &height);
 
-            VkExtent2D actualExtent = {
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height)
-            };
+            VkExtent2D actualExtent = { width, height };
 
             actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
             actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
@@ -171,17 +168,24 @@ namespace s3dl
         #endif
     }
 
-    unsigned int RenderWindow::getNextRenderImage(VkSemaphore& imageAvailableSemaphore) const
+    unsigned int RenderWindow::getNextRenderImage(VkSemaphore& imageAvailableSemaphore)
     {
         uint32_t imageIndex;
-        vkAcquireNextImageKHR(_device->getVulkanDevice(), _swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+        VkResult result = vkAcquireNextImageKHR(_device->getVulkanDevice(), _swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+        while (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            recreate();
+            result = vkAcquireNextImageKHR(_device->getVulkanDevice(), _swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+        }
+
+        if (result == VK_SUBOPTIMAL_KHR)
+            _needsResize = true;
 
         return imageIndex;
     }
 
     void RenderWindow::presentRenderImage(VkSemaphore& imageRenderedSemaphore, unsigned int imageIndex)
     {
-        VkResult result;
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
@@ -189,9 +193,14 @@ namespace s3dl
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = &_swapChain;
         presentInfo.pImageIndices = &imageIndex;
-        presentInfo.pResults = &result;
+        presentInfo.pResults = nullptr;
 
-        vkQueuePresentKHR(_device->getVulkanQueues().presentQueue, &presentInfo);
+        VkResult result = vkQueuePresentKHR(_device->getVulkanQueues().presentQueue, &presentInfo);
+        if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR || _needsResize)
+        {
+            _needsResize = false;
+            recreate();
+        }
     }
 
     void RenderWindow::destroyRenderImages()

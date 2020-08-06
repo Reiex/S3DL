@@ -66,6 +66,8 @@ namespace s3dl
             VkCommandPool getVulkanCommandPool() const;
             const DeviceQueues& getVulkanQueues() const;
 
+            void updateProperties(const RenderTarget& target) const;
+
             void destroy();
 
             ~Device();
@@ -76,7 +78,7 @@ namespace s3dl
 
             void create(const RenderTarget& target);
 
-            PhysicalDevice _physicalDeviceProperties;
+            mutable PhysicalDevice _physicalDeviceProperties;
             VkPhysicalDevice _physicalDevice;
 
             VkDevice _device;

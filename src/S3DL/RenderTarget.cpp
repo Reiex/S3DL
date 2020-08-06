@@ -18,7 +18,9 @@ namespace s3dl
         _commandBuffers(_concurrentFrames, VK_NULL_HANDLE),
         _imageAvailableSemaphore(_concurrentFrames, VK_NULL_HANDLE),
         _imageRenderedSemaphore(_concurrentFrames, VK_NULL_HANDLE),
-        _frameRenderedFence(_concurrentFrames, VK_NULL_HANDLE)
+        _frameRenderedFence(_concurrentFrames, VK_NULL_HANDLE),
+
+        _needsResize(false)
     {
     }
 
@@ -102,7 +104,7 @@ namespace s3dl
         _currentFrame = (_currentFrame + 1) % _concurrentFrames;
 
         // Recreate command buffer
-
+        
         vkWaitForFences(_device->getVulkanDevice(), 1, &_frameRenderedFence[_currentFrame], VK_TRUE, UINT64_MAX);
         _currentImage = getNextRenderImage(_imageAvailableSemaphore[_currentFrame]);
 
@@ -114,6 +116,7 @@ namespace s3dl
     
     void RenderTarget::destroy()
     {
+        unbindPipeline();
         unbindDevice();
     }
 
@@ -205,5 +208,24 @@ namespace s3dl
             vkDestroySemaphore(_device->getVulkanDevice(), _imageRenderedSemaphore[i], nullptr);
             vkDestroyFence(_device->getVulkanDevice(), _frameRenderedFence[i], nullptr);
         }
+
+        for (int i(0); i < _images.size(); i++)
+            _imageRenderedFence[i] = VK_NULL_HANDLE;
+    }
+
+    void RenderTarget::recreate()
+    {
+        vkDeviceWaitIdle(_device->getVulkanDevice());
+
+        RenderPipeline* pipeline(_pipeline);
+        const Device* device(_device);
+
+        unbindPipeline();
+        unbindDevice();
+
+        device->updateProperties(*this);
+
+        bindDevice(*device);
+        bindPipeline(*pipeline);
     }
 }
