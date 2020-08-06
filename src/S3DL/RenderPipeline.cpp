@@ -34,8 +34,8 @@ namespace s3dl
         _viewport{
             0.f,                                                          // .x
             0.f,                                                          // .y
-            1.f,                                                          // .width
-            1.f,                                                          // .height
+            0.f,                                                          // .width
+            0.f,                                                          // .height
             0.f,                                                          // .minDepth
             1.f                                                           // .maxDepth
         },
@@ -77,7 +77,9 @@ namespace s3dl
             nullptr,                                                      // .pSampleMask
             VK_FALSE,                                                     // .alphaToCoverageEnable
             VK_FALSE                                                      // .alphaToOneEnable
-        }
+        },
+        _pipelineLayout(VK_NULL_HANDLE),
+        _pipeline(VK_NULL_HANDLE)
     {
     }
 
@@ -132,6 +134,8 @@ namespace s3dl
     {
         if (!_pipelineComputed)
         {
+            destroyPipeline(device);
+
             VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
             pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             pipelineLayoutInfo.setLayoutCount = 0;
@@ -165,6 +169,10 @@ namespace s3dl
             if (result != VK_SUCCESS)
                 throw std::runtime_error("Failed to create graphics pipeline. VkResult: " + std::to_string(result));
 
+            #ifndef NDEBUG
+            std::clog << "VkPipeline successfully created." << std::endl;
+            #endif
+
             _pipelineComputed = true;
         }
 
@@ -176,4 +184,24 @@ namespace s3dl
         return _renderPass.getVulkanRenderPass(device);
     }
 
+    void RenderPipeline::destroy(const Device& device)
+    {
+        destroyPipeline(device);
+
+        _renderPass.destroy(device);
+        _shader.destroy(device);
+    }
+
+    void RenderPipeline::destroyPipeline(const Device& device) const
+    {
+        if (_pipelineLayout != VK_NULL_HANDLE)
+            vkDestroyPipelineLayout(device.getVulkanDevice(), _pipelineLayout, nullptr);
+        _pipelineLayout = VK_NULL_HANDLE;
+
+        if (_pipeline != VK_NULL_HANDLE)
+            vkDestroyPipeline(device.getVulkanDevice(), _pipeline, nullptr);
+        _pipeline = nullptr;
+
+        _pipelineComputed = false;
+    }
 }

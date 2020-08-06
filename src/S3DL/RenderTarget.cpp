@@ -3,10 +3,18 @@
 namespace s3dl
 {
     RenderTarget::RenderTarget(bool hasSurface) :
+        _extent({0, 0}),
+        _format(VK_FORMAT_UNDEFINED),
+
+        _device(nullptr),
+        _pipeline(nullptr),
+
+        _hasSurface(hasSurface),
+        _surface(VK_NULL_HANDLE),
+
         _concurrentFrames(2),
         _currentFrame(0),
         _currentImage(0),
-        _hasSurface(hasSurface),
         _commandBuffers(_concurrentFrames, VK_NULL_HANDLE),
         _imageAvailableSemaphore(_concurrentFrames, VK_NULL_HANDLE),
         _imageRenderedSemaphore(_concurrentFrames, VK_NULL_HANDLE),
@@ -24,17 +32,36 @@ namespace s3dl
         return _surface;
     }
 
-    void RenderTarget::setDevice(const Device& device)
+    void RenderTarget::bindDevice(const Device& device)
     {
+        unbindDevice();
+
         _device = &device;
         createRenderImages();
         createSyncTools();
         initClearColors();
     }
 
+    void RenderTarget::unbindDevice()
+    {
+        if (_device != nullptr)
+        {
+            destroySyncTools();
+            destroyRenderImages();
+        }
+        _device = nullptr;
+    }
+
     void RenderTarget::bindPipeline(RenderPipeline& pipeline)
     {
+        unbindPipeline();
+
         _pipeline = &pipeline;
+    }
+
+    void RenderTarget::unbindPipeline()
+    {
+        _pipeline = nullptr;
     }
 
     void RenderTarget::draw(const Drawable& drawable)
@@ -85,6 +112,16 @@ namespace s3dl
         startRecordingCommandBuffer(_commandBuffers[_currentFrame]);
     }
     
+    void RenderTarget::destroy()
+    {
+        unbindDevice();
+    }
+
+    RenderTarget::~RenderTarget()
+    {
+        destroy();
+    }
+
     void RenderTarget::createCommandBuffer(VkCommandBuffer& commandBuffer)
     {
         VkCommandBufferAllocateInfo allocInfo{};
@@ -135,6 +172,7 @@ namespace s3dl
     {
         if (commandBuffer != VK_NULL_HANDLE)
             vkFreeCommandBuffers(_device->getVulkanDevice(), _device->getVulkanCommandPool(), 1, &commandBuffer);
+        commandBuffer = VK_NULL_HANDLE;
     }
 
     void RenderTarget::createSyncTools()
@@ -167,8 +205,5 @@ namespace s3dl
             vkDestroySemaphore(_device->getVulkanDevice(), _imageRenderedSemaphore[i], nullptr);
             vkDestroyFence(_device->getVulkanDevice(), _frameRenderedFence[i], nullptr);
         }
-
-        for (int i(0); i < _images.size(); i++)
-            vkDestroyFence(_device->getVulkanDevice(), _imageRenderedFence[i], nullptr);
     }
 }

@@ -17,8 +17,8 @@ namespace s3dl
 
     void RenderWindow::bindPipeline(RenderPipeline& pipeline)
     {
+        pipeline.setViewportState({0, 0, _extent.width, _extent.height, 0, 1}, {0, 0, _extent.width, _extent.height});
         RenderTarget::bindPipeline(pipeline);
-        pipeline.setViewportState({0, 0, _extent.width, _extent.height}, {0, 0, _extent.width, _extent.height});
 
         if (_framebuffers.size() != 0)
             destroyFramebuffers();
@@ -29,15 +29,33 @@ namespace s3dl
         startRecordingCommandBuffer(_commandBuffers[_currentFrame]);
     }
 
+    void RenderWindow::unbindPipeline()
+    {
+        for (int i(0); i < _commandBuffers.size(); i++)
+            destroyCommandBuffer(_commandBuffers[i]);
+        
+        destroyFramebuffers();
+
+        RenderTarget::unbindPipeline();
+    }
+
     void RenderWindow::setClearColor(vec4 color)
     {
         _clearValues[0] = {color.x, color.y, color.z, color.w};
     }
 
+    void RenderWindow::destroy()
+    {
+        RenderTarget::destroy();
+
+        if (_surface != VK_NULL_HANDLE)
+            vkDestroySurfaceKHR(Instance::getVulkanInstance(), _surface, nullptr);
+        _surface = VK_NULL_HANDLE;
+    }
+
     RenderWindow::~RenderWindow()
     {
-        destroyRenderImages();
-        vkDestroySurfaceKHR(Instance::getVulkanInstance(), _surface, nullptr);
+        destroy();
     }
 
     VkSurfaceFormatKHR RenderWindow::chooseSwapSurfaceFormat()
@@ -178,6 +196,9 @@ namespace s3dl
 
     void RenderWindow::destroyRenderImages()
     {
+        for (int i(0); i < _imageViews.size(); i++)
+            vkDestroyImageView(_device->getVulkanDevice(), _imageViews[i], nullptr);
+
         vkDestroySwapchainKHR(_device->getVulkanDevice(), _swapChain, nullptr);
     }
 

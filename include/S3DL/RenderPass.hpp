@@ -22,6 +22,8 @@ namespace s3dl
 
             VkRenderPass getVulkanRenderPass(const Device& device) const;
 
+            void destroy(const Device& device) const;
+
         private:
 
             std::vector<RenderSubpass> _subpasses;

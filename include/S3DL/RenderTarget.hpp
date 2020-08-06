@@ -17,11 +17,17 @@ namespace s3dl
             bool hasVulkanSurface() const;
             VkSurfaceKHR getVulkanSurface() const;
 
-            void setDevice(const Device& device);
-            void bindPipeline(RenderPipeline& pipeline);
+            virtual void bindDevice(const Device& device);
+            virtual void unbindDevice();
+            virtual void bindPipeline(RenderPipeline& pipeline);
+            virtual void unbindPipeline();
 
             void draw(const Drawable& drawable);
             void display();
+
+            virtual void destroy();
+
+            ~RenderTarget();
 
         protected:
 

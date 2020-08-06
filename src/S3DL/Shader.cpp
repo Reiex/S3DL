@@ -89,6 +89,14 @@ namespace s3dl
         return _shaderStages;
     }
 
+    void Shader::destroy(const Device& device)
+    {
+        for (int i(0); i < _shaderStages.size(); i++)
+            vkDestroyShaderModule(device.getVulkanDevice(), _shaderStages[i].module, nullptr);
+
+        _shaderStages.clear();
+    }
+
     VkShaderModule Shader::getShaderModule(const Device& device, const std::string& filename)
     {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);

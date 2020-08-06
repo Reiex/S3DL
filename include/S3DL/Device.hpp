@@ -66,9 +66,13 @@ namespace s3dl
             VkCommandPool getVulkanCommandPool() const;
             const DeviceQueues& getVulkanQueues() const;
 
+            void destroy();
+
+            ~Device();
+
         private:
 
-            Device() = default;
+            Device();
 
             void create(const RenderTarget& target);
 

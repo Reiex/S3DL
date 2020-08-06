@@ -31,7 +31,11 @@ namespace s3dl
             VkPipeline getVulkanPipeline(const Device& device) const;
             VkRenderPass getVulkanRenderPass(const Device& device) const;
 
+            void destroy(const Device& device);
+
         private:
+
+            void destroyPipeline(const Device& device) const;
 
             RenderPass _renderPass;
             Shader _shader;

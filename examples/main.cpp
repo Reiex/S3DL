@@ -1166,7 +1166,9 @@ int main()
     s3dl::Instance::create();
     s3dl::RenderWindow window(1000, 800, "Test");
     s3dl::Device device = s3dl::Device::createBestPossible(window);
-    window.setDevice(device);
+    window.bindDevice(device);
+
+    // S'occuper de la destruction en regardant la création à partir d'ici (au dessus ça a déjà été fait)
     
     // Render pass creation
 
@@ -1228,6 +1230,13 @@ int main()
     }
 
     vkDeviceWaitIdle(device.getVulkanDevice());
+
+    window.unbindPipeline();
+    pipeline.destroy(device);
+    window.unbindDevice();
+    device.destroy();
+    window.destroy();
+    s3dl::Instance::destroy();
 
     // VulkanApplication app;
 

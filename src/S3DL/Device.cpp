@@ -130,6 +130,31 @@ namespace s3dl
         return _queues;
     }
 
+    void Device::destroy()
+    {
+        if (_commandPool != VK_NULL_HANDLE)
+            vkDestroyCommandPool(_device, _commandPool, nullptr);
+        _commandPool = VK_NULL_HANDLE;
+
+        if (_device != VK_NULL_HANDLE)
+            vkDestroyDevice(_device, nullptr);
+        _device = VK_NULL_HANDLE;
+    }
+
+    Device::~Device()
+    {
+        destroy();
+    }
+
+    Device::Device() :
+        _physicalDeviceProperties{},
+        _physicalDevice(VK_NULL_HANDLE),
+        _device(VK_NULL_HANDLE),
+        _queues{},
+        _commandPool(VK_NULL_HANDLE)
+    {
+    }
+
     namespace
     {
         struct QueueFamilies

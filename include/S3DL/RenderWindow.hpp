@@ -21,8 +21,11 @@ namespace s3dl
             RenderWindow(unsigned int width, unsigned int height, const std::string& title);
 
             void bindPipeline(RenderPipeline& pipeline);
+            void unbindPipeline();
 
             void setClearColor(vec4 color = {0.0, 0.0, 0.0, 1.0});
+        
+            void destroy();
 
             ~RenderWindow();
 

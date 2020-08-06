@@ -3,7 +3,8 @@
 namespace s3dl
 {
     RenderPass::RenderPass() :
-        _renderPassComputed(false)
+        _renderPassComputed(false),
+        _renderPass(VK_NULL_HANDLE)
     {
     }
 
@@ -37,6 +38,8 @@ namespace s3dl
     {
         if (!_renderPassComputed)
         {
+            destroy(device);
+
             std::vector<VkSubpassDescription> subpasses(_subpasses.size());
             for (int i(0); i < subpasses.size(); i++)
             {
@@ -68,9 +71,22 @@ namespace s3dl
             if (result != VK_SUCCESS)
                 throw std::runtime_error("Failed to create render pass. VkResult: " + std::to_string(result));
             
+            #ifndef NDEBUG
+            std::clog << "VkRenderPass successfully created." << std::endl;
+            #endif
+
             _renderPassComputed = true;
         }
 
         return _renderPass;
+    }
+
+    void RenderPass::destroy(const Device& device) const
+    {
+        if (_renderPass != VK_NULL_HANDLE)
+            vkDestroyRenderPass(device.getVulkanDevice(), _renderPass, nullptr);
+        
+        _renderPass = VK_NULL_HANDLE;
+        _renderPassComputed = false;
     }
 }
