@@ -213,7 +213,7 @@ namespace s3dl
 
     void RenderWindow::initClearColors()
     {
-        _clearValues = {{0.2f, 0.3f, 0.3f, 1.f}};
+        _clearValues.resize(1, {0.f, 0.f, 0.f, 1.f});
     }
 
     void RenderWindow::createFramebuffers()
