@@ -200,7 +200,7 @@ namespace s3dl
 
         if (_pipeline != VK_NULL_HANDLE)
             vkDestroyPipeline(device.getVulkanDevice(), _pipeline, nullptr);
-        _pipeline = nullptr;
+        _pipeline = VK_NULL_HANDLE;
 
         _pipelineComputed = false;
     }

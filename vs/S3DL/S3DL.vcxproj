@@ -162,13 +162,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\S3DL\Device.cpp" />
+    <ClCompile Include="..\..\src\S3DL\Drawable.cpp" />
     <ClCompile Include="..\..\src\S3DL\Instance.cpp" />
+    <ClCompile Include="..\..\src\S3DL\Mesh.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderPass.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderPipeline.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderSubpass.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderTarget.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderWindow.cpp" />
     <ClCompile Include="..\..\src\S3DL\Shader.cpp" />
+    <ClCompile Include="..\..\src\S3DL\Vertex.cpp" />
     <ClCompile Include="..\..\src\S3DL\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +180,7 @@
     <ClInclude Include="..\..\include\S3DL\Glsl.hpp" />
     <ClInclude Include="..\..\include\S3DL\GlslT.hpp" />
     <ClInclude Include="..\..\include\S3DL\Instance.hpp" />
+    <ClInclude Include="..\..\include\S3DL\Mesh.hpp" />
     <ClInclude Include="..\..\include\S3DL\RenderPass.hpp" />
     <ClInclude Include="..\..\include\S3DL\RenderPipeline.hpp" />
     <ClInclude Include="..\..\include\S3DL\RenderSubpass.hpp" />
@@ -185,6 +189,7 @@
     <ClInclude Include="..\..\include\S3DL\S3DL.hpp" />
     <ClInclude Include="..\..\include\S3DL\Shader.hpp" />
     <ClInclude Include="..\..\include\S3DL\types.hpp" />
+    <ClInclude Include="..\..\include\S3DL\Vertex.hpp" />
     <ClInclude Include="..\..\include\S3DL\Window.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

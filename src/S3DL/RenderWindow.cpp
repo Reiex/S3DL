@@ -4,7 +4,8 @@ namespace s3dl
 {
     RenderWindow::RenderWindow(unsigned int width, unsigned int height, const std::string& title) :
         Window(width, height, title),
-        RenderTarget(true)
+        RenderTarget(true),
+        _swapChain(VK_NULL_HANDLE)
     {
         VkResult result = glfwCreateWindowSurface(Instance::getVulkanInstance(), _window, nullptr, &_surface);
         if (result != VK_SUCCESS)
@@ -17,7 +18,7 @@ namespace s3dl
 
     void RenderWindow::bindPipeline(RenderPipeline& pipeline)
     {
-        pipeline.setViewportState({0, 0, _extent.width, _extent.height, 0, 1}, {0, 0, _extent.width, _extent.height});
+        pipeline.setViewportState({0, 0, (float) _extent.width, (float) _extent.height, 0, 1}, {0, 0, _extent.width, _extent.height});
         RenderTarget::bindPipeline(pipeline);
 
         if (_framebuffers.size() != 0)

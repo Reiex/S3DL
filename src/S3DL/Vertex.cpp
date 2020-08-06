@@ -8,6 +8,8 @@ namespace s3dl
         bindingDescription.binding = binding;
         bindingDescription.inputRate = inputRate;
         bindingDescription.stride = sizeof(Vertex);
+
+        return bindingDescription;
     }
 
     std::vector<VkVertexInputAttributeDescription> Vertex::getAttributeDescriptions()
@@ -33,5 +35,7 @@ namespace s3dl
         descriptions[3].location = 3;
         descriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
         descriptions[3].offset = offsetof(Vertex, color);
+
+        return descriptions;
     }
 }
