@@ -47,5 +47,7 @@ namespace s3dl
     class RenderPass;
     class RenderPipeline;
 
+    struct Vertex;
     class Drawable;
+    template<typename _VertexType> class Mesh;
 }

@@ -20,7 +20,7 @@ int main()
     s3dl::RenderSubpass subpass({}, {colorAttachmentRef}, {});
 
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = VK_FORMAT_B8G8R8A8_SRGB;
+    colorAttachment.format = window.getTextureFormat();
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -40,8 +40,13 @@ int main()
     
     // Vertex input description
 
+    VkVertexInputBindingDescription vertexBindingDescription = s3dl::Vertex::getBindingDescription();
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    // vertexInputInfo.vertexBindingDescriptionCount = 1;
+    // vertexInputInfo.pVertexBindingDescriptions = &vertexBindingDescription;
+    // vertexInputInfo.vertexAttributeDescriptionCount = s3dl::Vertex::getAttributeDescriptions().size();
+    // vertexInputInfo.pVertexAttributeDescriptions = s3dl::Vertex::getAttributeDescriptions().data();
     
     // Pipeline creation
 

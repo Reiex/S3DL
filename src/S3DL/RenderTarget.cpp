@@ -24,16 +24,6 @@ namespace s3dl
     {
     }
 
-    bool RenderTarget::hasVulkanSurface() const
-    {
-        return _hasSurface;
-    }
-
-    VkSurfaceKHR RenderTarget::getVulkanSurface() const
-    {
-        return _surface;
-    }
-
     void RenderTarget::bindDevice(const Device& device)
     {
         unbindDevice();
@@ -114,6 +104,21 @@ namespace s3dl
         startRecordingCommandBuffer(_commandBuffers[_currentFrame]);
     }
     
+    VkFormat RenderTarget::getTextureFormat() const
+    {
+        return _format;
+    }
+
+    bool RenderTarget::hasVulkanSurface() const
+    {
+        return _hasSurface;
+    }
+
+    VkSurfaceKHR RenderTarget::getVulkanSurface() const
+    {
+        return _surface;
+    }
+
     void RenderTarget::destroy()
     {
         unbindPipeline();

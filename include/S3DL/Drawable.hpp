@@ -10,6 +10,8 @@ namespace s3dl
     {
         public:
 
-        private:
+            // virtual void draw(VkCommandBuffer& commandBuffer) = 0;
+
+        protected:
     };
 }

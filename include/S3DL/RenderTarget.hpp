@@ -14,9 +14,6 @@ namespace s3dl
 
             RenderTarget(bool hasSurface);
 
-            bool hasVulkanSurface() const;
-            VkSurfaceKHR getVulkanSurface() const;
-
             virtual void bindDevice(const Device& device);
             virtual void unbindDevice();
             virtual void bindPipeline(RenderPipeline& pipeline);
@@ -24,6 +21,11 @@ namespace s3dl
 
             void draw(const Drawable& drawable);
             void display();
+
+            VkFormat getTextureFormat() const;
+
+            bool hasVulkanSurface() const;
+            VkSurfaceKHR getVulkanSurface() const;
 
             virtual void destroy();
 
