@@ -17,6 +17,9 @@ namespace s3dl
 
         private:
 
-            std::vector<_VertexType> vertices;
+            std::vector<_VertexType> _vertices;
+
+            VkBuffer _vertexBuffer;
+            VkDeviceMemory _vertexBufferMemory;
     };
 }
