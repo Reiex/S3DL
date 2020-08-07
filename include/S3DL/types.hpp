@@ -7,6 +7,7 @@ namespace s3dl
     class Window;
     class RenderTarget;
     class RenderWindow;
+
     class Device;
 
 
@@ -43,12 +44,19 @@ namespace s3dl
     typedef _mat<float, 4, 4, _vec4<float>, _vec4<float>> mat4;
 
     class Shader;
+
     class RenderSubpass;
     class RenderPass;
+
     class RenderPipeline;
 
+
     struct Vertex;
+
     class Buffer;
+    class TextureData;
+    class Texture;
+
     class Drawable;
     template<typename _VertexType> class Mesh;
 }

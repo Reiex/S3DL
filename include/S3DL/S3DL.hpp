@@ -28,6 +28,8 @@
 #include <S3DL/Vertex.hpp>
 
 #include <S3DL/Buffer.hpp>
+#include <S3DL/TextureData.hpp>
+#include <S3DL/Texture.hpp>
 
 #include <S3DL/Drawable.hpp>
 #include <S3DL/Mesh.hpp>
