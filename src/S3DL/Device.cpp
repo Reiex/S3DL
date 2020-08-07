@@ -102,6 +102,9 @@ namespace s3dl
                 }
             }
 
+            // Memory properties
+            vkGetPhysicalDeviceMemoryProperties(vulkanDevice, &device.memoryProperties);
+
             physicalDevices.push_back(device);
         }
 

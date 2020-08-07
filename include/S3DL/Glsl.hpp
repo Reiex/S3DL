@@ -3,6 +3,9 @@
 #include <cstdint>
 #include <initializer_list>
 #include <ostream>
+#include <stdexcept>
+#include <string>
+#include <cmath>
 
 #include <S3DL/types.hpp>
 

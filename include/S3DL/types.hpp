@@ -48,6 +48,7 @@ namespace s3dl
     class RenderPipeline;
 
     struct Vertex;
+    class Buffer;
     class Drawable;
     template<typename _VertexType> class Mesh;
 }

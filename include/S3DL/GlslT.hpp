@@ -1,10 +1,4 @@
-#pragma once
-
-#include <S3DL/Glsl.hpp>
-
-#include <stdexcept>
-#include <string>
-#include <cmath>
+#include <S3DL/S3DL.hpp>
 
 namespace s3dl
 {

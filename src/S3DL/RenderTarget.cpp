@@ -58,7 +58,7 @@ namespace s3dl
 
     void RenderTarget::draw(const Drawable& drawable)
     {
-        vkCmdDraw(_commandBuffers[_currentFrame], 3, 1, 0, 0);
+        drawable.draw(*_device, _commandBuffers[_currentFrame]);
     }
 
     void RenderTarget::display()

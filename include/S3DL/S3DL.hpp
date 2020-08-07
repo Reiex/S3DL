@@ -23,7 +23,11 @@
 #include <S3DL/RenderPipeline.hpp>
 
 
+// Classes for ressource management
 
+#include <S3DL/Vertex.hpp>
+
+#include <S3DL/Buffer.hpp>
 
 #include <S3DL/Drawable.hpp>
-#include <S3DL/Vertex.hpp>
+#include <S3DL/Mesh.hpp>

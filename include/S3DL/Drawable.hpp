@@ -10,8 +10,10 @@ namespace s3dl
     {
         public:
 
-            // virtual void draw(VkCommandBuffer& commandBuffer) = 0;
-
         protected:
+
+            virtual void draw(const Device& device, VkCommandBuffer& commandBuffer) const = 0;
+
+        friend RenderTarget;
     };
 }

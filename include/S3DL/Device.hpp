@@ -35,6 +35,7 @@ namespace s3dl
             std::vector<VkExtensionProperties> extensions;
             std::vector<VkQueueFamilyProperties> queueFamilies;
             SwapChainSupportDetails swapSupport;
+            VkPhysicalDeviceMemoryProperties memoryProperties;
         
         private:
 

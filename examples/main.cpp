@@ -1,5 +1,6 @@
 #include <S3DL/S3DL.hpp>
 
+
 int main()
 {
     // Context initialization
@@ -8,8 +9,6 @@ int main()
     s3dl::RenderWindow window(1000, 800, "Test");
     s3dl::Device device = s3dl::Device::createBestPossible(window);
     window.bindDevice(device);
-
-    // S'occuper de la destruction en regardant la création à partir d'ici (au dessus ça a déjà été fait)
     
     // Render pass creation
 
@@ -41,12 +40,13 @@ int main()
     // Vertex input description
 
     VkVertexInputBindingDescription vertexBindingDescription = s3dl::Vertex::getBindingDescription();
+    std::vector<VkVertexInputAttributeDescription> vertexAttributeDescriptions = s3dl::Vertex::getAttributeDescriptions();
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    // vertexInputInfo.vertexBindingDescriptionCount = 1;
-    // vertexInputInfo.pVertexBindingDescriptions = &vertexBindingDescription;
-    // vertexInputInfo.vertexAttributeDescriptionCount = s3dl::Vertex::getAttributeDescriptions().size();
-    // vertexInputInfo.pVertexAttributeDescriptions = s3dl::Vertex::getAttributeDescriptions().data();
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &vertexBindingDescription;
+    vertexInputInfo.vertexAttributeDescriptionCount = vertexAttributeDescriptions.size();
+    vertexInputInfo.pVertexAttributeDescriptions = vertexAttributeDescriptions.data();
     
     // Pipeline creation
 
@@ -58,19 +58,29 @@ int main()
 
     window.bindPipeline(pipeline);
     
+    // Mesh creation
+
+    s3dl::Vertex vertices[] = {
+        {{-0.5f, -0.5f, 0.f}, {-0.5f, -0.5f}, {0.f, 0.f, 1.f}, {1.f, 0.f, 0.f}},
+        {{ 0.f ,  0.5f, 0.f}, { 0.f ,  0.5f}, {0.f, 0.f, 1.f}, {0.f, 1.f, 0.f}},
+        {{ 0.5f, 0.5f, 0.f}, { 0.5f, -0.5f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}}
+    };
+
+    s3dl::Mesh<s3dl::Vertex> mesh(3, vertices);
+
     // Main loop
 
-    s3dl::Drawable drawable;
     window.setClearColor({0.05, 0.1, 0.1, 1.0});
     while (!window.shouldClose())
     {
         glfwPollEvents();
-        window.draw(drawable);
+        window.draw(mesh);
         window.display();
     }
 
     vkDeviceWaitIdle(device.getVulkanDevice());
 
+    mesh.destroy();
     window.unbindPipeline();
     pipeline.destroy(device);
     window.unbindDevice();
