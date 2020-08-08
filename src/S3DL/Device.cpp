@@ -150,11 +150,6 @@ namespace s3dl
         _device = VK_NULL_HANDLE;
     }
 
-    Device::~Device()
-    {
-        destroy();
-    }
-
     Device::Device() :
         _physicalDeviceProperties{},
         _physicalDevice(VK_NULL_HANDLE),
@@ -242,7 +237,6 @@ namespace s3dl
         createInfo.queueCreateInfoCount = queueCreateInfos.size();
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
         createInfo.pEnabledFeatures = &deviceFeatures;
-        createInfo.enabledExtensionCount = 0;
         createInfo.enabledLayerCount = 0;
         createInfo.ppEnabledLayerNames = nullptr;
         createInfo.enabledExtensionCount = deviceExtensions.size();

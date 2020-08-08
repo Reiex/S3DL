@@ -71,8 +71,6 @@ namespace s3dl
 
             void destroy();
 
-            ~Device();
-
         private:
 
             Device();
