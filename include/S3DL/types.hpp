@@ -54,7 +54,9 @@ namespace s3dl
     struct Vertex;
 
     class Buffer;
+    typedef _vec4<unsigned char> Color;
     class TextureData;
+    struct TextureSampler;
     class Texture;
 
     class Drawable;

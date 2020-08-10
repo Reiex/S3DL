@@ -227,6 +227,7 @@ namespace s3dl
         // Create the device itself
 
         VkPhysicalDeviceFeatures deviceFeatures{};
+        deviceFeatures.samplerAnisotropy = VK_TRUE;
 
         std::vector<const char*> deviceExtensions;
         for (int i(0); i < EXTENSIONS.size(); i++)

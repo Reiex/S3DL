@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <cstring>
+#include <cstdlib>
 
 #include <S3DL/types.hpp>
 
@@ -10,17 +12,29 @@ namespace s3dl
     {
         public:
 
-            TextureData(unsigned int width, unsigned int height, const uvec4& initialColor = {0, 0, 0, 255});
+            TextureData();
+            TextureData(const TextureData& texture);
+            TextureData(unsigned int width, unsigned int height, const Color& initialColor = {0, 0, 0, 255});
             TextureData(const std::string& filename);
+            // TextureData(unsigned int width, unsigned int height, unsigned char* data);
 
-            uvec4& operator()(unsigned int x, unsigned int y);
-            const uvec4& operator()(unsigned int x, unsigned int y) const;
+            TextureData& operator=(const TextureData& texture);
 
-            const unsigned char* getData() const;
+            Color& operator()(unsigned int x, unsigned int y);
+            const Color& operator()(unsigned int x, unsigned int y) const;
+
+            const uvec2& size() const;
+
+            unsigned int getRawSize() const;
+            const unsigned char* getRawData() const;
+
+            void toFile(const std::string& filename, float quality = 0.95f);
+
+            ~TextureData();
 
         private:
 
             unsigned char* _data;
-            vec2 _size;
+            uvec2 _size;
     };
 }
