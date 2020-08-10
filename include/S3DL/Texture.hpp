@@ -14,6 +14,7 @@ namespace s3dl
         public:
 
             Texture();
+            Texture(const Device& device, const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags imageAspects);
             Texture(const Device& device, const TextureData& textureData, const TextureSampler& sampler = TextureSampler());
 
             void setLayout(VkImageLayout layout);

@@ -13,15 +13,10 @@ namespace s3dl
     {
     }
 
-    Texture::Texture(const Device& device, const TextureData& textureData, const TextureSampler& sampler) : Texture()
+    Texture::Texture(const Device& device, const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags imageAspects) : Texture()
     {
-        _size = textureData.size();
+        _size = size;
         _device = &device;
-
-        // Create staging buffer with image in it
-
-        Buffer stagingBuffer(*_device, textureData.getRawSize(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        stagingBuffer.setData(textureData.getRawData(), textureData.getRawSize());
 
         // Create vulkan image
 
@@ -33,10 +28,10 @@ namespace s3dl
         imageInfo.extent.depth = 1;
         imageInfo.mipLevels = 1;
         imageInfo.arrayLayers = 1;
-        imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
-        imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+        imageInfo.format = format;
+        imageInfo.tiling = tiling;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+        imageInfo.usage = usage;
         imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         imageInfo.flags = 0;
@@ -72,20 +67,14 @@ namespace s3dl
 
         vkBindImageMemory(_device->getVulkanDevice(), _image, _imageMemory, 0);
 
-        // Fill vulkan image
-
-        setLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        fillFromBuffer(stagingBuffer.getVulkanBuffer());
-        setLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
         // Create image view
 
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         viewInfo.image = _image;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
-        viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewInfo.format = format;
+        viewInfo.subresourceRange.aspectMask = imageAspects;
         viewInfo.subresourceRange.baseMipLevel = 0;
         viewInfo.subresourceRange.levelCount = 1;
         viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -94,10 +83,24 @@ namespace s3dl
         result = vkCreateImageView(_device->getVulkanDevice(), &viewInfo, nullptr, &_imageView);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to create texture image view. VkResult: " + std::to_string(result));
+    }
+
+    Texture::Texture(const Device& device, const TextureData& textureData, const TextureSampler& sampler) : Texture(device, textureData.size(), VK_FORMAT_R8G8B8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT)
+    {
+        // Create staging buffer with image in it
+
+        Buffer stagingBuffer(*_device, textureData.getRawSize(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        stagingBuffer.setData(textureData.getRawData(), textureData.getRawSize());
+
+        // Fill vulkan image
+
+        setLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        fillFromBuffer(stagingBuffer.getVulkanBuffer());
+        setLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         
         // Create image sampler
 
-        result = vkCreateSampler(_device->getVulkanDevice(), &sampler.info, nullptr, &_sampler);
+        VkResult result = vkCreateSampler(_device->getVulkanDevice(), &sampler.info, nullptr, &_sampler);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to create texture sampler. VkResult: " + std::to_string(result));
     }
@@ -144,8 +147,12 @@ namespace s3dl
         switch (_currentLayout)
         {
             case VK_IMAGE_LAYOUT_UNDEFINED:
-                sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+                sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
                 barrier.srcAccessMask = 0;
+                break;
+            case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+                sourceStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+                barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 break;
             case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
                 sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -157,6 +164,14 @@ namespace s3dl
 
         switch (layout)
         {
+            case VK_IMAGE_LAYOUT_UNDEFINED:
+                destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+                barrier.dstAccessMask = 0;
+                break;
+            case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+                destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+                barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                break;
             case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
                 destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
                 barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;

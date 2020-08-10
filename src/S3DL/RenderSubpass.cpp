@@ -2,11 +2,12 @@
 
 namespace s3dl
 {
-    RenderSubpass::RenderSubpass(const std::vector<VkAttachmentReference>& input, const std::vector<VkAttachmentReference>& color, const std::vector<uint32_t>& preserve)
+    RenderSubpass::RenderSubpass(const std::vector<VkAttachmentReference>& input, const std::vector<VkAttachmentReference>& color, const std::vector<uint32_t>& preserve, const VkAttachmentReference& depth)
     {
         _inputAttachments = input;
         _colorAttachments = color;
         _preserveAttachments = preserve;
+        _depthAttachment = depth;
     }
 
     const std::vector<VkAttachmentReference>& RenderSubpass::getVulkanInputReferences() const
@@ -22,5 +23,10 @@ namespace s3dl
     const std::vector<uint32_t>& RenderSubpass::getVulkanPreserveReferences() const
     {
         return _preserveAttachments;
+    }
+
+    const VkAttachmentReference& RenderSubpass::getVulkanDepthReference() const
+    {
+        return _depthAttachment;
     }
 }

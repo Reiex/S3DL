@@ -50,7 +50,7 @@ namespace s3dl
                 subpass.colorAttachmentCount = _subpasses[i].getVulkanColorReferences().size();
                 subpass.pColorAttachments = _subpasses[i].getVulkanColorReferences().data();
                 subpass.pResolveAttachments = nullptr;
-                subpass.pDepthStencilAttachment = nullptr;
+                subpass.pDepthStencilAttachment = &_subpasses[i].getVulkanDepthReference();
                 subpass.preserveAttachmentCount = _subpasses[i].getVulkanPreserveReferences().size();
                 subpass.pPreserveAttachments = _subpasses[i].getVulkanPreserveReferences().data();
 

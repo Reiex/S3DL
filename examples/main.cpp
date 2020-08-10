@@ -16,7 +16,11 @@ int main()
     colorAttachmentRef.attachment = 0;
     colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    s3dl::RenderSubpass subpass({}, {colorAttachmentRef}, {});
+    VkAttachmentReference depthAttachmentRef{};
+    depthAttachmentRef.attachment = 1;
+    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    s3dl::RenderSubpass subpass({}, {colorAttachmentRef}, {}, depthAttachmentRef);
 
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format = window.getTextureFormat();
@@ -28,8 +32,19 @@ int main()
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+    VkAttachmentDescription depthAttachment{};
+    depthAttachment.format = VK_FORMAT_D32_SFLOAT;
+    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
     s3dl::RenderPass renderPass;
     renderPass.addAttachment(colorAttachment);
+    renderPass.addAttachment(depthAttachment);
     renderPass.addSubpass(subpass);
     renderPass.addDependency(VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
@@ -61,12 +76,15 @@ int main()
     // Mesh creation
 
     s3dl::Vertex vertices[] = {
-        {{-0.5f, -0.5f, 0.f}, {-0.5f, -0.5f}, {0.f, 0.f, 1.f}, {1.f, 0.f, 0.f}},
-        {{ 0.f ,  0.5f, 0.f}, { 0.f ,  0.5f}, {0.f, 0.f, 1.f}, {0.f, 1.f, 0.f}},
-        {{ 0.5f, 0.5f, 0.f}, { 0.5f, -0.5f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}}
+        {{-0.5f, -0.5f,  0.f }, {-0.5f, -0.5f}, {0.f, 0.f, 1.f}, {1.f, 0.f, 0.f}},
+        {{ 0.5f, -0.5f,  0.f }, { 0.5f, -0.5f}, {0.f, 0.f, 1.f}, {0.f, 1.f, 0.f}},
+        {{ 0.f ,  0.5f,  0.f }, { 0.f ,  0.5f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}},
+        {{-0.5f,  0.5f, 0.5f}, {-0.5f,  0.5f}, {0.f, 0.f, 1.f}, {0.f, 1.f, 1.f}},
+        {{ 0.5f,  0.5f, 0.5f}, { 0.5f,  0.5f}, {0.f, 0.f, 1.f}, {1.f, 0.f, 1.f}},
+        {{ 0.f , -0.5f, 0.5f}, { 0.f , -0.5f}, {0.f, 0.f, 1.f}, {1.f, 1.f, 1.f}}
     };
 
-    s3dl::Mesh<s3dl::Vertex> mesh(3, vertices);
+    s3dl::Mesh<s3dl::Vertex> mesh(6, vertices);
 
     // Main loop
 
