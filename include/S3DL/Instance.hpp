@@ -20,6 +20,8 @@ namespace s3dl
     {
         public:
 
+            static const Instance* Active;
+
             Instance(const std::set<std::string>& additionalExtensions = {}, const std::set<std::string>& additionalValidationLayers = {});
             Instance(const Instance& instance) = delete;
 

@@ -3,9 +3,12 @@
 namespace s3dl
 {
     unsigned int Instance::INSTANCE_COUNT = 0;
+    const Instance* Instance::Active = nullptr;
 
     Instance::Instance(const std::set<std::string>& additionalExtensions, const std::set<std::string>& additionalValidationLayers)
     {
+        Active = this;
+
         std::vector<const char*> extensions = {};
         #ifndef NDEBUG
         std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
