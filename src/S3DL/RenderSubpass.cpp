@@ -2,12 +2,19 @@
 
 namespace s3dl
 {
-    RenderSubpass::RenderSubpass(const std::vector<VkAttachmentReference>& input, const std::vector<VkAttachmentReference>& color, const std::vector<uint32_t>& preserve, const VkAttachmentReference& depth)
+    RenderSubpass::RenderSubpass(const std::vector<VkAttachmentReference>& input, const std::vector<VkAttachmentReference>& color, const std::vector<uint32_t>& preserve) :
+        _inputAttachments(input),
+        _colorAttachments(color),
+        _preserveAttachments(preserve),
+        _depthAttachmentSet(false)
     {
-        _inputAttachments = input;
-        _colorAttachments = color;
-        _preserveAttachments = preserve;
+    }
+
+    RenderSubpass::RenderSubpass(const std::vector<VkAttachmentReference>& input, const std::vector<VkAttachmentReference>& color, const std::vector<uint32_t>& preserve, const VkAttachmentReference& depth) :
+        RenderSubpass(input, color, preserve)
+    {
         _depthAttachment = depth;
+        _depthAttachmentSet = true;
     }
 
     const std::vector<VkAttachmentReference>& RenderSubpass::getVulkanInputReferences() const
@@ -25,8 +32,11 @@ namespace s3dl
         return _preserveAttachments;
     }
 
-    const VkAttachmentReference& RenderSubpass::getVulkanDepthReference() const
+    const VkAttachmentReference* RenderSubpass::getVulkanDepthReference() const
     {
-        return _depthAttachment;
+        if (_depthAttachmentSet)
+            return &_depthAttachment;
+        
+        return nullptr;
     }
 }

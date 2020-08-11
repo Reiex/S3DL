@@ -19,6 +19,12 @@ namespace s3dl
 
             void setLayout(VkImageLayout layout);
 
+            VkImage getVulkanImage() const;
+            VkImageView getVulkanImageView() const;
+            VkSampler getVulkanSampler() const;
+
+            void destroy();
+
             ~Texture();
 
         private:

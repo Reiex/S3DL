@@ -147,6 +147,16 @@ namespace s3dl
             if (result != VK_SUCCESS)
                 throw std::runtime_error("Failed to create pipeline layout. VkResult: " + std::to_string(result));
 
+            VkPipelineDepthStencilStateCreateInfo depthStencil{};
+            depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+            depthStencil.depthTestEnable = VK_TRUE;
+            depthStencil.depthWriteEnable = VK_TRUE;
+            depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+            depthStencil.depthBoundsTestEnable = VK_FALSE;
+            depthStencil.minDepthBounds = 0.0f;
+            depthStencil.maxDepthBounds = 1.0f;
+            depthStencil.stencilTestEnable = VK_FALSE;
+
             VkGraphicsPipelineCreateInfo pipelineInfo{};
             pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             pipelineInfo.stageCount = _shader.getVulkanShaderStages().size();
@@ -156,7 +166,10 @@ namespace s3dl
             pipelineInfo.pViewportState = &_viewportState;
             pipelineInfo.pRasterizationState = &_rasterizer;
             pipelineInfo.pMultisampleState = &_multisampler;
-            pipelineInfo.pDepthStencilState = nullptr;
+            if (_renderPass.hasDepthAttachment())
+                pipelineInfo.pDepthStencilState = &depthStencil;
+            else
+                pipelineInfo.pDepthStencilState = nullptr;
             pipelineInfo.pColorBlendState = &_blending;
             pipelineInfo.pDynamicState = nullptr;
             pipelineInfo.layout = _pipelineLayout;

@@ -3,6 +3,7 @@
 namespace s3dl
 {
     RenderTarget::RenderTarget(bool hasSurface) :
+        _depthBuffer(nullptr),
         _extent({0, 0}),
         _format(VK_FORMAT_UNDEFINED),
 
@@ -56,6 +57,26 @@ namespace s3dl
         _pipeline = nullptr;
     }
 
+    void RenderTarget::setDepthBuffer(const Texture& buffer)
+    {
+        _depthBuffer = &buffer;
+    }
+
+    void RenderTarget::setAttachment(unsigned int index, const Texture& texture)
+    {
+        if (index == 0)
+            throw std::runtime_error("Attachment 0 is reserved.");
+        
+        index--;
+
+        if (index == _attachments.size())
+            _attachments.push_back(&texture);
+        else if (index < _attachments.size())
+            _attachments[index] = &texture;
+        else
+            throw std::runtime_error("Cannot set attachment " + std::to_string(index+1) + " when there are currently only " + std::to_string(_attachments.size()+1) + " attachments.");
+    }
+
     void RenderTarget::draw(const Drawable& drawable)
     {
         drawable.draw(*_device, _commandBuffers[_currentFrame]);
@@ -67,8 +88,6 @@ namespace s3dl
 
         stopRecordingCommandBuffer(_commandBuffers[_currentFrame]);
         
-        const DeviceQueues& queues = _device->getVulkanQueues();
-
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -85,7 +104,7 @@ namespace s3dl
         _imageRenderedFence[_currentImage] = _frameRenderedFence[_currentFrame];
 
         vkResetFences(_device->getVulkanDevice(), 1, &_frameRenderedFence[_currentFrame]);
-        VkResult result = vkQueueSubmit(queues.graphicsQueue, 1, &submitInfo, _frameRenderedFence[_currentFrame]);
+        VkResult result = vkQueueSubmit(_device->getVulkanQueues().graphicsQueue, 1, &submitInfo, _frameRenderedFence[_currentFrame]);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to submit draw command buffer. VkResult: " + std::to_string(result));
         

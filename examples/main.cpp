@@ -44,7 +44,7 @@ int main()
 
     s3dl::RenderPass renderPass;
     renderPass.addAttachment(colorAttachment);
-    renderPass.addAttachment(depthAttachment);
+    renderPass.setDepthAttachment(depthAttachment);
     renderPass.addSubpass(subpass);
     renderPass.addDependency(VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
@@ -71,14 +71,17 @@ int main()
     pipeline.setVertexInputInfo(vertexInputInfo);
     pipeline.setRasterizerState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE);
 
+    s3dl::Texture depthBuffer(device, {1000, 800}, VK_FORMAT_D32_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
+    window.setDepthBuffer(depthBuffer);
+
     window.bindPipeline(pipeline);
     
     // Mesh creation
 
     s3dl::Vertex vertices[] = {
-        {{-0.5f, -0.5f,  0.f }, {-0.5f, -0.5f}, {0.f, 0.f, 1.f}, {1.f, 0.f, 0.f}},
-        {{ 0.5f, -0.5f,  0.f }, { 0.5f, -0.5f}, {0.f, 0.f, 1.f}, {0.f, 1.f, 0.f}},
-        {{ 0.f ,  0.5f,  0.f }, { 0.f ,  0.5f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}},
+        {{-0.5f, -0.5f, 0.f }, {-0.5f, -0.5f}, {0.f, 0.f, 1.f}, {1.f, 0.f, 0.f}},
+        {{ 0.5f, -0.5f, 0.f }, { 0.5f, -0.5f}, {0.f, 0.f, 1.f}, {0.f, 1.f, 0.f}},
+        {{ 0.f ,  0.5f, 0.f }, { 0.f ,  0.5f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}},
         {{-0.5f,  0.5f, 0.5f}, {-0.5f,  0.5f}, {0.f, 0.f, 1.f}, {0.f, 1.f, 1.f}},
         {{ 0.5f,  0.5f, 0.5f}, { 0.5f,  0.5f}, {0.f, 0.f, 1.f}, {1.f, 0.f, 1.f}},
         {{ 0.f , -0.5f, 0.5f}, { 0.f , -0.5f}, {0.f, 0.f, 1.f}, {1.f, 1.f, 1.f}}
@@ -97,7 +100,8 @@ int main()
     }
 
     vkDeviceWaitIdle(device.getVulkanDevice());
-
+    
+    depthBuffer.destroy();
     mesh.destroy();
     window.unbindPipeline();
     pipeline.destroy(device);

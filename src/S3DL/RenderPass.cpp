@@ -3,6 +3,7 @@
 namespace s3dl
 {
     RenderPass::RenderPass() :
+        _depthAttachmentSet(false),
         _renderPassComputed(false),
         _renderPass(VK_NULL_HANDLE)
     {
@@ -34,6 +35,18 @@ namespace s3dl
         _renderPassComputed = false;
     }
 
+    void RenderPass::setDepthAttachment(const VkAttachmentDescription& attachement)
+    {
+        _depthAttachment = attachement;
+        _depthAttachmentSet = true;
+        _renderPassComputed = false;
+    }
+
+    bool RenderPass::hasDepthAttachment() const
+    {
+        return _depthAttachmentSet;
+    }
+
     VkRenderPass RenderPass::getVulkanRenderPass(const Device& device) const
     {
         if (!_renderPassComputed)
@@ -50,18 +63,22 @@ namespace s3dl
                 subpass.colorAttachmentCount = _subpasses[i].getVulkanColorReferences().size();
                 subpass.pColorAttachments = _subpasses[i].getVulkanColorReferences().data();
                 subpass.pResolveAttachments = nullptr;
-                subpass.pDepthStencilAttachment = &_subpasses[i].getVulkanDepthReference();
+                subpass.pDepthStencilAttachment = _subpasses[i].getVulkanDepthReference();
                 subpass.preserveAttachmentCount = _subpasses[i].getVulkanPreserveReferences().size();
                 subpass.pPreserveAttachments = _subpasses[i].getVulkanPreserveReferences().data();
 
                 subpasses[i] = subpass;
             }
 
+            std::vector<VkAttachmentDescription> attachments(_attachments);
+            if (_depthAttachmentSet)
+                attachments.push_back(_depthAttachment);
+            
             VkRenderPassCreateInfo renderPassInfo{};
             renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
             renderPassInfo.pNext = nullptr;
-            renderPassInfo.attachmentCount = _attachments.size();
-            renderPassInfo.pAttachments = _attachments.data();
+            renderPassInfo.attachmentCount = attachments.size();
+            renderPassInfo.pAttachments = attachments.data();
             renderPassInfo.subpassCount = _subpasses.size();
             renderPassInfo.pSubpasses = subpasses.data();
             renderPassInfo.dependencyCount = _dependencies.size();

@@ -214,7 +214,9 @@ namespace s3dl
 
     void RenderWindow::initClearColors()
     {
-        _clearValues.resize(1, {0.f, 0.f, 0.f, 1.f});
+        _clearValues.resize(2);
+        _clearValues[0].color = {0.f, 0.f, 0.f, 1.f};
+        _clearValues[1].depthStencil = {1.f, 0};
     }
 
     void RenderWindow::createFramebuffers()
@@ -223,13 +225,18 @@ namespace s3dl
 
         for (size_t i = 0; i < _framebuffers.size(); i++)
         {
-            VkImageView attachments[] = { _imageViews[i] };
+            std::vector<VkImageView> attachments;
+            attachments.push_back(_imageViews[i]);
+            for (int j(0); j < _attachments.size(); j++)
+                attachments.push_back(_attachments[j]->getVulkanImageView());
+            if (_depthBuffer != nullptr)
+                attachments.push_back(_depthBuffer->getVulkanImageView());
 
             VkFramebufferCreateInfo framebufferInfo{};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = _pipeline->getVulkanRenderPass(*_device);
-            framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = attachments;
+            framebufferInfo.attachmentCount = attachments.size();
+            framebufferInfo.pAttachments = attachments.data();
             framebufferInfo.width = _extent.width;
             framebufferInfo.height = _extent.height;
             framebufferInfo.layers = 1;

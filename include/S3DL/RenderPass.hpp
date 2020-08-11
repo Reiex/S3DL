@@ -19,7 +19,9 @@ namespace s3dl
             void addSubpass(const RenderSubpass& subpass);
             void addAttachment(const VkAttachmentDescription& attachment);
             void addDependency(unsigned int srcSubpass, unsigned int srcStage, unsigned int srcAccess, unsigned int dstSubpass, unsigned int dstStage, unsigned int dstAccess);
+            void setDepthAttachment(const VkAttachmentDescription& attachement);
 
+            bool hasDepthAttachment() const;
             VkRenderPass getVulkanRenderPass(const Device& device) const;
 
             void destroy(const Device& device) const;
@@ -29,6 +31,8 @@ namespace s3dl
             std::vector<RenderSubpass> _subpasses;
             std::vector<VkAttachmentDescription> _attachments;
             std::vector<VkSubpassDependency> _dependencies;
+            VkAttachmentDescription _depthAttachment;
+            bool _depthAttachmentSet;
 
             mutable bool _renderPassComputed;
             mutable VkRenderPass _renderPass;

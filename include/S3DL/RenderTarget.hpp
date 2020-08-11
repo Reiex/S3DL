@@ -19,6 +19,9 @@ namespace s3dl
             virtual void bindPipeline(RenderPipeline& pipeline);
             virtual void unbindPipeline();
 
+            void setDepthBuffer(const Texture& buffer);
+            void setAttachment(unsigned int index, const Texture& texture);
+
             void draw(const Drawable& drawable);
             void display();
 
@@ -55,6 +58,8 @@ namespace s3dl
 
             std::vector<VkImage> _images;
             std::vector<VkImageView> _imageViews;
+            const Texture* _depthBuffer;
+            std::vector<const Texture*> _attachments;
             VkExtent2D _extent;
             VkFormat _format;
 

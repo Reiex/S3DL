@@ -212,7 +212,22 @@ namespace s3dl
         _currentLayout = layout;
     }
 
-    Texture::~Texture()
+    VkImage Texture::getVulkanImage() const
+    {
+        return _image;
+    }
+
+    VkImageView Texture::getVulkanImageView() const
+    {
+        return _imageView;
+    }
+
+    VkSampler Texture::getVulkanSampler() const
+    {
+        return _sampler;
+    }
+
+    void Texture::destroy()
     {
         if (_sampler != VK_NULL_HANDLE)
             vkDestroySampler(_device->getVulkanDevice(), _sampler, nullptr);
@@ -229,6 +244,11 @@ namespace s3dl
         if (_image != VK_NULL_HANDLE)
             vkDestroyImage(_device->getVulkanDevice(), _image, nullptr);
         _image = VK_NULL_HANDLE;
+    }
+
+    Texture::~Texture()
+    {
+        destroy();
     }
 
     void Texture::fillFromBuffer(VkBuffer buffer)
