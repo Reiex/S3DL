@@ -2,121 +2,118 @@
 
 namespace s3dl
 {
-    namespace Instance
+    unsigned int Instance::INSTANCE_COUNT = 0;
+
+    Instance::Instance(const std::set<std::string>& additionalExtensions, const std::set<std::string>& additionalValidationLayers)
     {
-        namespace
-        {
-            VkInstance S3DL_VK_INSTANCE;
-        }
+        std::vector<const char*> extensions = {};
+        #ifndef NDEBUG
+        std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
+        #else
+        std::vector<const char*> validationLayers = {};
+        #endif
 
-        std::set<std::string> EXTENSIONS = { };
-        std::set<std::string> VALIDATION_LAYERS = { "VK_LAYER_KHRONOS_validation" };
-
-        void create()
-        {
+        if (INSTANCE_COUNT == 0)
             glfwInit();
+        INSTANCE_COUNT++;
 
-            // General informations on the vulkan application
+        // General informations on the vulkan application
 
-            VkApplicationInfo appInfo{};
-            appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-            appInfo.pNext = nullptr;
-            appInfo.pApplicationName = "S3DL Application";
-            appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-            appInfo.pEngineName = "No Engine";
-            appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-            appInfo.apiVersion = VK_API_VERSION_1_0;
+        VkApplicationInfo appInfo{};
+        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        appInfo.pNext = nullptr;
+        appInfo.pApplicationName = "S3DL Application";
+        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+        appInfo.pEngineName = "No Engine";
+        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+        appInfo.apiVersion = VK_API_VERSION_1_0;
 
-            VkInstanceCreateInfo createInfo{};
-            createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-            createInfo.pNext = nullptr;
-            createInfo.pApplicationInfo = &appInfo;
+        VkInstanceCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        createInfo.pNext = nullptr;
+        createInfo.pApplicationInfo = &appInfo;
 
-            // Extensions
+        // Extensions
 
-            uint32_t glfwExtensionCount = 0;
-            const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-            for (int i(0); i < glfwExtensionCount; i++)
-                EXTENSIONS.insert(glfwExtensions[i]);
+        uint32_t glfwExtensionCount = 0;
+        const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+        for (int i(0); i < glfwExtensionCount; i++)
+            extensions.push_back(glfwExtensions[i]);
 
-            std::vector<const char*> extensions;
-            for (std::set<std::string>::iterator it(EXTENSIONS.begin()); it != EXTENSIONS.end(); it++)
-                extensions.push_back(it->c_str());
+        for (const std::string& extension: additionalExtensions)
+            extensions.push_back(extension.c_str());
 
-            createInfo.enabledExtensionCount = extensions.size();
-            createInfo.ppEnabledExtensionNames = extensions.data();
+        createInfo.enabledExtensionCount = extensions.size();
+        createInfo.ppEnabledExtensionNames = extensions.data();
 
-            #ifndef NDEBUG
-            std::clog << "Instance extensions required: ";
-            for (int i(0); i < extensions.size(); i++)
-                std::clog << extensions[i] << (i == extensions.size()-1 ? ".": ", ");
-            std::clog << std::endl;
-            #endif
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> Instance extensions required: ";
+        for (int i(0); i < extensions.size(); i++)
+            std::clog << extensions[i] << (i == extensions.size()-1 ? ".": ", ");
+        std::clog << std::endl;
+        #endif
 
-            // Validation layers (activated only if in debug mode)
+        // Validation layers
 
-            #ifndef NDEBUG
+        for (const std::string& layer: additionalValidationLayers)
+            validationLayers.push_back(layer.c_str());
 
-            uint32_t layerCount;
-            vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-            std::vector<VkLayerProperties> availableLayers(layerCount);
-            vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-            for (std::set<std::string>::iterator it(VALIDATION_LAYERS.begin()); it != VALIDATION_LAYERS.end(); it++)
+        uint32_t layerCount;
+        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+        std::vector<VkLayerProperties> availableLayers(layerCount);
+        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+        for (int i(0); i < validationLayers.size(); i++)
+        {
+            bool layerFound(false);
+            for (int j(0); j < layerCount; j++)
             {
-                bool layerFound(false);
-                for (int i(0); i < layerCount; i++)
+                if (std::strcmp(validationLayers[i], availableLayers[j].layerName) == 0)
                 {
-                    if (*it == std::string(availableLayers[i].layerName))
-                    {
-                        layerFound = true;
-                        break;
-                    }
+                    layerFound = true;
+                    break;
                 }
-
-                if (!layerFound)
-                    throw std::runtime_error("Validation layer '" + *it + "' not found in available validation layers.");
             }
 
-            std::vector<const char*> validationLayers;
-            for (std::set<std::string>::iterator it(VALIDATION_LAYERS.begin()); it != VALIDATION_LAYERS.end(); it++)
-                validationLayers.push_back(it->c_str());
-
-            createInfo.enabledLayerCount = validationLayers.size();
-            createInfo.ppEnabledLayerNames = validationLayers.data();
-
-            std::clog << "Validation layers required: ";
-            for (int i(0); i < validationLayers.size(); i++)
-                std::clog << validationLayers[i] << (i == validationLayers.size()-1 ? ".": ", ");
-            std::clog << std::endl;
-
-            #else
-
-            createInfo.enabledLayerCount = 0;
-            createInfo.ppEnabledLayerNames = nullptr;
-
-            #endif
-
-            // Instance creation itself
-
-            VkResult result = vkCreateInstance(&createInfo, nullptr, &S3DL_VK_INSTANCE);
-            if (result != VK_SUCCESS)
-                throw std::runtime_error("Failed to create VkInstance. VkResult: " + std::to_string(result));
-            
-            #ifndef NDEBUG
-            std::clog << "VkInstance successfully created." << std::endl;
-            #endif
+            if (!layerFound)
+                throw std::runtime_error("Validation layer '" + std::string(validationLayers[i]) + "' not found in available validation layers.");
         }
+
+        createInfo.enabledLayerCount = validationLayers.size();
+        createInfo.ppEnabledLayerNames = validationLayers.data();
+
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> Validation layers required: ";
+        for (int i(0); i < validationLayers.size(); i++)
+            std::clog << validationLayers[i] << (i == validationLayers.size()-1 ? ".": ", ");
+        std::clog << std::endl;
+        #endif
+
+        // Instance creation itself
+
+        VkResult result = vkCreateInstance(&createInfo, nullptr, &_instance);
+        if (result != VK_SUCCESS)
+            throw std::runtime_error("Failed to create VkInstance. VkResult: " + std::to_string(result));
         
-        void destroy()
-        {
-            vkDestroyInstance(S3DL_VK_INSTANCE, nullptr);
-            glfwTerminate();
-        }
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> VkInstance successfully created." << std::endl;
+        #endif
+    }
 
-        VkInstance getVulkanInstance()
-        {
-            return S3DL_VK_INSTANCE;
-        }
+    VkInstance Instance::getVulkanInstance() const
+    {
+        return _instance;
+    }
+
+    Instance::~Instance()
+    {
+        vkDestroyInstance(_instance, nullptr);
+
+        INSTANCE_COUNT--;
+        if (INSTANCE_COUNT == 0)
+            glfwTerminate();
+        
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> VkInstance successfully destroyed." << std::endl;
+        #endif
     }
 }

@@ -2,6 +2,7 @@
 
 #include <set>
 #include <vector>
+#include <cstring>
 #include <string>
 #include <stdexcept>
 #include <iostream>
@@ -15,14 +16,23 @@
 
 namespace s3dl
 {
-    namespace Instance
+    class Instance
     {
-        extern std::set<std::string> EXTENSIONS;
-        extern std::set<std::string> VALIDATION_LAYERS;
+        public:
 
-        void create();
-        void destroy();
+            Instance(const std::set<std::string>& additionalExtensions = {}, const std::set<std::string>& additionalValidationLayers = {});
+            Instance(const Instance& instance) = delete;
 
-        VkInstance getVulkanInstance();
-    }
+            Instance& operator=(const Instance& instance) = delete;
+
+            VkInstance getVulkanInstance() const;
+
+            ~Instance();
+
+        private:
+
+            static unsigned int INSTANCE_COUNT;
+
+            VkInstance _instance;
+    };
 }
