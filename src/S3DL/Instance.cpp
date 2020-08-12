@@ -9,11 +9,11 @@ namespace s3dl
     {
         Active = this;
 
-        std::vector<const char*> extensions = {};
+        std::set<const char*> extensions = {};
         #ifndef NDEBUG
-        std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
+        std::set<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
         #else
-        std::vector<const char*> validationLayers = {};
+        std::set<const char*> validationLayers = {};
         #endif
 
         if (INSTANCE_COUNT == 0)
@@ -41,36 +41,38 @@ namespace s3dl
         uint32_t glfwExtensionCount = 0;
         const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
         for (int i(0); i < glfwExtensionCount; i++)
-            extensions.push_back(glfwExtensions[i]);
+            extensions.insert(glfwExtensions[i]);
 
         for (const std::string& extension: additionalExtensions)
-            extensions.push_back(extension.c_str());
+            extensions.insert(extension.c_str());
 
-        createInfo.enabledExtensionCount = extensions.size();
-        createInfo.ppEnabledExtensionNames = extensions.data();
+        std::vector<const char*> extensionsVector(extensions.begin(), extensions.end());
+
+        createInfo.enabledExtensionCount = extensionsVector.size();
+        createInfo.ppEnabledExtensionNames = extensionsVector.data();
 
         #ifndef NDEBUG
         std::clog << "<S3DL Debug> Instance extensions required: ";
-        for (int i(0); i < extensions.size(); i++)
-            std::clog << extensions[i] << (i == extensions.size()-1 ? ".": ", ");
+        for (int i(0); i < extensionsVector.size(); i++)
+            std::clog << extensionsVector[i] << (i == extensionsVector.size()-1 ? ".": ", ");
         std::clog << std::endl;
         #endif
 
         // Validation layers
 
         for (const std::string& layer: additionalValidationLayers)
-            validationLayers.push_back(layer.c_str());
+            validationLayers.insert(layer.c_str());
 
         uint32_t layerCount;
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
         std::vector<VkLayerProperties> availableLayers(layerCount);
         vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-        for (int i(0); i < validationLayers.size(); i++)
+        for (const char* layer: validationLayers)
         {
             bool layerFound(false);
-            for (int j(0); j < layerCount; j++)
+            for (int i(0); i < layerCount; i++)
             {
-                if (std::strcmp(validationLayers[i], availableLayers[j].layerName) == 0)
+                if (std::strcmp(layer, availableLayers[i].layerName) == 0)
                 {
                     layerFound = true;
                     break;
@@ -78,16 +80,18 @@ namespace s3dl
             }
 
             if (!layerFound)
-                throw std::runtime_error("Validation layer '" + std::string(validationLayers[i]) + "' not found in available validation layers.");
+                throw std::runtime_error("Validation layer '" + std::string(layer) + "' not found in available validation layers.");
         }
 
-        createInfo.enabledLayerCount = validationLayers.size();
-        createInfo.ppEnabledLayerNames = validationLayers.data();
+        std::vector<const char*> validationLayersVector(validationLayers.begin(), validationLayers.end());
+
+        createInfo.enabledLayerCount = validationLayersVector.size();
+        createInfo.ppEnabledLayerNames = validationLayersVector.data();
 
         #ifndef NDEBUG
         std::clog << "<S3DL Debug> Validation layers required: ";
-        for (int i(0); i < validationLayers.size(); i++)
-            std::clog << validationLayers[i] << (i == validationLayers.size()-1 ? ".": ", ");
+        for (int i(0); i < validationLayersVector.size(); i++)
+            std::clog << validationLayersVector[i] << (i == validationLayersVector.size()-1 ? ".": ", ");
         std::clog << std::endl;
         #endif
 
