@@ -16,15 +16,19 @@ namespace s3dl
     {
         public:
 
-            Window(unsigned int width, unsigned int height, const std::string& title);
+            Window(const uvec2& size, const std::string& title);
+            Window(const Window& window) = delete;
+
+            Window& operator=(const Window& window) = delete;
 
             bool shouldClose() const;
+            const uvec2& getWindowSize() const;
 
             ~Window();
 
         protected:
 
             GLFWwindow* _window;
-            vec2 _size;
+            uvec2 _windowSize;
     };
 }

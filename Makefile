@@ -3,7 +3,11 @@ LDFLAGS = `pkg-config --static --libs glfw3` -lvulkan
 
 SPVS = vertex.spv fragment.spv
 OBJS = obj/main.o \
-	   obj/Instance.o
+	   obj/Instance.o \
+	   obj/Window.o \
+	   obj/RenderTarget.o \
+	   obj/RenderWindow.o \
+	   obj/Device.o
 
 vulkanExamples: $(SPVS) $(OBJS)
 	g++ $(CFLAGS) $(OBJS) -o vulkanExamples $(LDFLAGS)

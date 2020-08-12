@@ -17,11 +17,6 @@
 #include <S3DL/Glsl.hpp>
 #include <S3DL/Shader.hpp>
 
-#include <S3DL/RenderSubpass.hpp>
-#include <S3DL/RenderPass.hpp>
-
-#include <S3DL/RenderPipeline.hpp>
-
 
 // Classes for ressource management
 
@@ -31,8 +26,3 @@
 #include <S3DL/stb/stb_image.hpp>
 #include <S3DL/stb/stb_image_write.hpp>
 #include <S3DL/TextureData.hpp>
-#include <S3DL/TextureSampler.hpp>
-#include <S3DL/Texture.hpp>
-
-#include <S3DL/Drawable.hpp>
-#include <S3DL/Mesh.hpp>

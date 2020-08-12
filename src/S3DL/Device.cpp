@@ -12,44 +12,19 @@ namespace s3dl
         return _handle;
     }
 
-    Device Device::createFromPhysicalDevice(const PhysicalDevice& physicalDevice, const RenderTarget& target)
-    {
-        Device device;
-
-        device._physicalDeviceProperties = physicalDevice;
-        device._physicalDevice = physicalDevice.getVulkanPhysicalDevice();
-
-        device.create(target);
-
-        return device;
-    }
-
-    Device Device::createBestPossible(const RenderTarget& target)
-    {
-        std::vector<PhysicalDevice> availables = getAvailablePhysicalDevices(target);
-
-        #ifndef NDEBUG
-        std::clog << availables.size() << " physical device(s) available(s):" << std::endl;
-        for (int i(0); i < availables.size(); i++)
-            std::clog << "- " << availables[i].properties.deviceName << std::endl;
-        #endif
-
-        // TODO: Less arbitrary way of chosing the device
-
-        return createFromPhysicalDevice(availables[0], target);
-    }
+    const Device* Device::Active = nullptr;
 
     std::vector<PhysicalDevice> Device::getAvailablePhysicalDevices(const RenderTarget& target)
     {
         // Get list of all physical devices
 
         uint32_t deviceCount = 0;
-        VkResult result = vkEnumeratePhysicalDevices(Instance::getVulkanInstance(), &deviceCount, nullptr);
+        VkResult result = vkEnumeratePhysicalDevices(Instance::Active->getVulkanInstance(), &deviceCount, nullptr);
         if (result != VK_SUCCESS || deviceCount == 0)
             throw std::runtime_error("Failed to find GPUs with Vulkan support. VkResult: " + std::to_string(result));
 
         std::vector<VkPhysicalDevice> vulkanPhysicalDevices(deviceCount);
-        vkEnumeratePhysicalDevices(Instance::getVulkanInstance(), &deviceCount, vulkanPhysicalDevices.data());
+        vkEnumeratePhysicalDevices(Instance::Active->getVulkanInstance(), &deviceCount, vulkanPhysicalDevices.data());
 
         std::vector<PhysicalDevice> physicalDevices;
 
@@ -111,11 +86,20 @@ namespace s3dl
         return physicalDevices;
     }
 
-    std::vector<std::string> Device::EXTENSIONS = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-
-    const PhysicalDevice& Device::getPhysicalDeviceProperties() const
+    Device::Device(const RenderTarget& target, const std::set<std::string>& additionalExtensions)
     {
-        return _physicalDeviceProperties;
+        std::vector<PhysicalDevice> availables = getAvailablePhysicalDevices(target);
+        create(target, availables[0], additionalExtensions);
+    }
+
+    Device::Device(const RenderTarget& target, const PhysicalDevice& physicalDevice, const std::set<std::string>& additionalExtensions)
+    {
+        create(target, physicalDevice, additionalExtensions);
+    }
+
+    void Device::setActive() const
+    {
+        Active = this;
     }
 
     VkDevice Device::getVulkanDevice() const
@@ -123,40 +107,34 @@ namespace s3dl
         return _device;
     }
 
+    VkQueue Device::getVulkanGraphicsQueue() const
+    {
+        return _graphicsQueue;
+    }
+
+    VkQueue Device::getVulkanPresentQueue() const
+    {
+        return _presentQueue;
+    }
+
     VkCommandPool Device::getVulkanCommandPool() const
     {
         return _commandPool;
     }
 
-    const DeviceQueues& Device::getVulkanQueues() const
+    Device::~Device()
     {
-        return _queues;
-    }
+        vkDestroyCommandPool(_device, _commandPool, nullptr);
 
-    void Device::updateProperties(const RenderTarget& target) const
-    {
-        if (target.hasVulkanSurface())
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_physicalDevice, target.getVulkanSurface(), &_physicalDeviceProperties.swapSupport.capabilities);
-    }
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> VkCommandPool successfully destroyed." << std::endl;
+        #endif
 
-    void Device::destroy()
-    {
-        if (_commandPool != VK_NULL_HANDLE)
-            vkDestroyCommandPool(_device, _commandPool, nullptr);
-        _commandPool = VK_NULL_HANDLE;
+        vkDestroyDevice(_device, nullptr);
 
-        if (_device != VK_NULL_HANDLE)
-            vkDestroyDevice(_device, nullptr);
-        _device = VK_NULL_HANDLE;
-    }
-
-    Device::Device() :
-        _physicalDeviceProperties{},
-        _physicalDevice(VK_NULL_HANDLE),
-        _device(VK_NULL_HANDLE),
-        _queues{},
-        _commandPool(VK_NULL_HANDLE)
-    {
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> VkDevice successfully destroyed." << std::endl;
+        #endif
     }
 
     namespace
@@ -171,18 +149,25 @@ namespace s3dl
         };
     }
 
-    void Device::create(const RenderTarget& target)
+    void Device::create(const RenderTarget& target, const PhysicalDevice& physicalDevice, const std::set<std::string>& additionalExtensions)
     {
+        setActive();
+
+        _physicalDevice = physicalDevice;
+
         #ifndef NDEBUG
-        std::clog << "Physical device chosen: " << _physicalDeviceProperties.properties.deviceName << std::endl;
+        std::clog << "<S3DL Debug> Creating logical device from physical device: " << _physicalDevice.properties.deviceName << std::endl;
         #endif
+
+        std::set<std::string> extensions(additionalExtensions.begin(), additionalExtensions.end());
+        extensions.insert(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
         // Extract indices of the different queue families that can be needed
 
         QueueFamilies families;
-        for (int i(0); i < _physicalDeviceProperties.queueFamilies.size(); i++)
+        for (int i(0); i < _physicalDevice.queueFamilies.size(); i++)
         {
-            if (_physicalDeviceProperties.queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            if (_physicalDevice.queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
                 families.graphicsFamily = i;
                 families.hasGraphicsFamily = true;
@@ -191,7 +176,7 @@ namespace s3dl
             if (target.hasVulkanSurface())
             {
                 VkBool32 support = false;
-                vkGetPhysicalDeviceSurfaceSupportKHR(_physicalDevice, i, target.getVulkanSurface(), &support);
+                vkGetPhysicalDeviceSurfaceSupportKHR(_physicalDevice.getVulkanPhysicalDevice(), i, target.getVulkanSurface(), &support);
                 if (support)
                 {
                     families.presentFamily = i;
@@ -230,8 +215,8 @@ namespace s3dl
         deviceFeatures.samplerAnisotropy = VK_TRUE;
 
         std::vector<const char*> deviceExtensions;
-        for (int i(0); i < EXTENSIONS.size(); i++)
-            deviceExtensions.push_back(EXTENSIONS[i].c_str());
+        for (const std::string& extension: extensions)
+            deviceExtensions.push_back(extension.c_str());
 
         VkDeviceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -243,18 +228,18 @@ namespace s3dl
         createInfo.enabledExtensionCount = deviceExtensions.size();
         createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-        VkResult result = vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device);
+        VkResult result = vkCreateDevice(_physicalDevice.getVulkanPhysicalDevice(), &createInfo, nullptr, &_device);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to create logical device. VkResult: " + std::to_string(result));
         
         #ifndef NDEBUG
-        std::clog << "VkDevice successfully created." << std::endl;
+        std::clog << "<S3DL Debug> VkDevice successfully created." << std::endl;
         #endif
 
         // Extract the queues
 
-        vkGetDeviceQueue(_device, families.graphicsFamily, 0, &_queues.graphicsQueue);
-        vkGetDeviceQueue(_device, families.presentFamily, 0, &_queues.presentQueue);
+        vkGetDeviceQueue(_device, families.graphicsFamily, 0, &_graphicsQueue);
+        vkGetDeviceQueue(_device, families.presentFamily, 0, &_presentQueue);
 
         // Create the command pool
 
@@ -268,7 +253,7 @@ namespace s3dl
             throw std::runtime_error("Failed to create command pool. VkResult: " + std::to_string(result));
         
         #ifndef NDEBUG
-        std::clog << "VkCommandPool successfully created." << std::endl;
+        std::clog << "<S3DL Debug> VkCommandPool successfully created." << std::endl;
         #endif
     }
 }

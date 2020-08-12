@@ -4,29 +4,42 @@
 int main()
 {
     s3dl::Instance instance;
-    // s3dl::RenderWindow window({1000, 800}, "S3DL Test");
-    // s3dl::Device device = s3dl::Device::createBestPossible(window);
+    s3dl::RenderWindow window({1000, 800}, "S3DL Test");
+    s3dl::Device device(window);
 
-    // s3dl::SubpassAttachment render(format, loadOp, storeOp, initialLayout, finalLayout);
-    // s3dl::SubpassAttachment color(format, loadOp, storeOp, initialLayout, finalLayout);
-    // s3dl::SubpassAttachment depth(format, loadOp, storeOp, initialLayout, finalLayout);
-
+    // s3dl::Attachment render = window.getTargetAttachment();
+    // s3dl::Attachment color(format, loadOp, storeOp, initialLayout, finalLayout);
+    // s3dl::Attachment depth(format, loadOp, storeOp, initialLayout, finalLayout);
+    
     // s3dl::Subpass subpassA({}, {color}, {}, depth);
     // s3dl::Subpass subpassB({color}, {render}, {});
-    
-    // s3dl::Dependency dependencyA(...);
-    // s3dl::Dependency dependencyB(...);
+    // s3dl::Dependency dependencyA(subpassA, subpassB, stageA, stageB, accessA, accessB);
+    // s3dl::Dependency dependencyB(subpassA, subpassB, stageA, stageB, accessA, accessB);
+    // s3dl::RenderPass renderPass({render, color, depth}, {subpassA, subpassB}, {dependencyA, dependencyB});
 
-    // s3dl::RenderPass renderPass({subpassA, subpassB}, {dependencyA, dependencyB});
+    // s3dl::Shader shaderA(vertex, fragment);
+    // s3dl::Shader shaderB(fragment);
+    // s3dl::Pipeline* pipelineA = renderPass.createDefaultPipeline(0, shaderA);
+    // s3dl::Pipeline* pipelineB = renderPass.createDefaultPipeline(1, shaderB);
+    // pipelineA->setVertexInput(...);
 
-    // s3dl::Shader shaderA(...), shaderB(...);
-    // VkPipelineVertexInputStateCreateInfo vertexInput;
+    // s3dl::Framebuffer framebuffer = s3dl::Framebuffer::createFromRenderPassModel(renderPass);
 
-    // s3dl::Pipeline pipeline = s3dl::Pipeline::DefaultPipeline(shaderA, vertexInput);
+    // while (false)
+    // {
+    //     window.bindFramebuffer(framebuffer);
+    //     window.bindRenderPass(renderPass);
+    //     window.bindPipeline(pipelineA);
 
-    // renderPass.addPipeline(pipeline);
+    //     window.draw();
 
-    // window.setRenderPass(renderPass);
+    //     window.beginNextSubpass();
+    //     window.bindPipeline(pipelineB);
+
+    //     window.draw();
+
+    //     window.display();
+    // }
 
     return 0;
 }

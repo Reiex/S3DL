@@ -45,20 +45,10 @@ namespace s3dl
 
     class Shader;
 
-    class RenderSubpass;
-    class RenderPass;
-
-    class RenderPipeline;
-
 
     struct Vertex;
 
     class Buffer;
     typedef _vec4<unsigned char> Color;
     class TextureData;
-    struct TextureSampler;
-    class Texture;
-
-    class Drawable;
-    template<typename _VertexType> class Mesh;
 }

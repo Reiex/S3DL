@@ -15,16 +15,16 @@
 
 namespace s3dl
 {
-    struct SwapChainSupportDetails
-    {
-        VkSurfaceCapabilitiesKHR capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> presentModes;
-    };
-
     struct PhysicalDevice
     {
         public:
+
+            struct SwapChainSupportDetails
+            {
+                VkSurfaceCapabilitiesKHR capabilities;
+                std::vector<VkSurfaceFormatKHR> formats;
+                std::vector<VkPresentModeKHR> presentModes;
+            };
 
             PhysicalDevice() = default;
             PhysicalDevice(VkPhysicalDevice handle);
@@ -42,48 +42,37 @@ namespace s3dl
             VkPhysicalDevice _handle;
     };
 
-    struct DeviceQueues
-    {
-        VkQueue graphicsQueue;
-        VkQueue presentQueue;
-
-        bool hasGraphicsQueue;
-        bool hasPresentQueue;
-    };
-
     class Device
     {
         public:
 
-            static Device createFromPhysicalDevice(const PhysicalDevice& physicalDevice, const RenderTarget& target);
-            static Device createBestPossible(const RenderTarget& target);
-
             static std::vector<PhysicalDevice> getAvailablePhysicalDevices(const RenderTarget& target);
 
-            static std::vector<std::string> EXTENSIONS;
+            static const Device* Active;
 
-            const PhysicalDevice& getPhysicalDeviceProperties() const;
+            Device(const RenderTarget& target, const std::set<std::string>& additionalExtensions = {});
+            Device(const RenderTarget& target, const PhysicalDevice& physicalDevice, const std::set<std::string>& additionalExtensions = {});
+            Device(const Device& device) = delete;
+
+            Device& operator=(const Device& device) = delete;
+
+            void setActive() const;
+
             VkDevice getVulkanDevice() const;
+            VkQueue getVulkanGraphicsQueue() const;
+            VkQueue getVulkanPresentQueue() const;
             VkCommandPool getVulkanCommandPool() const;
-            const DeviceQueues& getVulkanQueues() const;
 
-            void updateProperties(const RenderTarget& target) const;
-
-            void destroy();
+            ~Device();
 
         private:
 
-            Device();
+            void create(const RenderTarget& target, const PhysicalDevice& physicalDevice, const std::set<std::string>& additionalExtensions);
 
-            void create(const RenderTarget& target);
-
-            mutable PhysicalDevice _physicalDeviceProperties;
-            VkPhysicalDevice _physicalDevice;
-
+            PhysicalDevice _physicalDevice;
             VkDevice _device;
-
-            DeviceQueues _queues;
-
+            VkQueue _graphicsQueue;
+            VkQueue _presentQueue;
             VkCommandPool _commandPool;
     };
 }
