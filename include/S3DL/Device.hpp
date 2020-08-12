@@ -58,6 +58,8 @@ namespace s3dl
 
             void setActive() const;
 
+            const PhysicalDevice& getPhysicalDevice() const;
+
             VkDevice getVulkanDevice() const;
             VkQueue getVulkanGraphicsQueue() const;
             VkQueue getVulkanPresentQueue() const;

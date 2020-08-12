@@ -102,6 +102,11 @@ namespace s3dl
         Active = this;
     }
 
+    const PhysicalDevice& Device::getPhysicalDevice() const
+    {
+        return _physicalDevice;
+    }
+
     VkDevice Device::getVulkanDevice() const
     {
         return _device;

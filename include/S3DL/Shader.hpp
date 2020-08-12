@@ -14,10 +14,10 @@ namespace s3dl
     {
         public:
 
-            Shader() = default;
-            Shader(const Device& device, const std::string& vertex, const std::string& fragment, const std::vector<std::string>& subFragments = {});
-            Shader(const Device& device, const std::string& vertex, const std::string& geometry, const std::string& fragment, const std::vector<std::string>& subFragments = {});
-            Shader(const Device& device, const std::string& vertex, const std::string& geometry, const std::string& tessControl, const std::string& tessEval, const std::string& fragment, const std::vector<std::string>& subFragments = {});
+            Shader(const std::string& fragment);
+            Shader(const std::string& vertex, const std::string& fragment);
+            Shader(const std::string& vertex, const std::string& geometry, const std::string& fragment);
+            Shader(const std::string& vertex, const std::string& geometry, const std::string& tessControl, const std::string& tessEval, const std::string& fragment);
 
             const std::vector<VkPipelineShaderStageCreateInfo>& getVulkanShaderStages() const;
 
@@ -25,7 +25,7 @@ namespace s3dl
 
         private:
 
-            static VkShaderModule getShaderModule(const Device& device, const std::string& filename);
+            static VkShaderModule getShaderModule(const std::string& filename, const std::string& shaderType);
 
             std::vector<VkPipelineShaderStageCreateInfo> _shaderStages;
     };

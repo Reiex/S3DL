@@ -14,8 +14,16 @@
 
 // Classes for render pipeline creation
 
+#include <S3DL/Attachment.hpp>
+#include <S3DL/Subpass.hpp>
+#include <S3DL/Dependency.hpp>
+
 #include <S3DL/Glsl.hpp>
 #include <S3DL/Shader.hpp>
+
+#include <S3DL/Pipeline.hpp>
+
+#include <S3DL/RenderPass.hpp>
 
 
 // Classes for ressource management
