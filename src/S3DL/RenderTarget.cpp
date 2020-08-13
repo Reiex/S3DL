@@ -3,6 +3,9 @@
 namespace s3dl
 {
     RenderTarget::RenderTarget(bool hasSurface) :
+    
+        _targetSize(0, 0),
+
         _hasSurface(hasSurface),
         _surface(VK_NULL_HANDLE)
     {

@@ -21,7 +21,7 @@ namespace s3dl
 
             const std::vector<VkPipelineShaderStageCreateInfo>& getVulkanShaderStages() const;
 
-            void destroy(const Device& device);
+            ~Shader();
 
         private:
 

@@ -20,6 +20,8 @@ namespace s3dl
 
         protected:
 
+            uvec2 _targetSize;
+
             bool _hasSurface;
             VkSurfaceKHR _surface;
     };

@@ -6,13 +6,18 @@ int main()
     s3dl::Instance instance;
     s3dl::RenderWindow window({1000, 800}, "S3DL Test");
     s3dl::Device device(window);
-    // window.createSwapChain();  // S'occuper de ça en premier !
+    window.createSwapChain();
 
     /*
 
     s3dl::Framebuffer contient n framebuffers.
     Si un attachment s3dl::Attachment::Screen est présent, n = 3 (ou le nombre d'images dans la swap chain)
     Sinon n = 1.
+
+    {
+        std::vector<VkFramebuffer> fs;
+        VkFramebuffer first;
+    }
 
     Voir comment garder les spécifités de la swapchain confinées à RenderWindow.
     C'est pour ça qu'il faut bien être au clair dessus et créer la swapchain avant de s'occuper du reste.

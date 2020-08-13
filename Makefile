@@ -7,7 +7,8 @@ OBJS = obj/main.o \
 	   obj/Window.o \
 	   obj/RenderTarget.o \
 	   obj/RenderWindow.o \
-	   obj/Device.o
+	   obj/Device.o \
+	   obj/Shader.o
 
 vulkanExamples: $(SPVS) $(OBJS)
 	g++ $(CFLAGS) $(OBJS) -o vulkanExamples $(LDFLAGS)
