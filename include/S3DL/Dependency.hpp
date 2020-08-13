@@ -20,5 +20,7 @@ namespace s3dl
             unsigned int _dstStage;
             unsigned int _srcMask;
             unsigned int _dstMask;
+        
+        friend RenderPass;
     };
 }

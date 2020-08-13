@@ -20,5 +20,7 @@ namespace s3dl
             std::vector<const Attachment*> _colorAttachments;
             std::vector<const Attachment*> _preserveAttachments;
             const Attachment* _depthAttachment;
+        
+        friend RenderPass;
     };
 }

@@ -11,6 +11,8 @@
 
 #include <S3DL/Device.hpp>
 
+#include <S3DL/Swapchain.hpp>
+
 
 // Classes for render pipeline creation
 

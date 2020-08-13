@@ -20,22 +20,12 @@ namespace s3dl
 
             RenderWindow(const uvec2& size, const std::string& title);
 
-            void createSwapChain();
-            void createSwapChain(VkExtent2D extent, VkPresentModeKHR presentMode, VkSurfaceFormatKHR surfaceFormat);
-
-            void destroySwapChain();
+            VkExtent2D getBestSwapExtent() const;
+            VkPresentModeKHR getBestSwapPresentMode() const;
+            VkSurfaceFormatKHR getBestSwapSurfaceFormat() const;
 
             ~RenderWindow();
 
         private:
-
-            VkSurfaceFormatKHR chooseSwapSurfaceFormat();
-            VkPresentModeKHR chooseSwapPresentMode();
-            VkExtent2D chooseSwapExtent();
-
-            VkSwapchainKHR _swapChain;
-            VkSurfaceFormatKHR _swapFormat;
-            std::vector<VkImage> _swapImages;
-            std::vector<VkImageView> _swapImageViews;
     };
 }

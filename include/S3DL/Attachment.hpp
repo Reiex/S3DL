@@ -9,7 +9,8 @@ namespace s3dl
     class Attachment
     {
         public:
-
+        
+            Attachment(const Swapchain& swapchain, VkAttachmentLoadOp loadOp);
             Attachment(VkFormat format, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp, VkImageLayout initialLayout, VkImageLayout finalLayout);
 
         private:
@@ -20,7 +21,8 @@ namespace s3dl
             VkImageLayout _initialLayout;
             VkImageLayout _finalLayout;
 
-            bool _targetAttachment;
-            const RenderTarget* _target;
+            const Swapchain* _swapchain;
+        
+        friend RenderPass;
     };
 }

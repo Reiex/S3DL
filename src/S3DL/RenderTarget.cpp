@@ -2,18 +2,24 @@
 
 namespace s3dl
 {
-    RenderTarget::RenderTarget(bool hasSurface) :
-    
+    RenderTarget::RenderTarget(bool hasVulkanSurface):
         _targetSize(0, 0),
+        _swapchain(nullptr),
 
-        _hasSurface(hasSurface),
+        _hasVulkanSurface(hasVulkanSurface),
         _surface(VK_NULL_HANDLE)
     {
     }
 
+    void RenderTarget::setSwapchain(const Swapchain& swapchain)
+    {
+        _swapchain = &swapchain;
+        _targetSize = {swapchain._extent.width, swapchain._extent.height};
+    }
+
     bool RenderTarget::hasVulkanSurface() const
     {
-        return _hasSurface;
+        return _hasVulkanSurface;
     }
 
     VkSurfaceKHR RenderTarget::getVulkanSurface() const

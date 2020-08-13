@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <cstdint>
 
 #include <vulkan/vulkan.h>
 
@@ -17,12 +18,15 @@ namespace s3dl
         private:
         
             std::vector<VkAttachmentDescription> _vulkanAttachments;
+
             std::vector<VkSubpassDescription> _vulkanSubpasses;
             std::vector<std::vector<VkAttachmentReference>> _vulkanInputReferences;
             std::vector<std::vector<VkAttachmentReference>> _vulkanColorReferences;
-            std::vector<std::vector<VkAttachmentReference>> _vulkanPreserveReferences;
+            std::vector<std::vector<uint32_t>> _vulkanPreserveReferences;
+            std::vector<VkAttachmentReference> _vulkanDepthReferences;
+
             std::vector<VkSubpassDependency> _vulkanDependencies;
 
-            std::vector<Pipeline> _pipelines;
+            // std::vector<Pipeline> _pipelines;
     };
 }

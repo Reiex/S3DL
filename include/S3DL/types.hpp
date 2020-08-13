@@ -4,11 +4,15 @@
 
 namespace s3dl
 {
+    class Instance;
+
     class Window;
     class RenderTarget;
     class RenderWindow;
 
     class Device;
+
+    class Swapchain;
 
 
     class Attachment;

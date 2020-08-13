@@ -10,10 +10,12 @@ namespace s3dl
     {
         public:
 
-            RenderTarget(bool hasSurface);
+            RenderTarget(bool hasVulkanSurface);
             RenderTarget(const RenderTarget& target) = delete;
 
             RenderTarget& operator=(const RenderTarget& target) = delete;
+
+            void setSwapchain(const Swapchain& swapchain);
 
             bool hasVulkanSurface() const;
             VkSurfaceKHR getVulkanSurface() const;
@@ -21,8 +23,9 @@ namespace s3dl
         protected:
 
             uvec2 _targetSize;
+            const Swapchain* _swapchain;
 
-            bool _hasSurface;
+            bool _hasVulkanSurface;
             VkSurfaceKHR _surface;
     };
 }
