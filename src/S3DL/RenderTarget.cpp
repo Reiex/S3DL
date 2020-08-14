@@ -17,6 +17,11 @@ namespace s3dl
         _targetSize = {swapchain._extent.width, swapchain._extent.height};
     }
 
+    const uvec2& RenderTarget::getTargetSize() const
+    {
+        return _targetSize;
+    }
+
     bool RenderTarget::hasVulkanSurface() const
     {
         return _hasVulkanSurface;

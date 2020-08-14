@@ -1,7 +1,7 @@
 CFLAGS = -Iinclude -g
 LDFLAGS = `pkg-config --static --libs glfw3` -lvulkan
 
-SPVS = vertex.spv fragment.spv
+SPVS = vertex.spv fragment.spv subpass.spv
 OBJS = obj/main.o \
 	   obj/Instance.o \
 	   obj/Window.o \
@@ -12,7 +12,9 @@ OBJS = obj/main.o \
 	   obj/Attachment.o \
 	   obj/Subpass.o \
 	   obj/Dependency.o \
-	   obj/RenderPass.o
+	   obj/RenderPass.o \
+	   obj/Shader.o \
+	   obj/Pipeline.o
 
 vulkanExamples: $(SPVS) $(OBJS)
 	g++ $(CFLAGS) $(OBJS) -o vulkanExamples $(LDFLAGS)
@@ -29,6 +31,9 @@ obj/%.o: src/S3DL/%.cpp
 	g++ $(CFLAGS) -c $^ -o $@
 
 fragment.spv: fragment.glsl
+	glslc -fshader-stage=fragment $^ -o $@
+
+subpass.spv: subpass.glsl
 	glslc -fshader-stage=fragment $^ -o $@
 
 vertex.spv: vertex.glsl

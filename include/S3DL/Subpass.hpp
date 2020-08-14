@@ -12,14 +12,14 @@ namespace s3dl
     {
         public:
 
-            Subpass(const std::vector<const Attachment*>& inputAttachments, const std::vector<const Attachment*>& colorAttachments, const std::vector<const Attachment*>& preserveAttachments, const Attachment* depthAttachment = nullptr);
+            Subpass(const std::vector<const Attachment*>& inputAttachments, const std::vector<const Attachment*>& colorAttachments, const std::vector<const Attachment*>& preserveAttachments, const Attachment* depthStencilAttachment = nullptr);
 
         private:
 
             std::vector<const Attachment*> _inputAttachments;
             std::vector<const Attachment*> _colorAttachments;
             std::vector<const Attachment*> _preserveAttachments;
-            const Attachment* _depthAttachment;
+            const Attachment* _depthStencilAttachment;
         
         friend RenderPass;
     };

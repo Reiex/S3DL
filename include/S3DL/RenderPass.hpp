@@ -13,20 +13,38 @@ namespace s3dl
     {
         public:
 
-            RenderPass(const std::vector<Attachment>& attachments, const std::vector<Subpass>& subpasses, const std::vector<Dependency>& dependencies);
+            RenderPass(const std::vector<const Attachment*>& attachments, const std::vector<Subpass>& subpasses, const std::vector<Dependency>& dependencies);
+            RenderPass(const RenderPass& renderPass) = delete;
+
+            RenderPass& operator=(const RenderPass& renderPass) = delete;
+
+            Pipeline* getNewPipeline(unsigned int subpass, const Shader& shader, const RenderTarget& target);
+
+            VkRenderPass getVulkanRenderPass() const;
+
+            ~RenderPass();
 
         private:
+
+            void destroyVulkanRenderPass() const;
         
-            std::vector<VkAttachmentDescription> _vulkanAttachments;
+            std::vector<VkAttachmentDescription> _attachments;
 
-            std::vector<VkSubpassDescription> _vulkanSubpasses;
-            std::vector<std::vector<VkAttachmentReference>> _vulkanInputReferences;
-            std::vector<std::vector<VkAttachmentReference>> _vulkanColorReferences;
-            std::vector<std::vector<uint32_t>> _vulkanPreserveReferences;
-            std::vector<VkAttachmentReference> _vulkanDepthReferences;
+            std::vector<VkSubpassDescription> _subpasses;
+            std::vector<std::vector<VkAttachmentReference>> _inputReferences;
+            std::vector<std::vector<VkAttachmentReference>> _colorReferences;
+            std::vector<std::vector<uint32_t>> _preserveReferences;
+            std::vector<VkAttachmentReference> _depthStencilReferences;
 
-            std::vector<VkSubpassDependency> _vulkanDependencies;
+            std::vector<VkSubpassDependency> _dependencies;
 
-            // std::vector<Pipeline> _pipelines;
+            VkRenderPassCreateInfo _renderPass;
+
+            mutable bool _vulkanRenderPassComputed;
+            mutable VkRenderPass _vulkanRenderPass;
+
+            std::vector<Pipeline*> _pipelines;
+        
+        friend Pipeline;
     };
 }

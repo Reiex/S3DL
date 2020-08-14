@@ -17,6 +17,8 @@ namespace s3dl
 
             void setSwapchain(const Swapchain& swapchain);
 
+            const uvec2& getTargetSize() const;
+
             bool hasVulkanSurface() const;
             VkSurfaceKHR getVulkanSurface() const;
 

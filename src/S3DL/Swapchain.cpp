@@ -4,7 +4,7 @@ namespace s3dl
 {
     Swapchain::Swapchain(const RenderWindow& window)
     {
-        VkExtent2D _extent = window.getBestSwapExtent();
+        _extent = window.getBestSwapExtent();
         VkPresentModeKHR presentMode = window.getBestSwapPresentMode();
         VkSurfaceFormatKHR surfaceFormat = window.getBestSwapSurfaceFormat();
 
