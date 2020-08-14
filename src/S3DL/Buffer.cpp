@@ -2,68 +2,93 @@
 
 namespace s3dl
 {
-    Buffer::Buffer() :
-        _device(nullptr),
-        _size(0),
-        _usage{},
-        _properties{},
-        _buffer(VK_NULL_HANDLE),
-        _deviceMemory(VK_NULL_HANDLE)
-    {
-    }
-
-    Buffer::Buffer(const Device& device, uint64_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) :
-        _device(&device),
+    Buffer::Buffer(uint64_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) :
         _size(size),
         _usage(usage),
         _properties(properties),
         _buffer(VK_NULL_HANDLE),
         _deviceMemory(VK_NULL_HANDLE)
     {
-        create();
+        // Create the buffer itself
+
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = _size;
+        bufferInfo.usage = _usage;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        VkResult result = vkCreateBuffer(Device::Active->getVulkanDevice(), &bufferInfo, nullptr, &_buffer);
+        if (result != VK_SUCCESS)
+            throw std::runtime_error("Failed to create buffer. VkResult: " + std::to_string(result));
+        
+        // Allocate memory to buffer
+
+        VkMemoryRequirements memRequirements;
+        vkGetBufferMemoryRequirements(Device::Active->getVulkanDevice(), _buffer, &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = findSuitableMemory(memRequirements.memoryTypeBits, _properties);
+
+        result = vkAllocateMemory(Device::Active->getVulkanDevice(), &allocInfo, nullptr, &_deviceMemory);
+        if (result != VK_SUCCESS)
+            throw std::runtime_error("Failed to allocate buffer memory. VkResult: " + std::to_string(result));
+
+        vkBindBufferMemory(Device::Active->getVulkanDevice(), _buffer, _deviceMemory, 0);
+
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> VkBuffer of size " + std::to_string(_size) + " successfully created." << std::endl;
+        #endif
     }
 
-    void Buffer::reCreate(const Device& device, uint64_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
-    {
-        destroy();
-
-        _device = &device;
-        _size = size;
-        _usage = usage;
-        _properties = properties;
-
-        create();
-    }
-    
     void Buffer::setData(const void* data, uint64_t size, uint64_t offset)
     {
+        VkResult result;
+
+        if (offset + size > _size)
+            throw std::runtime_error("Cannot put " + std::to_string(size) + " bytes of data with offset of " + std::to_string(offset) + " bytes in buffer of size " + std::to_string(_size) + " bytes.");
+
         if (_properties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
         {
             void* handle;
-            vkMapMemory(_device->getVulkanDevice(), _deviceMemory, offset, size, 0, &handle);
+            
+            result = vkMapMemory(Device::Active->getVulkanDevice(), _deviceMemory, offset, size, 0, &handle);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to map buffer to memory. VkResult: " + std::to_string(result));
+            
             std::memcpy(handle, data, size);
-            vkUnmapMemory(_device->getVulkanDevice(), _deviceMemory);
+            vkUnmapMemory(Device::Active->getVulkanDevice(), _deviceMemory);
         }
         else
         {
-            Buffer stagingBuffer(*_device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            // Create a staging buffer with the data
 
+            Buffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
             stagingBuffer.setData(data, size, 0);
+
+            // Create a command buffer for data transfer
 
             VkCommandBufferAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandPool = _device->getVulkanCommandPool();
+            allocInfo.commandPool = Device::Active->getVulkanCommandPool();
             allocInfo.commandBufferCount = 1;
 
             VkCommandBuffer commandBuffer;
-            vkAllocateCommandBuffers(_device->getVulkanDevice(), &allocInfo, &commandBuffer);
+            result = vkAllocateCommandBuffers(Device::Active->getVulkanDevice(), &allocInfo, &commandBuffer);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to allocate command buffer for Buffer memory transfer. VkResult: " + std::to_string(result));
+
+            // Record transfer command
 
             VkCommandBufferBeginInfo beginInfo{};
             beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
             beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-            vkBeginCommandBuffer(commandBuffer, &beginInfo);
+            result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to start recording command buffer for Buffer memory transfer. VkResult: " + std::to_string(result));
 
             VkBufferCopy copyRegion{};
             copyRegion.srcOffset = 0;
@@ -71,17 +96,37 @@ namespace s3dl
             copyRegion.size = size;
             vkCmdCopyBuffer(commandBuffer, stagingBuffer.getVulkanBuffer(), _buffer, 1, &copyRegion);
 
-            vkEndCommandBuffer(commandBuffer);
+            result = vkEndCommandBuffer(commandBuffer);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to end recording command buffer for Buffer memory transfer. VkResult: " + std::to_string(result));
+
+            // Create fence to wait for transfer to end
+
+            VkFence transferFence;
+            VkFenceCreateInfo fenceCreateInfo{};
+            fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+            fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+            result = vkCreateFence(Device::Active->getVulkanDevice(), &fenceCreateInfo, nullptr, &transferFence);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to create fence for Buffer memory transfer. VkResult: " + std::to_string(result));
+
+            // Submit command and wait its end with the fence
 
             VkSubmitInfo submitInfo{};
             submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
             submitInfo.commandBufferCount = 1;
             submitInfo.pCommandBuffers = &commandBuffer;
 
-            vkQueueSubmit(_device->getVulkanQueues().graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-            vkQueueWaitIdle(_device->getVulkanQueues().graphicsQueue);
+            vkResetFences(Device::Active->getVulkanDevice(), 1, &transferFence);
+            vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, transferFence);
 
-            vkFreeCommandBuffers(_device->getVulkanDevice(), _device->getVulkanCommandPool(), 1, &commandBuffer);
+            vkWaitForFences(Device::Active->getVulkanDevice(), 1, &transferFence, VK_TRUE, UINT64_MAX);
+
+            // Free command buffer and fence (the staging buffer is freed using Buffer class)
+
+            vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &commandBuffer);
+            vkDestroyFence(Device::Active->getVulkanDevice(), transferFence, nullptr);
         }
     }
 
@@ -92,60 +137,25 @@ namespace s3dl
     
     Buffer::~Buffer()
     {
-        destroy();
+        if (_buffer != VK_NULL_HANDLE)
+            vkDestroyBuffer(Device::Active->getVulkanDevice(), _buffer, nullptr);
+        
+        if (_deviceMemory != VK_NULL_HANDLE)
+            vkFreeMemory(Device::Active->getVulkanDevice(), _deviceMemory, nullptr);
+
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> VkBuffer of size " + std::to_string(_size) + " successfully destroyed." << std::endl;
+        #endif
     }
     
     uint32_t Buffer::findSuitableMemory(uint32_t typeFilter, VkMemoryPropertyFlags properties)
     {
-        const VkPhysicalDeviceMemoryProperties& memProperties = _device->getPhysicalDeviceProperties().memoryProperties;
+        const VkPhysicalDeviceMemoryProperties& memProperties = Device::Active->getPhysicalDevice().memoryProperties;
 
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
             if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
                 return i;
         
         throw std::runtime_error("Failed to find suitable memory type for buffer creation.");
-    }
-
-    void Buffer::create()
-    {
-        // Create the buffer itself
-
-        VkBufferCreateInfo bufferInfo{};
-        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.size = _size;
-        bufferInfo.usage = _usage;
-        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        VkResult result = vkCreateBuffer(_device->getVulkanDevice(), &bufferInfo, nullptr, &_buffer);
-        if (result != VK_SUCCESS)
-            throw std::runtime_error("Failed to create buffer. VkResult: " + std::to_string(result));
-        
-        // Allocate memory to buffer
-
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(_device->getVulkanDevice(), _buffer, &memRequirements);
-
-        VkMemoryAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = findSuitableMemory(memRequirements.memoryTypeBits, _properties);
-
-        result = vkAllocateMemory(_device->getVulkanDevice(), &allocInfo, nullptr, &_deviceMemory);
-        if (result != VK_SUCCESS)
-            throw std::runtime_error("Failed to allocate buffer memory. VkResult: " + std::to_string(result));
-
-        vkBindBufferMemory(_device->getVulkanDevice(), _buffer, _deviceMemory, 0);
-    }  
-
-    void Buffer::destroy()
-    {
-        if (_buffer != VK_NULL_HANDLE)
-            vkDestroyBuffer(_device->getVulkanDevice(), _buffer, nullptr);
-        
-        if (_deviceMemory != VK_NULL_HANDLE)
-            vkFreeMemory(_device->getVulkanDevice(), _deviceMemory, nullptr);
-
-        _buffer = VK_NULL_HANDLE;
-        _deviceMemory = VK_NULL_HANDLE;
     }
 }

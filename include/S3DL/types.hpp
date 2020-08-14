@@ -18,6 +18,7 @@ namespace s3dl
     class Attachment;
     class Subpass;
     class Dependency;
+    class RenderPass;
 
     template<typename T> struct _vec2;
     template<typename T> struct _vec3;
@@ -48,12 +49,14 @@ namespace s3dl
 
     class Pipeline;
 
-    class RenderPass;
-
 
     struct Vertex;
 
     class Buffer;
     typedef _vec4<unsigned char> Color;
     class TextureData;
+    class TextureSampler;
+    class Texture;
+
+    class Framebuffer;
 }

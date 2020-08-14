@@ -12,7 +12,7 @@ namespace s3dl
     struct Vertex
     {
         static VkVertexInputBindingDescription getBindingDescription(unsigned int binding = 0, VkVertexInputRate inputRate = VK_VERTEX_INPUT_RATE_VERTEX);
-        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions(unsigned int binding = 0);
 
         vec3 position;
         vec2 texCoords;

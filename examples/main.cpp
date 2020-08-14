@@ -34,7 +34,7 @@ int main()
     s3dl::Pipeline* pipelineB = renderPass.getNewPipeline(1, shaderB, window);
     pipelineA->setVertexInput({}, {});
 
-    // s3dl::Framebuffer framebuffer = s3dl::Framebuffer::createFromRenderPass(window, renderPass);
+    // s3dl::Framebuffer framebuffer(window, renderPass);
 
     // while (!window.shouldClose())
     // {

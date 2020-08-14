@@ -10,25 +10,20 @@ namespace s3dl
     {
         public:
 
-            Buffer();
-            Buffer(const Device& device, uint64_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
+            Buffer(uint64_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
+            Buffer(const Buffer& buffer) = delete;
 
-            void reCreate(const Device& device, uint64_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
+            Buffer& operator=(const Buffer& buffer) = delete;
 
             void setData(const void* data, uint64_t size, uint64_t offset = 0);
 
             VkBuffer getVulkanBuffer() const;
-
-            void destroy();
             
             ~Buffer();
 
         private:
 
             uint32_t findSuitableMemory(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-            void create();
-
-            const Device* _device;
 
             uint64_t _size;
             VkBufferUsageFlags _usage;

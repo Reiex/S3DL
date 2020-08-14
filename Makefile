@@ -14,7 +14,14 @@ OBJS = obj/main.o \
 	   obj/Dependency.o \
 	   obj/RenderPass.o \
 	   obj/Shader.o \
-	   obj/Pipeline.o
+	   obj/Pipeline.o \
+	   obj/Vertex.o \
+	   obj/Buffer.o \
+	   obj/stb/stb_image.o \
+	   obj/stb/stb_image_write.o \
+	   obj/TextureData.o \
+	   obj/TextureSampler.o \
+	   obj/Texture.o
 
 vulkanExamples: $(SPVS) $(OBJS)
 	g++ $(CFLAGS) $(OBJS) -o vulkanExamples $(LDFLAGS)

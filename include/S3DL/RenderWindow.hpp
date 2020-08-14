@@ -19,6 +19,9 @@ namespace s3dl
         public:
 
             RenderWindow(const uvec2& size, const std::string& title);
+            RenderWindow(const RenderWindow& window) = delete;
+
+            RenderWindow& operator=(const RenderWindow& window) = delete;
 
             VkExtent2D getBestSwapExtent() const;
             VkPresentModeKHR getBestSwapPresentMode() const;
