@@ -34,6 +34,8 @@ namespace s3dl
         _size = texture._size;
         _data = (unsigned char*) std::malloc(sizeof(unsigned char)*_size.x*_size.y*4);
         std::memcpy(_data, texture._data, _size.x*_size.y*4);
+
+        return *this;
     }
 
     Color& TextureData::operator()(unsigned int x, unsigned int y)
