@@ -32,5 +32,6 @@ namespace s3dl
 
         friend RenderTarget;
         friend Attachment;
+        friend Framebuffer;
     };
 }

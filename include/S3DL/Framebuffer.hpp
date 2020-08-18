@@ -10,19 +10,22 @@ namespace s3dl
     {
         public:
 
-            Framebuffer(const RenderTarget& target, const RenderPass& renderPass);
+            Framebuffer(const Swapchain& swapchain, const RenderPass& renderPass);
             Framebuffer(const Framebuffer& framebuffer) = delete;
 
             Framebuffer& operator=(const Framebuffer& framebuffer) = delete;
 
-            std::vector<VkFramebuffer> getVulkanFramebuffers() const;
+            const std::vector<VkFramebuffer>& getVulkanFramebuffers() const;
 
             ~Framebuffer();
 
         private:
 
+            uvec2 _size;
             std::vector<VkFramebufferCreateInfo> _framebuffers;
             std::vector<VkFramebuffer> _vulkanFramebuffers;
-            std::vector<Texture> _attachments;
+            std::vector<Texture*> _attachments;
+            std::vector<bool> _attachmentsBelonging;
+            std::vector<std::vector<VkImageView>> _vulkanAttachments;
     };
 }

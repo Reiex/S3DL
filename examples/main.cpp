@@ -34,7 +34,7 @@ int main_example()
     s3dl::Pipeline* pipelineB = renderPass.getNewPipeline(1, shaderB, window);
     pipelineA->setVertexInput({}, {});
 
-    // s3dl::Framebuffer framebuffer(window, renderPass);
+    s3dl::Framebuffer framebuffer(swapchain, renderPass);
 
     // while (!window.shouldClose())
     // {

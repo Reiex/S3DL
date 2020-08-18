@@ -6,7 +6,7 @@ namespace s3dl
     {
         _extent = window.getBestSwapExtent();
         VkPresentModeKHR presentMode = window.getBestSwapPresentMode();
-        VkSurfaceFormatKHR surfaceFormat = window.getBestSwapSurfaceFormat();
+        _format = window.getBestSwapSurfaceFormat();
 
         // Compute swap chain settings
         PhysicalDevice::SwapChainSupportDetails swapChainSupport = Device::Active->getPhysicalDevice().swapSupport;
@@ -21,8 +21,8 @@ namespace s3dl
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = window.getVulkanSurface();
         createInfo.minImageCount = imageCount;
-        createInfo.imageFormat = surfaceFormat.format;
-        createInfo.imageColorSpace = surfaceFormat.colorSpace;
+        createInfo.imageFormat = _format.format;
+        createInfo.imageColorSpace = _format.colorSpace;
         createInfo.imageExtent = _extent;
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -53,7 +53,7 @@ namespace s3dl
             createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             createInfo.image = _images[i];
             createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            createInfo.format = surfaceFormat.format;
+            createInfo.format = _format.format;
             createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;

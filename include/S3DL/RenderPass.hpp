@@ -46,5 +46,6 @@ namespace s3dl
             std::vector<Pipeline*> _pipelines;
         
         friend Pipeline;
+        friend Framebuffer;
     };
 }
