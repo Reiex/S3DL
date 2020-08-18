@@ -1,7 +1,7 @@
 #include <S3DL/S3DL.hpp>
 
 
-int main()
+int main_example()
 {
     // Init context
     s3dl::Instance instance;
@@ -52,4 +52,14 @@ int main()
     // }
 
     return 0;
+}
+
+
+int main()
+{
+    int exit_code = main_example();
+
+    system("pause");
+
+    return exit_code;
 }
