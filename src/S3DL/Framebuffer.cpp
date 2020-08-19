@@ -26,7 +26,7 @@ namespace s3dl
 
         for (int i(1); i < renderPass._attachments.size(); i++)
         {
-            VkFormat format(swapchain._format.format);
+            VkFormat format(renderPass._attachments[i].format);
             VkImageTiling tiling(VK_IMAGE_TILING_OPTIMAL);
             VkImageUsageFlags usage(0);
             VkImageAspectFlags imageAspects(0);

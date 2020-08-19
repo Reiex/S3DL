@@ -99,6 +99,8 @@ namespace s3dl
             subpass.pDepthStencilAttachment = (subpasses[i]._depthStencilAttachment != nullptr) ? &_depthStencilReferences[i]: nullptr;
             subpass.preserveAttachmentCount = _preserveReferences[i].size();
             subpass.pPreserveAttachments = (_preserveReferences[i].size() != 0) ? _preserveReferences[i].data(): nullptr;
+
+            _subpasses[i] = subpass;
         }
 
         // Dependencies
