@@ -1,7 +1,7 @@
 CFLAGS = -Iinclude -g
 LDFLAGS = `pkg-config --static --libs glfw3` -lvulkan
 
-SPVS = vertex.spv fragment.spv subpass.spv
+SPVS = vertex.spv fragment.spv subpassVertex.spv subpassFragment.spv
 OBJS = obj/main.o \
 	   obj/Instance.o \
 	   obj/Window.o \
@@ -37,11 +37,14 @@ obj/main.o: examples/main.cpp
 obj/%.o: src/S3DL/%.cpp
 	g++ $(CFLAGS) -c $^ -o $@
 
+vertex.spv: vertex.glsl
+	glslc -fshader-stage=vertex $^ -o $@
+
+subpassVertex.spv: subpassVertex.glsl
+	glslc -fshader-stage=vertex $^ -o $@
+
 fragment.spv: fragment.glsl
 	glslc -fshader-stage=fragment $^ -o $@
 
-subpass.spv: subpass.glsl
+subpassFragment.spv: subpassFragment.glsl
 	glslc -fshader-stage=fragment $^ -o $@
-
-vertex.spv: vertex.glsl
-	glslc -fshader-stage=vertex $^ -o $@

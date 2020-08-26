@@ -15,11 +15,13 @@ namespace s3dl
 
             Framebuffer& operator=(const Framebuffer& framebuffer) = delete;
 
-            const std::vector<VkFramebuffer>& getVulkanFramebuffers() const;
+            VkFramebuffer getCurrentFramebuffer() const;
 
             ~Framebuffer();
 
         private:
+
+            const Swapchain* _swapchain;
 
             uvec2 _size;
             std::vector<VkFramebufferCreateInfo> _framebuffers;

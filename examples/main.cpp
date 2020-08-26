@@ -29,27 +29,39 @@ int main_example()
     s3dl::RenderPass renderPass({&render, &color, &depth}, {subpassA, subpassB}, {dependencyA, dependencyB});
 
     s3dl::Shader shaderA("vertex.spv", "fragment.spv");
-    s3dl::Shader shaderB("subpass.spv");
+    s3dl::Shader shaderB("subpassVertex.spv", "subpassFragment.spv");
     s3dl::Pipeline* pipelineA = renderPass.getNewPipeline(0, shaderA, window);
     s3dl::Pipeline* pipelineB = renderPass.getNewPipeline(1, shaderB, window);
     pipelineA->setVertexInput({}, {});
 
     s3dl::Framebuffer framebuffer(swapchain, renderPass);
 
-    // while (!window.shouldClose())
-    // {
-    //     window.beginRenderPass(renderPass, framebuffer);
-    //     window.bindPipeline(pipelineA);
+    std::vector<VkClearValue> clearValues;
+    VkClearValue clearValue{};
+    clearValue.color = { 0.f, 0.f, 0.f, 1.f };
+    clearValues.push_back(clearValue);
+    clearValues.push_back(clearValue);
+    clearValue.depthStencil = { 1.f, 0 };
+    clearValues.push_back(clearValue);
 
-    //     window.draw();
+    while (!window.shouldClose())
+    {
+        glfwPollEvents();
 
-    //     window.beginNextSubpass();
-    //     window.bindPipeline(pipelineB);
+        window.beginRenderPass(renderPass, framebuffer, clearValues);
+        window.bindPipeline(pipelineA);
 
-    //     window.subpassDraw();
+        // window.draw();
 
-    //     window.display();
-    // }
+        window.beginNextSubpass();
+        window.bindPipeline(pipelineB);
+
+        // window.subpassDraw();
+
+        window.display();
+    }
+
+    swapchain.waitIdle();
 
     return 0;
 }

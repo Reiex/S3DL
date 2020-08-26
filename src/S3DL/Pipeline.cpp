@@ -158,7 +158,7 @@ namespace s3dl
         VkPipelineColorBlendAttachmentState blendAttachment{};
         blendAttachment.blendEnable = VK_FALSE;
 
-        _blendAttachments.resize(renderPass._attachments.size(), blendAttachment);
+        _blendAttachments.resize(renderPass._colorReferences[subpass].size(), blendAttachment);
 
         _blendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         _blendState.pNext = nullptr;

@@ -4,6 +4,8 @@ namespace s3dl
 {
     Framebuffer::Framebuffer(const Swapchain& swapchain, const RenderPass& renderPass)
     {
+        _swapchain = &swapchain;
+
         _size = { swapchain._extent.width, swapchain._extent.height };
         _framebuffers.resize(swapchain._images.size());
         _vulkanFramebuffers.resize(swapchain._images.size());
@@ -96,9 +98,9 @@ namespace s3dl
         #endif
     }
 
-    const std::vector<VkFramebuffer>& Framebuffer::getVulkanFramebuffers() const
+    VkFramebuffer Framebuffer::getCurrentFramebuffer() const
     {
-        return _vulkanFramebuffers;
+        return _vulkanFramebuffers[_swapchain->_currentImage];
     }
 
     Framebuffer::~Framebuffer()

@@ -3,7 +3,7 @@
 namespace s3dl
 {
     Attachment::Attachment(const Swapchain& swapchain, VkAttachmentLoadOp loadOp) :
-        _format(swapchain._format.format),
+        _format(swapchain.getFormat().format),
         _loadOp(loadOp),
         _storeOp(VK_ATTACHMENT_STORE_OP_STORE),
         _initialLayout(VK_IMAGE_LAYOUT_UNDEFINED),
