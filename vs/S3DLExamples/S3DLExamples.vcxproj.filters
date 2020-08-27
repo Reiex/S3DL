@@ -13,10 +13,27 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{3b32d030-8866-4f57-a5e7-8fcc51a489bd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\examples\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\fragment.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\subpassFragment.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\subpassVertex.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\vertex.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

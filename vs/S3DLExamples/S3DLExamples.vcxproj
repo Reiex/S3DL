@@ -158,6 +158,12 @@
   <ItemGroup>
     <ClCompile Include="..\..\examples\main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\fragment.glsl" />
+    <None Include="..\..\subpassFragment.glsl" />
+    <None Include="..\..\subpassVertex.glsl" />
+    <None Include="..\..\vertex.glsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
