@@ -19,42 +19,29 @@ int main_example()
 
     // Create render pass
     s3dl::Attachment render(swapchain, VK_ATTACHMENT_LOAD_OP_CLEAR);
-    s3dl::Attachment color(VK_FORMAT_R8G8B8A8_SRGB, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    s3dl::Attachment depth(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-    
-    s3dl::Subpass subpassA({}, {&color}, {}, &depth);
-    s3dl::Subpass subpassB({&color}, {&render}, {});
-    s3dl::Dependency dependencyA(VK_SUBPASS_EXTERNAL, 0);
-    s3dl::Dependency dependencyB(0, 1);
-    s3dl::RenderPass renderPass({&render, &color, &depth}, {subpassA, subpassB}, {dependencyA, dependencyB});
+    s3dl::Subpass subpass({}, {&render}, {});
+    s3dl::Dependency dependency(VK_SUBPASS_EXTERNAL, 0);
+    s3dl::RenderPass renderPass({&render}, {subpass}, {dependency});
 
-    s3dl::Shader shaderA("vertex.spv", "fragment.spv");
-    s3dl::Shader shaderB("subpassVertex.spv", "subpassFragment.spv");
-    s3dl::Pipeline* pipelineA = renderPass.getNewPipeline(0, shaderA, window);
-    s3dl::Pipeline* pipelineB = renderPass.getNewPipeline(1, shaderB, window);
-    pipelineA->setVertexInput({}, {});
+    s3dl::Shader shader("vertex.spv", "fragment.spv");
+    s3dl::Pipeline* pipeline = renderPass.getNewPipeline(0, shader, window);
 
     s3dl::Framebuffer framebuffer(swapchain, renderPass);
 
-    std::vector<VkClearValue> clearValues;
     VkClearValue clearValue{};
-    clearValue.color = { 0.f, 0.f, 0.f, 1.f };
-    clearValues.push_back(clearValue);
-    clearValues.push_back(clearValue);
-    clearValue.depthStencil = { 1.f, 0 };
-    clearValues.push_back(clearValue);
+    clearValue.color = { 0.05f, 0.05f, 0.1f, 1.f };
 
     while (!window.shouldClose())
     {
         glfwPollEvents();
 
-        window.beginRenderPass(renderPass, framebuffer, clearValues);
-        window.bindPipeline(pipelineA);
+        window.beginRenderPass(renderPass, framebuffer, {clearValue});
+        window.bindPipeline(pipeline);
 
-        // window.draw();
+        window.draw();
 
-        window.beginNextSubpass();
-        window.bindPipeline(pipelineB);
+        // window.beginNextSubpass();
+        // window.bindPipeline(pipelineB);
 
         // window.subpassDraw();
 

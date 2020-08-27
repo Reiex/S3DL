@@ -99,7 +99,7 @@ namespace s3dl
 
         vkResetFences(Device::Active->getVulkanDevice(), 1, &_renderFences[_currentImage]);
         submitCommandBuffer(_currentImage);
-        presentSurface(target);
+        presentSurface(target, _currentImage);
 
         vkResetFences(Device::Active->getVulkanDevice(), 1, &_acquireFence);
         _currentImage = getNextImage(target);
@@ -182,28 +182,28 @@ namespace s3dl
         startRecordingCommandBuffer(_currentImage);
     }
 
-    void Swapchain::startRecordingCommandBuffer(unsigned int buffer) const
+    void Swapchain::startRecordingCommandBuffer(unsigned int index) const
     {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags = 0;
         beginInfo.pInheritanceInfo = nullptr;
 
-        VkResult result = vkBeginCommandBuffer(_commandBuffers[buffer], &beginInfo);
+        VkResult result = vkBeginCommandBuffer(_commandBuffers[index], &beginInfo);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to begin recording command buffer. VkResult: " + std::to_string(result));
     }
 
-    void Swapchain::stopRecordingCommandBuffer(unsigned int buffer) const
+    void Swapchain::stopRecordingCommandBuffer(unsigned int index) const
     {
-        VkResult result = vkEndCommandBuffer(_commandBuffers[buffer]);
+        VkResult result = vkEndCommandBuffer(_commandBuffers[index]);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to record command buffer. VkResult: " + std::to_string(result));
     }
 
-    void Swapchain::recreateCommandBuffer(unsigned int buffer) const
+    void Swapchain::recreateCommandBuffer(unsigned int index) const
     {
-        vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &_commandBuffers[buffer]);
+        vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &_commandBuffers[index]);
 
         VkCommandBufferAllocateInfo commandBufferInfo{};
         commandBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -211,10 +211,10 @@ namespace s3dl
         commandBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         commandBufferInfo.commandBufferCount = 1;
 
-        vkAllocateCommandBuffers(Device::Active->getVulkanDevice(), &commandBufferInfo, &_commandBuffers[buffer]);
+        vkAllocateCommandBuffers(Device::Active->getVulkanDevice(), &commandBufferInfo, &_commandBuffers[index]);
     }
 
-    void Swapchain::submitCommandBuffer(unsigned int buffer) const
+    void Swapchain::submitCommandBuffer(unsigned int index) const
     {
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
         VkSubmitInfo submitInfo{};
@@ -223,23 +223,23 @@ namespace s3dl
         submitInfo.pWaitSemaphores = nullptr;
         submitInfo.pWaitDstStageMask = waitStages;
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &_commandBuffers[buffer];
+        submitInfo.pCommandBuffers = &_commandBuffers[index];
         submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &_renderSemaphores[_currentImage];
+        submitInfo.pSignalSemaphores = &_renderSemaphores[index];
 
-        VkResult result = vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, _renderFences[_currentImage]);
+        VkResult result = vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, _renderFences[index]);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to submit draw command buffer. VkResult: " + std::to_string(result));
     }
 
-    void Swapchain::presentSurface(const RenderTarget& target) const
+    void Swapchain::presentSurface(const RenderTarget& target, unsigned int index) const
     {
         if (target.hasVulkanSurface())
         {
             VkPresentInfoKHR presentInfo{};
             presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
             presentInfo.waitSemaphoreCount = 1;
-            presentInfo.pWaitSemaphores = &_renderSemaphores[_currentImage];
+            presentInfo.pWaitSemaphores = &_renderSemaphores[index];
             presentInfo.swapchainCount = 1;
             presentInfo.pSwapchains = &_swapChain;
             presentInfo.pImageIndices = &_currentImage;
@@ -253,9 +253,9 @@ namespace s3dl
     {
         if (target.hasVulkanSurface())
         {
-            uint32_t imageIndex;
-            vkAcquireNextImageKHR(Device::Active->getVulkanDevice(), _swapChain, UINT64_MAX, VK_NULL_HANDLE, _acquireFence, &imageIndex);
-            return imageIndex;
+            uint32_t index;
+            vkAcquireNextImageKHR(Device::Active->getVulkanDevice(), _swapChain, UINT64_MAX, VK_NULL_HANDLE, _acquireFence, &index);
+            return index;
         }
 
         return (_currentImage + 1) % _images.size();

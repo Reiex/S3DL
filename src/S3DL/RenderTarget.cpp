@@ -29,7 +29,7 @@ namespace s3dl
         renderPassInfo.renderPass = renderPass.getVulkanRenderPass();
         renderPassInfo.framebuffer = framebuffer.getCurrentFramebuffer();
         renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = { _targetSize.x, _targetSize.y };
+        renderPassInfo.renderArea.extent = _swapchain->getExtent();
         renderPassInfo.clearValueCount = clearValues.size();
         renderPassInfo.pClearValues = clearValues.data();
 
@@ -43,7 +43,7 @@ namespace s3dl
 
     void RenderTarget::draw()
     {
-
+        vkCmdDraw(_swapchain->getCurrentCommandBuffer(), 3, 1, 0, 0);
     }
 
     void RenderTarget::beginNextSubpass()

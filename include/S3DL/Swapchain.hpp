@@ -28,12 +28,12 @@ namespace s3dl
 
             void create(const RenderTarget& target);
 
-            void startRecordingCommandBuffer(unsigned int buffer) const;
-            void stopRecordingCommandBuffer(unsigned int buffer) const;
-            void recreateCommandBuffer(unsigned int buffer) const;
+            void startRecordingCommandBuffer(unsigned int index) const;
+            void stopRecordingCommandBuffer(unsigned int index) const;
+            void recreateCommandBuffer(unsigned int index) const;
 
-            void submitCommandBuffer(unsigned int buffer) const;
-            void presentSurface(const RenderTarget& target) const;
+            void submitCommandBuffer(unsigned int index) const;
+            void presentSurface(const RenderTarget& target, unsigned int index) const;
             unsigned int getNextImage(const RenderTarget& target) const;
 
             VkSwapchainKHR _swapChain;

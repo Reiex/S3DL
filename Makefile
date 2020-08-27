@@ -21,7 +21,8 @@ OBJS = obj/main.o \
 	   obj/stb/stb_image_write.o \
 	   obj/TextureData.o \
 	   obj/TextureSampler.o \
-	   obj/Texture.o
+	   obj/Texture.o \
+	   obj/Framebuffer.o
 
 vulkanExamples: $(SPVS) $(OBJS)
 	g++ $(CFLAGS) $(OBJS) -o vulkanExamples $(LDFLAGS)
