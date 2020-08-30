@@ -26,6 +26,7 @@ int main_example()
 
     s3dl::Shader shader("vertex.spv", "fragment.spv");
     s3dl::Pipeline* pipeline = renderPass.getNewPipeline(0, shader, window);
+    pipeline->setVertexInput({ s3dl::Vertex::getBindingDescription() }, s3dl::Vertex::getAttributeDescriptions());
 
     s3dl::Framebuffer framebuffer(swapchain, renderPass);
     
@@ -42,7 +43,6 @@ int main_example()
         {{0.5f, 0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 1.f, 0.f, 1.f}},
         {{-0.5f, 0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 0.f, 1.f, 1.f}}
     });
-    pipeline->setVertexInput({ s3dl::Vertex::getBindingDescription() }, s3dl::Vertex::getAttributeDescriptions());
 
     while (!window.shouldClose())
     {
