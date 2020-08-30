@@ -33,7 +33,7 @@ namespace s3dl
 
         descriptions[3].binding = binding;
         descriptions[3].location = 3;
-        descriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+        descriptions[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
         descriptions[3].offset = offsetof(Vertex, color);
 
         return descriptions;

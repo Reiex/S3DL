@@ -30,6 +30,8 @@
 // Classes for ressource management
 
 #include <S3DL/Vertex.hpp>
+#include <S3DL/Drawable.hpp>
+#include <S3DL/Mesh.hpp>
 
 #include <S3DL/Buffer.hpp>
 #include <S3DL/stb/stb_image.hpp>

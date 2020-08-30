@@ -51,6 +51,8 @@ namespace s3dl
 
 
     struct Vertex;
+    class Drawable;
+    template<typename T> class Mesh;
 
     class Buffer;
     typedef _vec4<unsigned char> Color;

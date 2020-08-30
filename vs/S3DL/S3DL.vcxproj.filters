@@ -155,5 +155,14 @@
     <ClInclude Include="..\..\include\S3DL\stb\stb_image_write.hpp">
       <Filter>Header Files\stb</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\S3DL\Drawable.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\S3DL\Mesh.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\S3DL\MeshT.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

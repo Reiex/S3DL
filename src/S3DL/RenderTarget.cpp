@@ -41,19 +41,14 @@ namespace s3dl
         vkCmdBindPipeline(_swapchain->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getVulkanPipeline());
     }
 
-    void RenderTarget::draw()
+    void RenderTarget::draw(const Drawable& drawable)
     {
-        vkCmdDraw(_swapchain->getCurrentCommandBuffer(), 3, 1, 0, 0);
+        drawable.draw(_swapchain->getCurrentCommandBuffer());
     }
 
     void RenderTarget::beginNextSubpass()
     {
         vkCmdNextSubpass(_swapchain->getCurrentCommandBuffer(), VK_SUBPASS_CONTENTS_INLINE);
-    }
-
-    void RenderTarget::subpassDraw()
-    {
-        vkCmdDraw(_swapchain->getCurrentCommandBuffer(), 3, 1, 0, 0);
     }
 
     void RenderTarget::display()

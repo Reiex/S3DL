@@ -21,9 +21,8 @@ namespace s3dl
 
             void beginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer, const std::vector<VkClearValue>& clearValues);
             void bindPipeline(const Pipeline* pipeline);
-            void draw();
+            void draw(const Drawable& drawable);
             void beginNextSubpass();
-            void subpassDraw();
             void display();
 
             const uvec2& getTargetSize() const;

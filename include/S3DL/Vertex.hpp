@@ -17,6 +17,6 @@ namespace s3dl
         vec3 position;
         vec2 texCoords;
         vec3 normal;
-        vec3 color;
+        vec4 color;
     };
 }

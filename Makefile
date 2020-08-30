@@ -27,6 +27,8 @@ OBJS = obj/main.o \
 vulkanExamples: $(SPVS) $(OBJS)
 	g++ $(CFLAGS) $(OBJS) -o vulkanExamples $(LDFLAGS)
 
+shaders: $(SPVS)
+
 clean:
 	-rm *.spv
 	-rm obj/*.o
