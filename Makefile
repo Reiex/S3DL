@@ -41,13 +41,13 @@ obj/%.o: src/S3DL/%.cpp
 	g++ $(CFLAGS) -c $^ -o $@
 
 vertex.spv: vertex.glsl
-	glslc -fshader-stage=vertex $^ -o $@
+	glslc -fshader-stage=vertex $^ -o $@ --target-env=vulkan1.1
 
 subpassVertex.spv: subpassVertex.glsl
-	glslc -fshader-stage=vertex $^ -o $@
+	glslc -fshader-stage=vertex $^ -o $@ --target-env=vulkan1.1
 
 fragment.spv: fragment.glsl
-	glslc -fshader-stage=fragment $^ -o $@
+	glslc -fshader-stage=fragment $^ -o $@ --target-env=vulkan1.1
 
 subpassFragment.spv: subpassFragment.glsl
-	glslc -fshader-stage=fragment $^ -o $@
+	glslc -fshader-stage=fragment $^ -o $@ --target-env=vulkan1.1

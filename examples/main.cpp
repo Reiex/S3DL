@@ -20,7 +20,7 @@ int main_example()
 
     // Create render pass
     s3dl::Attachment render(swapchain, VK_ATTACHMENT_LOAD_OP_CLEAR);
-    s3dl::Attachment depth(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    s3dl::Attachment depth(VK_FORMAT_D24_UNORM_S8_UINT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     s3dl::Subpass subpass({}, {&render}, {}, &depth);
     s3dl::Dependency dependency(VK_SUBPASS_EXTERNAL, 0);
     s3dl::RenderPass renderPass({&render, &depth}, {subpass}, {dependency});
@@ -39,7 +39,7 @@ int main_example()
     clearValues.push_back(clearValue);
 
     // Create mesh
-    s3dl::Mesh<s3dl::Vertex> mesh(
+    s3dl::Mesh<s3dl::Vertex> meshA(
         {
             {{-0.5f, -0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 1.f, 1.f, 1.f}},
             {{0.5f, -0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 0.f, 0.f, 1.f}},
@@ -49,15 +49,27 @@ int main_example()
         {
             0, 1, 2, 2, 3, 0
         });
+    s3dl::Mesh<s3dl::Vertex> meshB(
+        {
+            {{-0.9f, -0.9f, 0.5f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 0.f, 0.f, 1.f}},
+            {{0.9f, -0.9f, 0.5f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 1.f, 1.f, 1.f}},
+            {{0.9f, 0.9f, 0.5f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 0.f, 1.f, 1.f}},
+            {{-0.9f, 0.9f, 0.5f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 1.f, 0.f, 1.f}}
+        },
+        {
+            0, 1, 2, 2, 3, 0
+        });
 
+    int i(0);
     while (!window.shouldClose())
     {
         glfwPollEvents();
 
         window.beginRenderPass(renderPass, framebuffer, clearValues);
         window.bindPipeline(pipeline);
-
-        window.draw(mesh);
+        
+        window.draw(meshA);
+        window.draw(meshB);
 
         // window.beginNextSubpass();
         // window.bindPipeline(pipelineB);
