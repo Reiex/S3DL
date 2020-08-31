@@ -39,11 +39,16 @@ int main_example()
     clearValues.push_back(clearValue);
 
     // Create mesh
-    s3dl::Mesh<s3dl::Vertex> mesh({
-        {{0.f, -0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 0.f, 0.f, 1.f}},
-        {{0.5f, 0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 1.f, 0.f, 1.f}},
-        {{-0.5f, 0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 0.f, 1.f, 1.f}}
-    });
+    s3dl::Mesh<s3dl::Vertex> mesh(
+        {
+            {{-0.5f, -0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 1.f, 1.f, 1.f}},
+            {{0.5f, -0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 0.f, 0.f, 1.f}},
+            {{0.5f, 0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 1.f, 0.f, 1.f}},
+            {{-0.5f, 0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 0.f, 1.f, 1.f}}
+        },
+        {
+            0, 1, 2, 2, 3, 0
+        });
 
     while (!window.shouldClose())
     {

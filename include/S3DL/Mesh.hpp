@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <cstdint>
 
 #include <vulkan/vulkan.h>
 
@@ -14,6 +15,7 @@ namespace s3dl
         public:
 
             Mesh(const std::vector<T>& vertices);
+            Mesh(const std::vector<T>& vertices, const std::vector<uint32_t>& indices);
             Mesh(const Mesh& mesh) = delete;
 
             Mesh& operator=(const Mesh& mesh) = delete;
@@ -22,15 +24,20 @@ namespace s3dl
 
         private:
 
-            void createBuffer() const;
-            void destroyBuffer() const;
+            void createVertexBuffer() const;
+            void createIndexBuffer() const;
+            void destroyVertexBuffer() const;
+            void destroyIndexBuffer() const;
 
             void draw(VkCommandBuffer commandBuffer) const;
 
             std::vector<T> _vertices;
+            mutable Buffer* _vertexBuffer;
+            mutable bool _vertexBufferCreated;
 
-            mutable bool _bufferCreated;
-            mutable Buffer* _buffer;
+            std::vector<uint32_t> _indices;
+            mutable Buffer* _indexBuffer;
+            mutable bool _indexBufferCreated;
 	};
 }
 
