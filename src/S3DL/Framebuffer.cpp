@@ -12,66 +12,68 @@ namespace s3dl
         _attachments.resize(renderPass._attachments.size());
         _attachmentsBelonging.resize(renderPass._attachments.size());
         _vulkanAttachments.resize(swapchain._images.size());
-
-        // Manage swapchain texture
-
-        _attachments[0] = nullptr;
-        _attachmentsBelonging[0] = false;
-
         for (int i(0); i < swapchain._images.size(); i++)
-        {
             _vulkanAttachments[i].resize(renderPass._attachments.size());
-            _vulkanAttachments[i][0] = swapchain._imageViews[i];
-        }
 
-        // Create texture for each attachment (except swapchain)
+        // Create texture for each attachment (except swapchain where image views are fetched from it)
 
-        for (int i(1); i < renderPass._attachments.size(); i++)
+        for (int i(0); i < renderPass._attachments.size(); i++)
         {
-            VkFormat format(renderPass._attachments[i].format);
-            VkImageTiling tiling(VK_IMAGE_TILING_OPTIMAL);
-            VkImageUsageFlags usage(0);
-            VkImageAspectFlags imageAspects(0);
-
-            for (int j(0); j < renderPass._inputReferences.size(); j++)
+            if (renderPass._swapchainAttachments[i])
             {
-                for (int k(0); k < renderPass._inputReferences[j].size(); k++)
+                _attachments[i] = nullptr;
+                _attachmentsBelonging[i] = false;
+
+                for (int j(0); j < swapchain._images.size(); j++)
+                    _vulkanAttachments[j][i] = swapchain._imageViews[j];
+            }
+            else
+            {
+                VkFormat format(renderPass._attachments[i].format);
+                VkImageTiling tiling(VK_IMAGE_TILING_OPTIMAL);
+                VkImageUsageFlags usage(0);
+                VkImageAspectFlags imageAspects(0);
+
+                for (int j(0); j < renderPass._inputReferences.size(); j++)
                 {
-                    if (renderPass._inputReferences[j][k].attachment == i)
+                    for (int k(0); k < renderPass._inputReferences[j].size(); k++)
                     {
-                        usage = usage | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+                        if (renderPass._inputReferences[j][k].attachment == i)
+                        {
+                            usage = usage | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+                        }
                     }
                 }
-            }
 
-            for (int j(0); j < renderPass._colorReferences.size(); j++)
-            {
-                for (int k(0); k < renderPass._colorReferences[j].size(); k++)
+                for (int j(0); j < renderPass._colorReferences.size(); j++)
                 {
-                    if (renderPass._colorReferences[j][k].attachment == i)
+                    for (int k(0); k < renderPass._colorReferences[j].size(); k++)
                     {
-                        usage = usage | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-                        imageAspects = imageAspects | VK_IMAGE_ASPECT_COLOR_BIT;
+                        if (renderPass._colorReferences[j][k].attachment == i)
+                        {
+                            usage = usage | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                            imageAspects = imageAspects | VK_IMAGE_ASPECT_COLOR_BIT;
+                        }
                     }
                 }
-            }
 
-            for (int j(0); j < renderPass._subpasses.size(); j++)
-            {
-                if (renderPass._subpasses[j].pDepthStencilAttachment != nullptr)
+                for (int j(0); j < renderPass._subpasses.size(); j++)
                 {
-                    if (renderPass._subpasses[j].pDepthStencilAttachment->attachment == i)
+                    if (renderPass._subpasses[j].pDepthStencilAttachment != nullptr)
                     {
-                        usage = usage | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-                        imageAspects = imageAspects | VK_IMAGE_ASPECT_DEPTH_BIT;
+                        if (renderPass._subpasses[j].pDepthStencilAttachment->attachment == i)
+                        {
+                            usage = usage | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+                            imageAspects = imageAspects | VK_IMAGE_ASPECT_DEPTH_BIT;
+                        }
                     }
                 }
-            }
 
-            _attachments[i] = new Texture(_size, format, tiling, usage, imageAspects);
-            _attachmentsBelonging[i] = true;
-            for (int j(0); j < swapchain._images.size(); j++)
-                _vulkanAttachments[j][i] = _attachments[i]->getVulkanImageView();
+                _attachments[i] = new Texture(_size, format, tiling, usage, imageAspects);
+                _attachmentsBelonging[i] = true;
+                for (int j(0); j < swapchain._images.size(); j++)
+                    _vulkanAttachments[j][i] = _attachments[i]->getVulkanImageView();
+            }
         }
 
         // Create framebuffer

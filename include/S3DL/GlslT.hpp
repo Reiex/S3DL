@@ -1,4 +1,4 @@
-#include <S3DL/S3DL.hpp>
+#include <S3DL/types.hpp>
 
 namespace s3dl
 {

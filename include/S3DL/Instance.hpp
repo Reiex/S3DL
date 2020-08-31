@@ -27,6 +27,8 @@ namespace s3dl
 
             Instance& operator=(const Instance& instance) = delete;
 
+            void setActive() const;
+
             VkInstance getVulkanInstance() const;
 
             ~Instance();

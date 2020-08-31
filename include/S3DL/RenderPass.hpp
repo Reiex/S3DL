@@ -29,6 +29,7 @@ namespace s3dl
             void destroyVulkanRenderPass() const;
         
             std::vector<VkAttachmentDescription> _attachments;
+            std::vector<bool> _swapchainAttachments;
 
             std::vector<VkSubpassDescription> _subpasses;
             std::vector<std::vector<VkAttachmentReference>> _inputReferences;

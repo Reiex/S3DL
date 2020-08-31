@@ -7,8 +7,6 @@ namespace s3dl
 
     Instance::Instance(const std::set<std::string>& additionalExtensions, const std::set<std::string>& additionalValidationLayers)
     {
-        Active = this;
-
         std::set<const char*> extensions = {};
         #ifndef NDEBUG
         std::set<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -106,6 +104,11 @@ namespace s3dl
         #endif
     }
 
+    void Instance::setActive() const
+    {
+        Active = this;
+    }
+
     VkInstance Instance::getVulkanInstance() const
     {
         return _instance;
@@ -113,6 +116,9 @@ namespace s3dl
 
     Instance::~Instance()
     {
+        if (Active == this)
+            Active = nullptr;
+
         vkDestroyInstance(_instance, nullptr);
 
         INSTANCE_COUNT--;

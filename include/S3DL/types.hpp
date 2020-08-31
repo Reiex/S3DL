@@ -50,10 +50,6 @@ namespace s3dl
     class Pipeline;
 
 
-    struct Vertex;
-    class Drawable;
-    template<typename T> class Mesh;
-
     class Buffer;
     typedef _vec4<unsigned char> Color;
     class TextureData;
@@ -61,4 +57,8 @@ namespace s3dl
     class Texture;
 
     class Framebuffer;
+
+    struct Vertex;
+    class Drawable;
+    template<typename T> class Mesh;
 }

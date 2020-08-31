@@ -156,8 +156,6 @@ namespace s3dl
 
     void Device::create(const RenderTarget& target, const PhysicalDevice& physicalDevice, const std::set<std::string>& additionalExtensions)
     {
-        setActive();
-
         _physicalDevice = physicalDevice;
 
         #ifndef NDEBUG

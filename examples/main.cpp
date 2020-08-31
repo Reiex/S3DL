@@ -5,6 +5,7 @@ int main_example()
 {
     // Init context
     s3dl::Instance instance;
+    instance.setActive();
 
     // Open window
     s3dl::RenderWindow window({1000, 800}, "S3DL Test");
@@ -71,7 +72,7 @@ int main()
 {
     int exit_code = main_example();
 
-    system("pause");
+    // system("pause");
 
     return exit_code;
 }

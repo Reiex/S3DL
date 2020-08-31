@@ -17,6 +17,7 @@ namespace s3dl
     RenderPass::RenderPass(const std::vector<const Attachment*>& attachments, const std::vector<Subpass>& subpasses, const std::vector<Dependency>& dependencies)
     {
         _attachments.resize(attachments.size());
+        _swapchainAttachments.resize(attachments.size());
 
         _subpasses.resize(subpasses.size());
         _inputReferences.resize(subpasses.size());
@@ -41,6 +42,8 @@ namespace s3dl
             attachment.finalLayout = attachments[i]->_finalLayout;
 
             _attachments[i] = attachment;
+
+            _swapchainAttachments[i] = (attachments[i]->_swapchain != nullptr);
         }
 
         for (int i(0); i < subpasses.size(); i++)
