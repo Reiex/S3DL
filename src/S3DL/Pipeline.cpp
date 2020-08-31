@@ -13,7 +13,15 @@ namespace s3dl
         _vertexInput.pVertexAttributeDescriptions = (_inputAttributes.size() != 0) ? _inputAttributes.data(): nullptr;
 
         _vulkanPipelineComputed = false;
-        _vulkanPipelineLayoutComputed = false;
+    }
+
+    void Pipeline::setDepthTest(bool depthTestEnabled, bool depthWriteEnabled, VkCompareOp depthCompareOp)
+    {
+        _depthStencil.depthTestEnable = depthTestEnabled;
+        _depthStencil.depthWriteEnable = depthWriteEnabled;
+        _depthStencil.depthCompareOp = depthCompareOp;
+
+        _vulkanPipelineComputed = false;
     }
 
     VkPipelineLayout Pipeline::getVulkanPipelineLayout() const
@@ -143,8 +151,8 @@ namespace s3dl
         _depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         _depthStencil.pNext = nullptr;
         _depthStencil.flags = 0;
-        _depthStencil.depthTestEnable = VK_TRUE;
-        _depthStencil.depthWriteEnable = VK_TRUE;
+        _depthStencil.depthTestEnable = VK_FALSE;
+        _depthStencil.depthWriteEnable = VK_FALSE;
         _depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
         _depthStencil.depthBoundsTestEnable = VK_FALSE;
         _depthStencil.stencilTestEnable = VK_FALSE;

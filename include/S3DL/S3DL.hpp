@@ -25,6 +25,7 @@
 #include <S3DL/Shader.hpp>
 
 #include <S3DL/Pipeline.hpp>
+#include <S3DL/PipelineLayout.hpp>
 
 
 // Classes for ressource management

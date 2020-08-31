@@ -24,11 +24,34 @@ int main_example()
     s3dl::Subpass subpass({}, {&render}, {}, &depth);
     s3dl::Dependency dependency(VK_SUBPASS_EXTERNAL, 0);
     s3dl::RenderPass renderPass({&render, &depth}, {subpass}, {dependency});
-
+    
+    // Create and configure pipeline from render pass
     s3dl::Shader shader("vertex.spv", "fragment.spv");
     s3dl::Pipeline* pipeline = renderPass.getNewPipeline(0, shader, window);
     pipeline->setVertexInput({ s3dl::Vertex::getBindingDescription() }, s3dl::Vertex::getAttributeDescriptions());
+    pipeline->setDepthTest(true, true);
 
+    /*
+    
+    // Extract, configure and lock pipeline layout
+    s3dl::PipelineLayout* layout = pipeline->getLayout();
+    layout->declareUniform(0, sizeof(float));
+    layout->declareUniform(1, sizeof(vec4));
+    layout->lock();
+
+    layout->setUniform(0, 3.1415926);
+    layout->setUniform(1, {1, 2, 3, 4});
+    
+    Cas à traiter:
+    lock() -> lock() (au lieu de lock->unlock)
+    Toujours le bon nombre de buffers ?
+    Toujours les buffers à la bonne taille ?
+    Toujours les buffers à jour ?
+    Toujours les draws avec les bons buffers ?
+
+    */
+
+    // Create framebuffer
     s3dl::Framebuffer framebuffer(swapchain, renderPass);
     
     std::vector<VkClearValue> clearValues;
@@ -38,7 +61,7 @@ int main_example()
     clearValue.depthStencil = { 1.f, 0 };
     clearValues.push_back(clearValue);
 
-    // Create mesh
+    // Create meshes
     s3dl::Mesh<s3dl::Vertex> meshA(
         {
             {{-0.5f, -0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 1.f, 1.f, 1.f}},
@@ -60,7 +83,6 @@ int main_example()
             0, 1, 2, 2, 3, 0
         });
 
-    int i(0);
     while (!window.shouldClose())
     {
         glfwPollEvents();

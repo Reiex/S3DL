@@ -48,6 +48,7 @@ namespace s3dl
     class Shader;
 
     class Pipeline;
+    class PipelineLayout;
 
 
     class Buffer;

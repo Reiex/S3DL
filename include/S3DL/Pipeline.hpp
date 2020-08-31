@@ -15,6 +15,7 @@ namespace s3dl
             Pipeline& operator=(const Pipeline& pipeline) = delete;
 
             void setVertexInput(const std::vector<VkVertexInputBindingDescription>& bindings, const std::vector<VkVertexInputAttributeDescription>& attributes);
+            void setDepthTest(bool depthTestEnabled, bool depthWriteEnabled, VkCompareOp depthCompareOp = VK_COMPARE_OP_LESS);
 
             VkPipelineLayout getVulkanPipelineLayout() const;
             VkPipeline getVulkanPipeline() const;
