@@ -24,33 +24,18 @@ namespace s3dl
         _vulkanPipelineComputed = false;
     }
 
-    VkPipelineLayout Pipeline::getVulkanPipelineLayout() const
+    PipelineLayout* Pipeline::getPipelineLayout() const
     {
-        if (!_vulkanPipelineLayoutComputed)
-        {
-            destroyVulkanPipelineLayout();
-
-            VkResult result = vkCreatePipelineLayout(Device::Active->getVulkanDevice(), &_pipelineLayout, nullptr, &_vulkanPipelineLayout);
-            if (result != VK_SUCCESS)
-                throw std::runtime_error("Failed to create pipeline layout. VkResult: " + std::to_string(result));
-
-            #ifndef NDEBUG
-            std::clog << "<S3DL Debug> VkPipelineLayout successfully created." << std::endl;
-            #endif
-            
-            _vulkanPipelineLayoutComputed = true;
-        }
-
-        return _vulkanPipelineLayout;
+        return _pipelineLayout;
     }
 
     VkPipeline Pipeline::getVulkanPipeline() const
     {
-        if (!_vulkanPipelineComputed | !_vulkanPipelineLayoutComputed)
+        if (!_vulkanPipelineComputed)
         {
             destroyVulkanPipeline();
             
-            _pipeline.layout = getVulkanPipelineLayout();
+            _pipeline.layout = _pipelineLayout->getVulkanPipelineLayout();
 
             VkResult result = vkCreateGraphicsPipelines(Device::Active->getVulkanDevice(), VK_NULL_HANDLE, 1, &_pipeline, nullptr, &_vulkanPipeline);
             if (result != VK_SUCCESS)
@@ -69,7 +54,7 @@ namespace s3dl
     Pipeline::~Pipeline()
     {
         destroyVulkanPipeline();
-        destroyVulkanPipelineLayout();
+        delete _pipelineLayout;
     }
 
     Pipeline::Pipeline(const RenderPass& renderPass, unsigned int subpass, const Shader& shader, const RenderTarget& target)
@@ -186,16 +171,10 @@ namespace s3dl
         _blendState.blendConstants[1] = 0.f;
         _blendState.blendConstants[2] = 0.f;
         _blendState.blendConstants[3] = 0.f;
-
+        
         // Pipeline layout
 
-        _pipelineLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        _pipelineLayout.pNext = nullptr;
-        _pipelineLayout.flags = 0;
-        _pipelineLayout.setLayoutCount = 0;
-        _pipelineLayout.pSetLayouts = nullptr;
-        _pipelineLayout.pushConstantRangeCount = 0;
-        _pipelineLayout.pPushConstantRanges = nullptr;
+        _pipelineLayout = new PipelineLayout();
 
         // Pipeline creation
         
@@ -219,25 +198,8 @@ namespace s3dl
         _pipeline.basePipelineHandle = VK_NULL_HANDLE;
         _pipeline.basePipelineIndex = -1;
 
-        _vulkanPipelineLayoutComputed = false;
         _vulkanPipelineComputed = false;
-        _vulkanPipelineLayout = VK_NULL_HANDLE;
         _vulkanPipeline = VK_NULL_HANDLE;
-    }
-
-    void Pipeline::destroyVulkanPipelineLayout() const
-    {
-        if (_vulkanPipelineLayout != VK_NULL_HANDLE)
-        {
-            vkDestroyPipelineLayout(Device::Active->getVulkanDevice(), _vulkanPipelineLayout, nullptr);
-
-            #ifndef NDEBUG
-            std::clog << "<S3DL Debug> VkPipelineLayout successfully destroyed." << std::endl;
-            #endif
-        }
-
-        _vulkanPipelineLayout = VK_NULL_HANDLE;
-        _vulkanPipelineLayoutComputed = false;
     }
 
     void Pipeline::destroyVulkanPipeline() const

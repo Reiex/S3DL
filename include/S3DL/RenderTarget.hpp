@@ -42,5 +42,6 @@ namespace s3dl
             VkSurfaceKHR _surface;
 
             const RenderPass* _currentRenderPass;
+            const Pipeline* _currentPipeline;
     };
 }

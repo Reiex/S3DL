@@ -14,8 +14,8 @@ namespace s3dl
             
         extendDeclaredRange(set, binding);
         
-        _bindingStates[set][binding].size = elementSize;
-        _bindingStates[set][binding].count = count;
+        _bindings[set][binding].size = elementSize;
+        _bindings[set][binding].count = count;
         
         _descriptorSetLayoutBindings[set][binding].descriptorCount = count;
         _descriptorSetLayoutBindings[set][binding].stageFlags = shaderStage;
@@ -23,13 +23,16 @@ namespace s3dl
     
     void PipelineLayout::lock(const Swapchain& swapchain)
     {
-        createVulkanDescriptorSetLayouts();
-        createVulkanPipelineLayout();
-        createVulkanDescriptorPool(swapchain);
-        createVulkanDescriptorSets(swapchain);
-        createBuffers(swapchain);
+        if (_bindings.size() > 0)
+        {
+            createVulkanDescriptorSetLayouts();
+            createVulkanPipelineLayout();
+            createVulkanDescriptorPool(swapchain);
+            createVulkanDescriptorSets(swapchain);
+            createBuffers(swapchain);
 
-        computeBindingStates();
+            computeBindingStates();
+        }
 
         _locked = true;
     }
@@ -78,17 +81,14 @@ namespace s3dl
     
     PipelineLayout::~PipelineLayout()
     {
-        destroyBuffers();
-        destroyVulkanDescriptorSets();
-        destroyVulkanDescriptorPool();
-        destroyVulkanPipelineLayout();
-        destroyVulkanDescriptorSetLayouts();
+        unlock();
     }
     
     PipelineLayout::PipelineLayout() :
         _vulkanPipelineLayout(VK_NULL_HANDLE),
         _vulkanPipelineLayoutComputed(false),
-        _locked(false)
+        _locked(false),
+        _vulkanDescriptorPool(VK_NULL_HANDLE)
     {
         _pipelineLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         _pipelineLayout.pNext = nullptr;
@@ -115,43 +115,46 @@ namespace s3dl
         _descriptorSets.pSetLayouts = nullptr;
     }
 
-    void PipelineLayout::bind(const Swapchain& swapchain, unsigned int index)
+    void PipelineLayout::bind(const Swapchain& swapchain)
     {
         if (!_locked)
             throw std::runtime_error("Cannot draw using a pipeline while its pipeline layout is not locked.");
 
-        _buffers[index]->setData(_bufferData.data(), _bufferData.size());
+        if (_bindings.size() == 0)
+            return;
+
+        _buffers[swapchain.getCurrentImage()]->setData(_bufferData.data(), _bufferData.size());
 
         std::vector<VkDescriptorBufferInfo> bufferInfos;
         std::vector<VkWriteDescriptorSet> descriptorWrites;
-        for (int i(0); i < _bindingStates.size(); i++)
+        for (int i(0); i < _bindings.size(); i++)
         {
-            for (int j(0); j < _bindingStates[i].size(); j++)
+            for (int j(0); j < _bindings[i].size(); j++)
             {
-                if (_bindingStates[i][j].needsUpdate)
+                if (_bindings[i][j].needsUpdate)
                 {
                     VkDescriptorBufferInfo bufferInfo{};
-                    bufferInfo.buffer = _buffers[index]->getVulkanBuffer();
-                    bufferInfo.offset = _bindingStates[i][j].offset;
-                    bufferInfo.range = _bindingStates[i][j].size;
+                    bufferInfo.buffer = _buffers[swapchain.getCurrentImage()]->getVulkanBuffer();
+                    bufferInfo.offset = _bindings[i][j].offset;
+                    bufferInfo.range = _bindings[i][j].size;
 
                     bufferInfos.push_back(bufferInfo);
                 }
             }
         }
-        for (int i(0); i < _bindingStates.size(); i++)
+        for (int i(0); i < _bindings.size(); i++)
         {
-            for (int j(0); j < _bindingStates[i].size(); j++)
+            for (int j(0); j < _bindings[i].size(); j++)
             {
-                if (_bindingStates[i][j].needsUpdate)
+                if (_bindings[i][j].needsUpdate)
                 {
                     VkWriteDescriptorSet descriptorWrite{};
                     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                    descriptorWrite.dstSet = _vulkanDescriptorSets[index][i];
+                    descriptorWrite.dstSet = _vulkanDescriptorSets[swapchain.getCurrentImage()][i];
                     descriptorWrite.dstBinding = j;
                     descriptorWrite.dstArrayElement = 0;
                     descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    descriptorWrite.descriptorCount = _bindingStates[i][j].count;
+                    descriptorWrite.descriptorCount = _bindings[i][j].count;
                     descriptorWrite.pBufferInfo = &bufferInfos[descriptorWrites.size()];
                     descriptorWrite.pImageInfo = nullptr;
                     descriptorWrite.pTexelBufferView = nullptr;
@@ -164,17 +167,16 @@ namespace s3dl
         if (descriptorWrites.size() != 0)
             vkUpdateDescriptorSets(Device::Active->getVulkanDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 
-        if (_vulkanDescriptorSets[index].size() != 0)
-            vkCmdBindDescriptorSets(
-                swapchain.getCurrentCommandBuffer(),
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                _vulkanPipelineLayout,
-                0,
-                _vulkanDescriptorSets[index].size(),
-                _vulkanDescriptorSets[index].data(),
-                0,
-                nullptr
-            );
+        vkCmdBindDescriptorSets(
+            swapchain.getCurrentCommandBuffer(),
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            _vulkanPipelineLayout,
+            0,
+            _vulkanDescriptorSets[swapchain.getCurrentImage()].size(),
+            _vulkanDescriptorSets[swapchain.getCurrentImage()].data(),
+            0,
+            nullptr
+        );
     }
 
     void PipelineLayout::createVulkanDescriptorSetLayouts()
@@ -272,9 +274,9 @@ namespace s3dl
         destroyBuffers();
 
         uint32_t totalSize(0);
-        for (int i(0); i < _bindingStates.size(); i++)
-            for (int j(0); j < _bindingStates[i].size(); j++)
-                totalSize += _bindingStates[i][j].size;
+        for (int i(0); i < _bindings.size(); i++)
+            for (int j(0); j < _bindings[i].size(); j++)
+                totalSize += _bindings[i][j].size;
         
         _bufferData.resize(totalSize, 0);
         _buffers.resize(swapchain.getImageCount());
@@ -343,15 +345,15 @@ namespace s3dl
 
     void PipelineLayout::extendDeclaredRange(uint32_t set, uint32_t binding)
     {
-        if (_bindingStates.size() <= set)
+        if (_bindings.size() <= set)
         {
-            _bindingStates.resize(set + 1);
+            _bindings.resize(set + 1);
             _descriptorSetLayoutBindings.resize(set + 1);
         }
         
-        if (_bindingStates[set].size() <= binding)
+        if (_bindings[set].size() <= binding)
         {
-            _bindingStates[set].resize(binding + 1, {0, 0, 0, true});
+            _bindings[set].resize(binding + 1, {0, 0, 0, true});
 
             int n = _descriptorSetLayoutBindings[set].size();
             _descriptorSetLayoutBindings[set].resize(binding + 1);
@@ -372,20 +374,20 @@ namespace s3dl
     void PipelineLayout::computeBindingStates()
     {
         uint32_t offset = 0;
-        for (int i(0); i < _bindingStates.size(); i++)
+        for (int i(0); i < _bindings.size(); i++)
         {
-            for (int j(0); j < _bindingStates[i].size(); j++)
+            for (int j(0); j < _bindings[i].size(); j++)
             {
-                _bindingStates[i][j].offset = offset;
-                offset += _bindingStates[i][j].size * _bindingStates[i][j].count;
+                _bindings[i][j].offset = offset;
+                offset += _bindings[i][j].size * _bindings[i][j].count;
             }
         }
     }
 
     void PipelineLayout::resetBindingStates()
     {
-        for (int i(0); i < _bindingStates.size(); i++)
-            for (int j(0); j < _bindingStates[i].size(); j++)
-                _bindingStates[i][j].needsUpdate = true;
+        for (int i(0); i < _bindings.size(); i++)
+            for (int j(0); j < _bindings[i].size(); j++)
+                _bindings[i][j].needsUpdate = true;
     }
 }

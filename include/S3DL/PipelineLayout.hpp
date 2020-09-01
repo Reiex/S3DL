@@ -47,7 +47,7 @@ namespace s3dl
 
             PipelineLayout();
 
-            void bind(const Swapchain& swapchain, unsigned int index);
+            void bind(const Swapchain& swapchain);
 
             void createVulkanDescriptorSetLayouts();
             void createVulkanPipelineLayout();
@@ -66,7 +66,7 @@ namespace s3dl
             void computeBindingStates();
             void resetBindingStates();
 
-            std::vector<std::vector<DescriptorSetLayoutBindingState>> _bindingStates;
+            std::vector<std::vector<DescriptorSetLayoutBindingState>> _bindings;
             std::vector<std::vector<VkDescriptorSetLayoutBinding>> _descriptorSetLayoutBindings;
             std::vector<VkDescriptorSetLayout> _vulkanDescriptorSetLayouts;
 
@@ -86,6 +86,7 @@ namespace s3dl
             VkDescriptorSetAllocateInfo _descriptorSets;
             std::vector<std::vector<VkDescriptorSet>> _vulkanDescriptorSets;
 
+        friend RenderTarget;
         friend Pipeline;
     };
 }

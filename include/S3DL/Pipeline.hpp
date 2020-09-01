@@ -17,7 +17,7 @@ namespace s3dl
             void setVertexInput(const std::vector<VkVertexInputBindingDescription>& bindings, const std::vector<VkVertexInputAttributeDescription>& attributes);
             void setDepthTest(bool depthTestEnabled, bool depthWriteEnabled, VkCompareOp depthCompareOp = VK_COMPARE_OP_LESS);
 
-            VkPipelineLayout getVulkanPipelineLayout() const;
+            PipelineLayout* getPipelineLayout() const;
             VkPipeline getVulkanPipeline() const;
 
             ~Pipeline();
@@ -25,7 +25,6 @@ namespace s3dl
         private:
 
             Pipeline(const RenderPass& renderPass, unsigned int subpass, const Shader& shader, const RenderTarget& target);
-            void destroyVulkanPipelineLayout() const;
             void destroyVulkanPipeline() const;
 
             const Shader* _shader;
@@ -49,12 +48,11 @@ namespace s3dl
             std::vector<VkPipelineColorBlendAttachmentState> _blendAttachments;
             VkPipelineColorBlendStateCreateInfo _blendState;
 
-            VkPipelineLayoutCreateInfo _pipelineLayout;
+            PipelineLayout* _pipelineLayout;
+
             mutable VkGraphicsPipelineCreateInfo _pipeline;
 
-            mutable bool _vulkanPipelineLayoutComputed;
             mutable bool _vulkanPipelineComputed;
-            mutable VkPipelineLayout _vulkanPipelineLayout;
             mutable VkPipeline _vulkanPipeline;
         
         friend RenderPass;

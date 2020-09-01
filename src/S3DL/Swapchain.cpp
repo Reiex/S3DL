@@ -86,6 +86,11 @@ namespace s3dl
         return _extent;
     }
 
+    uint32_t Swapchain::getCurrentImage() const
+    {
+        return _currentImage;
+    }
+
     uint32_t Swapchain::getImageCount() const
     {
         return _images.size();

@@ -30,18 +30,18 @@ int main_example()
     s3dl::Pipeline* pipeline = renderPass.getNewPipeline(0, shader, window);
     pipeline->setVertexInput({ s3dl::Vertex::getBindingDescription() }, s3dl::Vertex::getAttributeDescriptions());
     pipeline->setDepthTest(true, true);
-
-    /*
     
     // Extract, configure and lock pipeline layout
-    s3dl::PipelineLayout* layout = pipeline->getLayout();
+    s3dl::PipelineLayout* layout = pipeline->getPipelineLayout();
     layout->declareUniform(0, sizeof(float));
-    layout->declareUniform(1, sizeof(vec4));
-    layout->lock();
+    // layout->declareUniform(1, sizeof(s3dl::vec4));
+    layout->lock(swapchain);
+    
+    /*
 
     layout->setUniform(0, 3.1415926);
     layout->setUniform(1, {1, 2, 3, 4});
-    
+
     Cas à traiter:
     lock() -> lock() (au lieu de lock->unlock)
     Toujours le bon nombre de buffers ?

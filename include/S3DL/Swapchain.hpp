@@ -16,6 +16,8 @@ namespace s3dl
 
             VkSurfaceFormatKHR getFormat() const;
             VkExtent2D getExtent() const;
+
+            uint32_t getCurrentImage() const;
             uint32_t getImageCount() const;
 
             VkCommandBuffer getCurrentCommandBuffer() const;
