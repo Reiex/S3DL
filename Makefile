@@ -14,6 +14,7 @@ OBJS = obj/main.o \
 	   obj/Dependency.o \
 	   obj/RenderPass.o \
 	   obj/Shader.o \
+	   obj/PipelineLayout.o \
 	   obj/Pipeline.o \
 	   obj/Vertex.o \
 	   obj/Buffer.o \

@@ -86,6 +86,11 @@ namespace s3dl
         return _extent;
     }
 
+    uint32_t Swapchain::getImageCount() const
+    {
+        return _images.size();
+    }
+
     VkCommandBuffer Swapchain::getCurrentCommandBuffer() const
     {
         return _commandBuffers[_currentImage];

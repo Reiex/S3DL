@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <vector>
+#include <cstdint>
 
 #include <vulkan/vulkan.h>
 
@@ -9,6 +10,14 @@
 
 namespace s3dl
 {
+    struct DescriptorSetLayoutBindingState
+    {
+        uint32_t size;
+        uint32_t count;
+        uint32_t offset;
+        bool needsUpdate;
+    };
+
     class PipelineLayout
     {
         public:
@@ -17,20 +26,20 @@ namespace s3dl
 
             PipelineLayout& operator=(const PipelineLayout& layout) = delete;
 
-            void declareUniform(unsigned int binding, unsigned int size);
-            void declareUniformArray(unsigned int binding, unsigned int size, unsigned int count);
+            void declareUniform(uint32_t binding, uint32_t size, uint32_t set = 0, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareUniformArray(uint32_t binding, uint32_t elementSize, uint32_t count, uint32_t set = 0, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
 
             void lock(const Swapchain& swapchain);
             void unlock();
 
             template<typename T>
-            void setUniform(unsigned int binding, T value);
+            void setUniform(uint32_t binding, T value, uint32_t set = 0);
             template<typename T>
-            void setUniformArray(unsigned int binding, T* values);
+            void setUniformArray(uint32_t binding, T* values, uint32_t set = 0);
             template<typename T>
-            void setUniformArrayElement(unsigned int binding, unsigned int index, T value);
+            void setUniformArrayElement(uint32_t binding, uint32_t index, T value, uint32_t set = 0);
 
-            VkPipelineLayout getVulkanPipelineLayout() const;
+            VkPipelineLayout getVulkanPipelineLayout();
 
             ~PipelineLayout();
 
@@ -38,27 +47,44 @@ namespace s3dl
 
             PipelineLayout();
 
-            void destroyVulkanPipelineLayout() const;
+            void bind(const Swapchain& swapchain, unsigned int index);
 
-            std::vector<VkDescriptorSetLayoutBinding> _descriptorSetLayoutBindings;
+            void createVulkanDescriptorSetLayouts();
+            void createVulkanPipelineLayout();
+            void createVulkanDescriptorPool(const Swapchain& swapchain);
+            void createVulkanDescriptorSets(const Swapchain& swapchain);
+            void createBuffers(const Swapchain& swapchain);
 
-            std::vector<VkDescriptorSetLayoutCreateInfo> _descriptorSetLayouts;
+            void destroyVulkanDescriptorSetLayouts();
+            void destroyVulkanPipelineLayout();
+            void destroyVulkanDescriptorPool();
+            void destroyVulkanDescriptorSets();
+            void destroyBuffers();
+
+            void extendDeclaredRange(uint32_t set, uint32_t binding);
+
+            void computeBindingStates();
+            void resetBindingStates();
+
+            std::vector<std::vector<DescriptorSetLayoutBindingState>> _bindingStates;
+            std::vector<std::vector<VkDescriptorSetLayoutBinding>> _descriptorSetLayoutBindings;
             std::vector<VkDescriptorSetLayout> _vulkanDescriptorSetLayouts;
 
             VkPipelineLayoutCreateInfo _pipelineLayout;
-            mutable VkPipelineLayout _vulkanPipelineLayout;
-            mutable bool _vulkanPipelineLayoutComputed;
+            VkPipelineLayout _vulkanPipelineLayout;
+            bool _vulkanPipelineLayoutComputed;
 
             bool _locked;
 
-            std::vector<Buffer*> buffers;
+            std::vector<uint8_t> _bufferData;
+            std::vector<Buffer*> _buffers;
 
             VkDescriptorPoolSize _descriptorPoolSize;
             VkDescriptorPoolCreateInfo _descriptorPool;
             VkDescriptorPool _vulkanDescriptorPool;
 
             VkDescriptorSetAllocateInfo _descriptorSets;
-            std::vector<std::vector<VkDescriptorSet>> descriptorSets;
+            std::vector<std::vector<VkDescriptorSet>> _vulkanDescriptorSets;
 
         friend Pipeline;
     };
