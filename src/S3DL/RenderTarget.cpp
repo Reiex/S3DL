@@ -44,7 +44,6 @@ namespace s3dl
 
     void RenderTarget::draw(const Drawable& drawable)
     {
-        _currentPipeline->getPipelineLayout()->bind(*_swapchain);
         drawable.draw(_swapchain->getCurrentCommandBuffer());
     }
 

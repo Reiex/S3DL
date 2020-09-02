@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <vector>
 #include <cstdint>
+#include <unordered_map>
 
 #include <vulkan/vulkan.h>
 
@@ -23,71 +24,75 @@ namespace s3dl
         public:
 
             PipelineLayout(const PipelineLayout& layout) = delete;
-
             PipelineLayout& operator=(const PipelineLayout& layout) = delete;
 
-            void declareUniform(uint32_t binding, uint32_t size, uint32_t set = 0, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
-            void declareUniformArray(uint32_t binding, uint32_t elementSize, uint32_t count, uint32_t set = 0, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareGlobalUniform(uint32_t binding, uint32_t size, uint32_t count = 1, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareDrawablesUniform(uint32_t binding, uint32_t size, uint32_t count = 1, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
 
             void lock(const Swapchain& swapchain);
             void unlock();
 
             template<typename T>
-            void setUniform(uint32_t binding, T value, uint32_t set = 0);
-            template<typename T>
-            void setUniformArray(uint32_t binding, T* values, uint32_t set = 0);
-            template<typename T>
-            void setUniformArrayElement(uint32_t binding, uint32_t index, T value, uint32_t set = 0);
+            void setGlobalUniforms(uint32_t binding, T* values, uint32_t count = 1, uint32_t startIndex = 0);
 
-            VkPipelineLayout getVulkanPipelineLayout();
+            VkPipelineLayout getVulkanPipelineLayout() const;
 
             ~PipelineLayout();
 
-            void update(const Swapchain& swapchain);
-
         private:
+
+            static const uint32_t DESCRIPTOR_POOL_SIZE = UINT16_MAX;
 
             PipelineLayout();
 
-            void bind(const Swapchain& swapchain);
+            void globalUpdate(const Swapchain& swapchain);  // Au bind d'une pipeline
+            void drawableUpdate(const Drawable& drawable, const Swapchain& swapchain);  // Au draw d'un mesh
+            void bind(const Drawable& drawable, const Swapchain& swapchain);  // Au draw d'un mesh
 
-            void createVulkanDescriptorSetLayouts();
-            void createVulkanPipelineLayout();
-            void createVulkanDescriptorPool(const Swapchain& swapchain);
-            void createVulkanDescriptorSets(const Swapchain& swapchain);
-            void createBuffers(const Swapchain& swapchain);
+            void createVulkanDescriptorPool();  // A l'initialisation
+            void createVulkanGlobalDescriptorSetLayout();  // Au lock
+            void createVulkanDrawablesDescriptorSetLayout();  // Au lock
+            void createVulkanPipelineLayout();  // Au lock
+            void createVulkanGlobalDescriptorSets(const Swapchain& swapchain);  // Au lock
+            void createGlobalBuffers(const Swapchain& swapchain);  // Au lock
+            void createVulkanDrawablesDescriptorSets(const Drawable& drawable, const Swapchain& swapchain);  // A la declaration d'un nouveau mesh
+            void createDrawablesBuffers(const Drawable& drawable, const Swapchain& swapchain);  // A la declaration d'un nouveau mesh
 
-            void destroyVulkanDescriptorSetLayouts();
-            void destroyVulkanPipelineLayout();
             void destroyVulkanDescriptorPool();
-            void destroyVulkanDescriptorSets();
-            void destroyBuffers();
+            void destroyVulkanGlobalDescriptorSetLayout();
+            void destroyVulkanDrawablesDescriptorSetLayout();
+            void destroyVulkanPipelineLayout();
+            void destroyVulkanGlobalDescriptorSets();
+            void destroyGlobalBuffers();
+            void destroyVulkanDrawablesDescriptorSets();
+            void destroyDrawablesBuffers();
 
-            void extendDeclaredRange(uint32_t set, uint32_t binding);
+            std::vector<DescriptorSetLayoutBindingState> _globalBindings;
+            std::vector<DescriptorSetLayoutBindingState> _drawablesBindings;
 
-            void computeBindingStates();
-            void resetBindingStates();
+            std::vector<VkDescriptorSetLayoutBinding> _globalBindingsLayouts;
+            std::vector<VkDescriptorSetLayoutBinding> _drawablesBindingsLayouts;
 
-            std::vector<std::vector<DescriptorSetLayoutBindingState>> _bindings;
-            std::vector<std::vector<VkDescriptorSetLayoutBinding>> _descriptorSetLayoutBindings;
-            std::vector<VkDescriptorSetLayout> _vulkanDescriptorSetLayouts;
+            VkDescriptorSetLayout _vulkanGlobalSetLayout;
+            VkDescriptorSetLayout _vulkanDrawablesSetLayout;
 
             VkPipelineLayoutCreateInfo _pipelineLayout;
             VkPipelineLayout _vulkanPipelineLayout;
-            bool _vulkanPipelineLayoutComputed;
 
             bool _locked;
 
-            std::vector<uint8_t> _bufferData;
-            std::vector<Buffer*> _buffers;
+            std::vector<uint8_t> _globalData;
+            std::unordered_map<const Drawable*, std::vector<uint8_t>> _drawablesData;
             uint32_t _alignment;
 
             VkDescriptorPoolSize _descriptorPoolSize;
             VkDescriptorPoolCreateInfo _descriptorPool;
             VkDescriptorPool _vulkanDescriptorPool;
 
-            VkDescriptorSetAllocateInfo _descriptorSets;
-            std::vector<std::vector<VkDescriptorSet>> _vulkanDescriptorSets;
+            std::vector<VkDescriptorSet> _vulkanGlobalDescriptorSets;
+            std::unordered_map<const Drawable*, std::vector<VkDescriptorSet>> _vulkanDrawablesDescriptorSets;
+            std::vector<Buffer*> _globalBuffers;
+            std::unordered_map<const Drawable*, std::vector<Buffer*>> _drawablesBuffers;
 
         friend RenderTarget;
         friend Pipeline;

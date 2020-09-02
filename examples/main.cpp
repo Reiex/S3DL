@@ -33,25 +33,18 @@ int main_example()
     
     // Extract, configure and lock pipeline layout
     s3dl::PipelineLayout* layout = pipeline->getPipelineLayout();
-    layout->declareUniform(0, sizeof(float));
-    layout->declareUniform(1, sizeof(s3dl::vec4));
     layout->lock(swapchain);
-
-    layout->setUniform(0, 3.1415926);
-    layout->setUniform(1, s3dl::vec4{1.0, 1.0, 0.0, 1.0});
-
-    std::cout << &swapchain << std::endl;
     
     /*
 
     layout->declareGlobalUniform(0, sizeof(float));
-    layout->declareDrawableUniform(0, sizeof(s3dl::vec4));
+    layout->declareDrawablesUniform(0, sizeof(s3dl::vec4));
 
     layout->lock(swapchain);
 
     layout->setGlobalUniform(0, 3.1415926);
-    layout->setDrawableUniform(meshA, 0, s3dl::vec4{1.0, 1.0, 0.0, 1.0});
-    layout->setDrawableUniform(meshB, 0, s3dl::vec4{0.0, 0.0, 1.0, 1.0});
+    layout->setDrawablesUniform(meshA, 0, s3dl::vec4{1.0, 1.0, 0.0, 1.0});
+    layout->setDrawablesUniform(meshB, 0, s3dl::vec4{0.0, 0.0, 1.0, 1.0});
 
     */
 
@@ -94,8 +87,6 @@ int main_example()
 
         window.beginRenderPass(renderPass, framebuffer, clearValues);
         window.bindPipeline(pipeline);
-
-        pipeline->getPipelineLayout()->update(swapchain);
         
         window.draw(meshA);
         window.draw(meshB);

@@ -3,11 +3,9 @@
 
 layout (location = 0) in vec4 vertColor;
 
-layout(binding = 1) uniform UBO {vec4 test;} ubo;
-
 layout (location = 0) out vec4 fragColor;
 
 void main()
 {
-    fragColor = ubo.test;
+    fragColor = vertColor;
 }
