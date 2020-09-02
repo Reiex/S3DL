@@ -43,6 +43,8 @@ namespace s3dl
 
             ~PipelineLayout();
 
+            void update(const Swapchain& swapchain);
+
         private:
 
             PipelineLayout();
@@ -78,6 +80,7 @@ namespace s3dl
 
             std::vector<uint8_t> _bufferData;
             std::vector<Buffer*> _buffers;
+            uint32_t _alignment;
 
             VkDescriptorPoolSize _descriptorPoolSize;
             VkDescriptorPoolCreateInfo _descriptorPool;
@@ -90,3 +93,5 @@ namespace s3dl
         friend Pipeline;
     };
 }
+
+#include <S3DL/PipelineLayoutT.hpp>

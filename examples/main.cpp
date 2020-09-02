@@ -34,20 +34,24 @@ int main_example()
     // Extract, configure and lock pipeline layout
     s3dl::PipelineLayout* layout = pipeline->getPipelineLayout();
     layout->declareUniform(0, sizeof(float));
-    // layout->declareUniform(1, sizeof(s3dl::vec4));
+    layout->declareUniform(1, sizeof(s3dl::vec4));
     layout->lock(swapchain);
+
+    layout->setUniform(0, 3.1415926);
+    layout->setUniform(1, s3dl::vec4{1.0, 1.0, 0.0, 1.0});
+
+    std::cout << &swapchain << std::endl;
     
     /*
 
-    layout->setUniform(0, 3.1415926);
-    layout->setUniform(1, {1, 2, 3, 4});
+    layout->declareGlobalUniform(0, sizeof(float));
+    layout->declareDrawableUniform(0, sizeof(s3dl::vec4));
 
-    Cas à traiter:
-    lock() -> lock() (au lieu de lock->unlock)
-    Toujours le bon nombre de buffers ?
-    Toujours les buffers à la bonne taille ?
-    Toujours les buffers à jour ?
-    Toujours les draws avec les bons buffers ?
+    layout->lock(swapchain);
+
+    layout->setGlobalUniform(0, 3.1415926);
+    layout->setDrawableUniform(meshA, 0, s3dl::vec4{1.0, 1.0, 0.0, 1.0});
+    layout->setDrawableUniform(meshB, 0, s3dl::vec4{0.0, 0.0, 1.0, 1.0});
 
     */
 
@@ -83,12 +87,15 @@ int main_example()
             0, 1, 2, 2, 3, 0
         });
 
+
     while (!window.shouldClose())
     {
         glfwPollEvents();
 
         window.beginRenderPass(renderPass, framebuffer, clearValues);
         window.bindPipeline(pipeline);
+
+        pipeline->getPipelineLayout()->update(swapchain);
         
         window.draw(meshA);
         window.draw(meshB);

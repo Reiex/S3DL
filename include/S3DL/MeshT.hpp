@@ -1,6 +1,7 @@
 #pragma once
 
 #include <S3DL/types.hpp>
+#include <S3DL/Mesh.hpp>
 
 namespace s3dl
 {

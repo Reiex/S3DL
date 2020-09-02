@@ -38,7 +38,7 @@ namespace s3dl
         vkBindBufferMemory(Device::Active->getVulkanDevice(), _buffer, _deviceMemory, 0);
 
         #ifndef NDEBUG
-        std::clog << "<S3DL Debug> VkBuffer of size " + std::to_string(_size) + " successfully created." << std::endl;
+        std::clog << "<S3DL Debug> VkBuffer of " + std::to_string(_size) + " bytes successfully created." << std::endl;
         #endif
     }
 
@@ -144,7 +144,7 @@ namespace s3dl
             vkFreeMemory(Device::Active->getVulkanDevice(), _deviceMemory, nullptr);
 
         #ifndef NDEBUG
-        std::clog << "<S3DL Debug> VkBuffer of size " + std::to_string(_size) + " successfully destroyed." << std::endl;
+        std::clog << "<S3DL Debug> VkBuffer of " + std::to_string(_size) + " bytes successfully destroyed." << std::endl;
         #endif
     }
     

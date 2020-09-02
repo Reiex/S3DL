@@ -25,13 +25,14 @@ namespace s3dl
     {
         if (_bindings.size() > 0)
         {
+            _alignment = Device::Active->getPhysicalDevice().properties.limits.minUniformBufferOffsetAlignment;
+            computeBindingStates();
+
             createVulkanDescriptorSetLayouts();
             createVulkanPipelineLayout();
             createVulkanDescriptorPool(swapchain);
             createVulkanDescriptorSets(swapchain);
             createBuffers(swapchain);
-
-            computeBindingStates();
         }
 
         _locked = true;
@@ -39,36 +40,15 @@ namespace s3dl
     
     void PipelineLayout::unlock()
     {
-        resetBindingStates();
-
         destroyBuffers();
         destroyVulkanDescriptorSets();
         destroyVulkanDescriptorPool();
         destroyVulkanPipelineLayout();
         destroyVulkanDescriptorSetLayouts();
 
+        resetBindingStates();
+
         _locked = false;
-    }
-    
-    template<typename T>
-    void PipelineLayout::setUniform(uint32_t binding, T value, uint32_t set)
-    {
-        if (!_locked)
-            throw std::runtime_error("Cannot set uniform while pipeline layout is not locked.");
-    }
-    
-    template<typename T>
-    void PipelineLayout::setUniformArray(uint32_t binding, T* values, uint32_t set)
-    {
-        if (!_locked)
-            throw std::runtime_error("Cannot set uniform while pipeline layout is not locked.");
-    }
-    
-    template<typename T>
-    void PipelineLayout::setUniformArrayElement(uint32_t binding, uint32_t index, T value, uint32_t set)
-    {
-        if (!_locked)
-            throw std::runtime_error("Cannot set uniform while pipeline layout is not locked.");
     }
     
     VkPipelineLayout PipelineLayout::getVulkanPipelineLayout()
@@ -115,7 +95,7 @@ namespace s3dl
         _descriptorSets.pSetLayouts = nullptr;
     }
 
-    void PipelineLayout::bind(const Swapchain& swapchain)
+    void PipelineLayout::update(const Swapchain& swapchain)
     {
         if (!_locked)
             throw std::runtime_error("Cannot draw using a pipeline while its pipeline layout is not locked.");
@@ -166,17 +146,17 @@ namespace s3dl
 
         if (descriptorWrites.size() != 0)
             vkUpdateDescriptorSets(Device::Active->getVulkanDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+    }
 
-        vkCmdBindDescriptorSets(
-            swapchain.getCurrentCommandBuffer(),
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            _vulkanPipelineLayout,
-            0,
-            _vulkanDescriptorSets[swapchain.getCurrentImage()].size(),
-            _vulkanDescriptorSets[swapchain.getCurrentImage()].data(),
-            0,
-            nullptr
-        );
+    void PipelineLayout::bind(const Swapchain& swapchain)
+    {
+        if (!_locked)
+            throw std::runtime_error("Cannot draw using a pipeline while its pipeline layout is not locked.");
+
+        if (_bindings.size() == 0)
+            return;
+
+        vkCmdBindDescriptorSets(swapchain.getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, _vulkanPipelineLayout, 0, _vulkanDescriptorSets[swapchain.getCurrentImage()].size(), _vulkanDescriptorSets[swapchain.getCurrentImage()].data(), 0, nullptr);
     }
 
     void PipelineLayout::createVulkanDescriptorSetLayouts()
@@ -273,10 +253,10 @@ namespace s3dl
     {
         destroyBuffers();
 
-        uint32_t totalSize(0);
-        for (int i(0); i < _bindings.size(); i++)
-            for (int j(0); j < _bindings[i].size(); j++)
-                totalSize += _bindings[i][j].size;
+        uint32_t n, m;
+        n = _bindings.size() - 1;
+        m = _bindings[n].size() - 1;
+        uint32_t totalSize = _bindings[n][m].offset + _bindings[n][m].size * _bindings[n][m].count;
         
         _bufferData.resize(totalSize, 0);
         _buffers.resize(swapchain.getImageCount());
@@ -353,7 +333,12 @@ namespace s3dl
         
         if (_bindings[set].size() <= binding)
         {
-            _bindings[set].resize(binding + 1, {0, 0, 0, true});
+            DescriptorSetLayoutBindingState bindingState;
+            bindingState.size = 0;
+            bindingState.count = 0;
+            bindingState.offset = 0;
+            bindingState.needsUpdate = true;
+            _bindings[set].resize(binding + 1, bindingState);
 
             int n = _descriptorSetLayoutBindings[set].size();
             _descriptorSetLayoutBindings[set].resize(binding + 1);
@@ -380,6 +365,7 @@ namespace s3dl
             {
                 _bindings[i][j].offset = offset;
                 offset += _bindings[i][j].size * _bindings[i][j].count;
+                offset += (_alignment - offset) % _alignment;
             }
         }
     }
