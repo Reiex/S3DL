@@ -168,6 +168,7 @@
     <ClCompile Include="..\..\src\S3DL\Framebuffer.cpp" />
     <ClCompile Include="..\..\src\S3DL\Instance.cpp" />
     <ClCompile Include="..\..\src\S3DL\Pipeline.cpp" />
+    <ClCompile Include="..\..\src\S3DL\PipelineLayout.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderPass.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderTarget.cpp" />
     <ClCompile Include="..\..\src\S3DL\RenderWindow.cpp" />
@@ -195,6 +196,8 @@
     <ClInclude Include="..\..\include\S3DL\Mesh.hpp" />
     <ClInclude Include="..\..\include\S3DL\MeshT.hpp" />
     <ClInclude Include="..\..\include\S3DL\Pipeline.hpp" />
+    <ClInclude Include="..\..\include\S3DL\PipelineLayout.hpp" />
+    <ClInclude Include="..\..\include\S3DL\PipelineLayoutT.hpp" />
     <ClInclude Include="..\..\include\S3DL\RenderPass.hpp" />
     <ClInclude Include="..\..\include\S3DL\RenderTarget.hpp" />
     <ClInclude Include="..\..\include\S3DL\RenderWindow.hpp" />

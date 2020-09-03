@@ -81,6 +81,9 @@
     <ClCompile Include="..\..\src\S3DL\stb\stb_image_write.cpp">
       <Filter>Source Files\stb</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\S3DL\PipelineLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\S3DL\stb\stb_image.hpp">
@@ -162,6 +165,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\S3DL\MeshT.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\S3DL\PipelineLayout.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\S3DL\PipelineLayoutT.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
