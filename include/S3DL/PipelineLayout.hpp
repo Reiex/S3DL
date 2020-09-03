@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <cstring>
+#include <array>
 
 #include <vulkan/vulkan.h>
 
@@ -28,6 +29,7 @@ namespace s3dl
 
             void declareGlobalUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
             void declareGlobalUniformArray(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareGlobalUniformSampler(uint32_t binding, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
             void declareDrawablesUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
             void declareDrawablesUniformArray(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
 
@@ -101,7 +103,7 @@ namespace s3dl
             std::unordered_map<const Drawable*, std::vector<uint8_t>> _drawablesData;
             uint32_t _alignment;
 
-            VkDescriptorPoolSize _descriptorPoolSize;
+            std::array<VkDescriptorPoolSize, 2> _descriptorPoolSizes;
             VkDescriptorPoolCreateInfo _descriptorPool;
             VkDescriptorPool _vulkanDescriptorPool;
 

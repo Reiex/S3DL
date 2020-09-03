@@ -21,18 +21,47 @@ namespace s3dl
         {
             VkDescriptorSetLayoutBinding layoutBinding{};
             layoutBinding.binding = binding;
-            layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            layoutBinding.pImmutableSamplers = nullptr;
 
             _globalBindingsLayouts.push_back(layoutBinding);
             _globalBindings.push_back(DescriptorSetLayoutBindingState{});
         }
 
+        _globalBindingsLayouts[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         _globalBindingsLayouts[i].descriptorCount = count;
         _globalBindingsLayouts[i].stageFlags = shaderStage;
+        _globalBindingsLayouts[i].pImmutableSamplers = nullptr;
         
         _globalBindings[i].size = size;
         _globalBindings[i].count = count;
+        _globalBindings[i].offset = 0;
+    }
+
+    void PipelineLayout::declareGlobalUniformSampler(uint32_t binding, VkShaderStageFlags shaderStage)
+    {
+        if (_locked)
+            throw std::runtime_error("Cannot declare uniform while pipeline layout is locked.");
+        
+        int i(0);
+        for (; i < _globalBindingsLayouts.size(); i++)
+            if (_globalBindingsLayouts[i].binding == binding)
+                break;
+        
+        if (i == _globalBindingsLayouts.size())
+        {
+            VkDescriptorSetLayoutBinding layoutBinding{};
+            layoutBinding.binding = binding;
+
+            _globalBindingsLayouts.push_back(layoutBinding);
+            _globalBindings.push_back(DescriptorSetLayoutBindingState{});
+        }
+
+        _globalBindingsLayouts[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        _globalBindingsLayouts[i].descriptorCount = 1;
+        _globalBindingsLayouts[i].stageFlags = shaderStage;
+        _globalBindingsLayouts[i].pImmutableSamplers = nullptr;
+        
+        _globalBindings[i].size = 0;
+        _globalBindings[i].count = 1;
         _globalBindings[i].offset = 0;
     }
 
@@ -55,15 +84,15 @@ namespace s3dl
         {
             VkDescriptorSetLayoutBinding layoutBinding{};
             layoutBinding.binding = binding;
-            layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            layoutBinding.pImmutableSamplers = nullptr;
 
             _drawablesBindingsLayouts.push_back(layoutBinding);
             _drawablesBindings.push_back(DescriptorSetLayoutBindingState{});
         }
 
+        _drawablesBindingsLayouts[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         _drawablesBindingsLayouts[i].descriptorCount = count;
         _drawablesBindingsLayouts[i].stageFlags = shaderStage;
+        _drawablesBindingsLayouts[i].pImmutableSamplers = nullptr;
         
         _drawablesBindings[i].size = size;
         _drawablesBindings[i].count = count;
@@ -154,19 +183,40 @@ namespace s3dl
         _globalBuffers[frame]->setData(_globalData.data(), _globalData.size());
 
         std::vector<VkDescriptorBufferInfo> bufferInfos;
-        std::vector<VkWriteDescriptorSet> descriptorWrites;
+        std::vector<VkDescriptorImageInfo> imageInfos;
         for (int i(0); i < _globalBindings.size(); i++)
         {
             if (_globalNeedsUpdate[i][frame])
             {
-                VkDescriptorBufferInfo bufferInfo{};
-                bufferInfo.buffer = _globalBuffers[frame]->getVulkanBuffer();
-                bufferInfo.offset = _globalBindings[i].offset;
-                bufferInfo.range = _globalBindings[i].size;
+                switch (_globalBindingsLayouts[i].descriptorType)
+                {
+                    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
 
-                bufferInfos.push_back(bufferInfo);
+                        VkDescriptorBufferInfo bufferInfo{};
+                        bufferInfo.buffer = _globalBuffers[frame]->getVulkanBuffer();
+                        bufferInfo.offset = _globalBindings[i].offset;
+                        bufferInfo.range = _globalBindings[i].size;
+
+                        bufferInfos.push_back(bufferInfo);
+                        break;
+
+                    case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+
+                        VkDescriptorImageInfo imageInfo{};
+                        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                        imageInfo.imageView = VK_NULL_HANDLE; // TODO
+                        imageInfo.sampler = VK_NULL_HANDLE; // TODO
+
+                        imageInfos.push_back(imageInfo);
+                        break;
+
+                    default:
+                        break;
+                }
             }
         }
+
+        std::vector<VkWriteDescriptorSet> descriptorWrites;
         for (int i(0); i < _globalBindings.size(); i++)
         {
             if (_globalNeedsUpdate[i][frame])
@@ -176,8 +226,30 @@ namespace s3dl
                 descriptorWrite.dstSet = _vulkanGlobalDescriptorSets[frame];
                 descriptorWrite.dstBinding = i;
                 descriptorWrite.dstArrayElement = 0;
-                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 descriptorWrite.descriptorCount = _globalBindings[i].count;
+                descriptorWrite.pBufferInfo = nullptr;
+                descriptorWrite.pImageInfo = nullptr;
+                descriptorWrite.pTexelBufferView = nullptr;
+
+                switch (_globalBindingsLayouts[i].descriptorType)
+                {
+                    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+
+                        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        descriptorWrite.pBufferInfo = &bufferInfos[descriptorWrites.size()];
+                        break;
+
+                    case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+
+                        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        descriptorWrite.pImageInfo = &imageInfos[descriptorWrites.size()];
+                        break;
+
+                    default:
+                        break;
+                }
+
+                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 descriptorWrite.pBufferInfo = &bufferInfos[descriptorWrites.size()];
                 descriptorWrite.pImageInfo = nullptr;
                 descriptorWrite.pTexelBufferView = nullptr;
@@ -267,14 +339,17 @@ namespace s3dl
     {
         destroyVulkanDescriptorPool();
 
-        _descriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        _descriptorPoolSize.descriptorCount = DESCRIPTOR_POOL_SIZE;
+        _descriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        _descriptorPoolSizes[0].descriptorCount = DESCRIPTOR_POOL_SIZE;
+
+        _descriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        _descriptorPoolSizes[1].descriptorCount = DESCRIPTOR_POOL_SIZE;
 
         _descriptorPool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         _descriptorPool.pNext = nullptr;
         _descriptorPool.flags = 0;
-        _descriptorPool.poolSizeCount = 1;
-        _descriptorPool.pPoolSizes = &_descriptorPoolSize;
+        _descriptorPool.poolSizeCount = _descriptorPoolSizes.size();
+        _descriptorPool.pPoolSizes = _descriptorPoolSizes.data();
         _descriptorPool.maxSets = DESCRIPTOR_POOL_SIZE;
 
         VkResult result = vkCreateDescriptorPool(Device::Active->getVulkanDevice(), &_descriptorPool, nullptr, &_vulkanDescriptorPool);
