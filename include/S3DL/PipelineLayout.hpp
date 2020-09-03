@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdint>
 #include <unordered_map>
+#include <cstring>
 
 #include <vulkan/vulkan.h>
 
@@ -16,7 +17,6 @@ namespace s3dl
         uint32_t size;
         uint32_t count;
         uint32_t offset;
-        bool needsUpdate;
     };
 
     class PipelineLayout
@@ -26,14 +26,22 @@ namespace s3dl
             PipelineLayout(const PipelineLayout& layout) = delete;
             PipelineLayout& operator=(const PipelineLayout& layout) = delete;
 
-            void declareGlobalUniform(uint32_t binding, uint32_t size, uint32_t count = 1, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
-            void declareDrawablesUniform(uint32_t binding, uint32_t size, uint32_t count = 1, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareGlobalUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareGlobalUniformArray(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareDrawablesUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareDrawablesUniformArray(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
 
             void lock(const Swapchain& swapchain);
             void unlock();
 
             template<typename T>
-            void setGlobalUniforms(uint32_t binding, T* values, uint32_t count = 1, uint32_t startIndex = 0);
+            void setGlobalUniform(uint32_t binding, const T& value);
+            template<typename T>
+            void setGlobalUniformArray(uint32_t binding, const T* values, uint32_t count, uint32_t startIndex = 0);
+            template<typename T>
+            void setDrawablesUniform(const Drawable& drawable, uint32_t binding, const T& value);
+            template<typename T>
+            void setDrawablesUniformArray(const Drawable& drawable, uint32_t binding, const T* values, uint32_t count, uint32_t startIndex = 0);
 
             VkPipelineLayout getVulkanPipelineLayout() const;
 
@@ -45,18 +53,18 @@ namespace s3dl
 
             PipelineLayout();
 
-            void globalUpdate(const Swapchain& swapchain);  // Au bind d'une pipeline
-            void drawableUpdate(const Drawable& drawable, const Swapchain& swapchain);  // Au draw d'un mesh
-            void bind(const Drawable& drawable, const Swapchain& swapchain);  // Au draw d'un mesh
+            void globalUpdate(const Swapchain& swapchain);
+            void drawableUpdate(const Drawable& drawable, const Swapchain& swapchain);
+            void bind(const Drawable& drawable, const Swapchain& swapchain);
 
-            void createVulkanDescriptorPool();  // A l'initialisation
-            void createVulkanGlobalDescriptorSetLayout();  // Au lock
-            void createVulkanDrawablesDescriptorSetLayout();  // Au lock
-            void createVulkanPipelineLayout();  // Au lock
-            void createVulkanGlobalDescriptorSets(const Swapchain& swapchain);  // Au lock
-            void createGlobalBuffers(const Swapchain& swapchain);  // Au lock
-            void createVulkanDrawablesDescriptorSets(const Drawable& drawable, const Swapchain& swapchain);  // A la declaration d'un nouveau mesh
-            void createDrawablesBuffers(const Drawable& drawable, const Swapchain& swapchain);  // A la declaration d'un nouveau mesh
+            void createVulkanDescriptorPool();
+            void createVulkanGlobalDescriptorSetLayout();
+            void createVulkanDrawablesDescriptorSetLayout();
+            void createVulkanPipelineLayout();
+            void createVulkanGlobalDescriptorSets();
+            void createGlobalBuffers();
+            void createVulkanDrawablesDescriptorSets(const Drawable& drawable);
+            void createDrawablesBuffers(const Drawable& drawable);
 
             void destroyVulkanDescriptorPool();
             void destroyVulkanGlobalDescriptorSetLayout();
@@ -64,11 +72,18 @@ namespace s3dl
             void destroyVulkanPipelineLayout();
             void destroyVulkanGlobalDescriptorSets();
             void destroyGlobalBuffers();
-            void destroyVulkanDrawablesDescriptorSets();
-            void destroyDrawablesBuffers();
+            void destroyVulkanDrawablesDescriptorSets(const Drawable& drawable);
+            void destroyDrawablesBuffers(const Drawable& drawable);
+
+            void computeBuffersOffsets();
+            void computeUpdateNeeds();
+
+            void addDrawable(const Drawable& drawable);
 
             std::vector<DescriptorSetLayoutBindingState> _globalBindings;
+            std::vector<std::vector<bool>> _globalNeedsUpdate;
             std::vector<DescriptorSetLayoutBindingState> _drawablesBindings;
+            std::vector<std::unordered_map<const Drawable*, std::vector<bool>>> _drawablesNeedsUpdate;
 
             std::vector<VkDescriptorSetLayoutBinding> _globalBindingsLayouts;
             std::vector<VkDescriptorSetLayoutBinding> _drawablesBindingsLayouts;
@@ -80,6 +95,7 @@ namespace s3dl
             VkPipelineLayout _vulkanPipelineLayout;
 
             bool _locked;
+            uint32_t _swapchainImageCount;
 
             std::vector<uint8_t> _globalData;
             std::unordered_map<const Drawable*, std::vector<uint8_t>> _drawablesData;

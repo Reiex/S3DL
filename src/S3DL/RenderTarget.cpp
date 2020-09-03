@@ -40,10 +40,13 @@ namespace s3dl
     {
         _currentPipeline = pipeline;
         vkCmdBindPipeline(_swapchain->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getVulkanPipeline());
+        _currentPipeline->getPipelineLayout()->globalUpdate(*_swapchain);
     }
 
     void RenderTarget::draw(const Drawable& drawable)
     {
+        _currentPipeline->getPipelineLayout()->drawableUpdate(drawable, *_swapchain);
+        _currentPipeline->getPipelineLayout()->bind(drawable, *_swapchain);
         drawable.draw(_swapchain->getCurrentCommandBuffer());
     }
 

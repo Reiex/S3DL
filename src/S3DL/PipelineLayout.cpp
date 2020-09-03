@@ -2,7 +2,12 @@
 
 namespace s3dl
 {
-    void PipelineLayout::declareGlobalUniform(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage)
+    void PipelineLayout::declareGlobalUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage)
+    {
+        declareGlobalUniformArray(binding, size, 1, shaderStage);
+    }
+
+    void PipelineLayout::declareGlobalUniformArray(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage)
     {
         if (_locked)
             throw std::runtime_error("Cannot declare uniform while pipeline layout is locked.");
@@ -29,10 +34,14 @@ namespace s3dl
         _globalBindings[i].size = size;
         _globalBindings[i].count = count;
         _globalBindings[i].offset = 0;
-        _globalBindings[i].needsUpdate = true;
     }
 
-    void PipelineLayout::declareDrawablesUniform(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage)
+    void PipelineLayout::declareDrawablesUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage)
+    {
+        declareDrawablesUniformArray(binding, size, 1, shaderStage);
+    }
+
+    void PipelineLayout::declareDrawablesUniformArray(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage)
     {
         if (_locked)
             throw std::runtime_error("Cannot declare uniform while pipeline layout is locked.");
@@ -59,11 +68,12 @@ namespace s3dl
         _drawablesBindings[i].size = size;
         _drawablesBindings[i].count = count;
         _drawablesBindings[i].offset = 0;
-        _drawablesBindings[i].needsUpdate = true;
     }
     
     void PipelineLayout::lock(const Swapchain& swapchain)
     {
+        _swapchainImageCount = swapchain.getImageCount();
+
         if (_globalBindings.size() > 0)
             createVulkanGlobalDescriptorSetLayout();
         
@@ -72,11 +82,14 @@ namespace s3dl
         
         createVulkanPipelineLayout();
         
+        computeBuffersOffsets();
         if (_globalBindings.size() > 0)
         {
-            createVulkanGlobalDescriptorSets(swapchain);
-            createGlobalBuffers(swapchain);
+            createVulkanGlobalDescriptorSets();
+            createGlobalBuffers();
         }
+
+        computeUpdateNeeds();
 
         _locked = true;
     }
@@ -99,8 +112,11 @@ namespace s3dl
     
     PipelineLayout::~PipelineLayout()
     {
-        destroyDrawablesBuffers();
-        destroyVulkanDrawablesDescriptorSets();
+        for (std::pair<const Drawable*, std::vector<uint8_t>> drawableData: _drawablesData)
+        {
+            destroyDrawablesBuffers(*drawableData.first);
+            destroyVulkanDrawablesDescriptorSets(*drawableData.first);
+        }
         destroyGlobalBuffers();
         destroyVulkanGlobalDescriptorSets();
         destroyVulkanPipelineLayout();
@@ -116,6 +132,7 @@ namespace s3dl
         _vulkanPipelineLayout(VK_NULL_HANDLE),
 
         _locked(false),
+        _swapchainImageCount(0),
 
         _alignment(Device::Active->getPhysicalDevice().properties.limits.minUniformBufferOffsetAlignment),
 
@@ -126,17 +143,124 @@ namespace s3dl
     
     void PipelineLayout::globalUpdate(const Swapchain& swapchain)
     {
+        if (!_locked)
+            throw std::runtime_error("Cannot bind a pipeline while its pipeline layout is not locked.");
 
+        if (_globalBindings.size() == 0)
+            return;
+
+        uint32_t frame = swapchain.getCurrentImage();
+
+        _globalBuffers[frame]->setData(_globalData.data(), _globalData.size());
+
+        std::vector<VkDescriptorBufferInfo> bufferInfos;
+        std::vector<VkWriteDescriptorSet> descriptorWrites;
+        for (int i(0); i < _globalBindings.size(); i++)
+        {
+            if (_globalNeedsUpdate[i][frame])
+            {
+                VkDescriptorBufferInfo bufferInfo{};
+                bufferInfo.buffer = _globalBuffers[frame]->getVulkanBuffer();
+                bufferInfo.offset = _globalBindings[i].offset;
+                bufferInfo.range = _globalBindings[i].size;
+
+                bufferInfos.push_back(bufferInfo);
+            }
+        }
+        for (int i(0); i < _globalBindings.size(); i++)
+        {
+            if (_globalNeedsUpdate[i][frame])
+            {
+                VkWriteDescriptorSet descriptorWrite{};
+                descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrite.dstSet = _vulkanGlobalDescriptorSets[frame];
+                descriptorWrite.dstBinding = i;
+                descriptorWrite.dstArrayElement = 0;
+                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                descriptorWrite.descriptorCount = _globalBindings[i].count;
+                descriptorWrite.pBufferInfo = &bufferInfos[descriptorWrites.size()];
+                descriptorWrite.pImageInfo = nullptr;
+                descriptorWrite.pTexelBufferView = nullptr;
+
+                descriptorWrites.push_back(descriptorWrite);
+                _globalNeedsUpdate[i][frame] = false;
+            }
+        }
+
+        if (descriptorWrites.size() != 0)
+            vkUpdateDescriptorSets(Device::Active->getVulkanDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
     }
     
     void PipelineLayout::drawableUpdate(const Drawable& drawable, const Swapchain& swapchain)
     {
+        if (!_locked)
+            throw std::runtime_error("Cannot bind a pipeline while its pipeline layout is not locked.");
 
+        if (_drawablesBindings.size() == 0)
+            return;
+        
+        addDrawable(drawable);
+
+        uint32_t frame = swapchain.getCurrentImage();
+
+        _drawablesBuffers[&drawable][frame]->setData(_drawablesData[&drawable].data(), _drawablesData[&drawable].size());
+
+        std::vector<VkDescriptorBufferInfo> bufferInfos;
+        std::vector<VkWriteDescriptorSet> descriptorWrites;
+        for (int i(0); i < _drawablesBindings.size(); i++)
+        {
+            if (_drawablesNeedsUpdate[i][&drawable][frame])
+            {
+                VkDescriptorBufferInfo bufferInfo{};
+                bufferInfo.buffer = _drawablesBuffers[&drawable][frame]->getVulkanBuffer();
+                bufferInfo.offset = _drawablesBindings[i].offset;
+                bufferInfo.range = _drawablesBindings[i].size;
+
+                bufferInfos.push_back(bufferInfo);
+            }
+        }
+        for (int i(0); i < _drawablesBindings.size(); i++)
+        {
+            if (_drawablesNeedsUpdate[i][&drawable][frame])
+            {
+                VkWriteDescriptorSet descriptorWrite{};
+                descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrite.dstSet = _vulkanDrawablesDescriptorSets[&drawable][frame];
+                descriptorWrite.dstBinding = i;
+                descriptorWrite.dstArrayElement = 0;
+                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                descriptorWrite.descriptorCount = _drawablesBindings[i].count;
+                descriptorWrite.pBufferInfo = &bufferInfos[descriptorWrites.size()];
+                descriptorWrite.pImageInfo = nullptr;
+                descriptorWrite.pTexelBufferView = nullptr;
+
+                descriptorWrites.push_back(descriptorWrite);
+                _drawablesNeedsUpdate[i][&drawable][frame] = false;
+            }
+        }
+
+        if (descriptorWrites.size() != 0)
+            vkUpdateDescriptorSets(Device::Active->getVulkanDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
     }
     
     void PipelineLayout::bind(const Drawable& drawable, const Swapchain& swapchain)
     {
+        if (!_locked)
+            throw std::runtime_error("Cannot draw using a pipeline while its pipeline layout is not locked.");
 
+        if (_globalBindings.size() == 0 && _drawablesBindings.size() == 0)
+            return;
+
+        int i = swapchain.getCurrentImage();
+
+        std::vector<VkDescriptorSet> descriptorSets;
+        if (_globalBindings.size() != 0 || _drawablesBindings.size() != 0)
+            descriptorSets.push_back(_vulkanGlobalDescriptorSets[i]);
+        
+        if (_drawablesBindings.size() != 0)
+            descriptorSets.push_back(_vulkanDrawablesDescriptorSets[&drawable][i]);
+
+        vkCmdBindDescriptorSets(swapchain.getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, _vulkanPipelineLayout, 0, descriptorSets.size(), descriptorSets.data(), 0, nullptr);
     }
     
     void PipelineLayout::createVulkanDescriptorPool()
@@ -185,7 +309,7 @@ namespace s3dl
 
     void PipelineLayout::createVulkanDrawablesDescriptorSetLayout()
     {
-        destroyVulkanGlobalDescriptorSetLayout();
+        destroyVulkanDrawablesDescriptorSetLayout();
 
         VkDescriptorSetLayoutCreateInfo createInfo{};
 
@@ -217,7 +341,7 @@ namespace s3dl
             setLayouts = { _vulkanGlobalSetLayout, _vulkanDrawablesSetLayout };
         else if (_vulkanGlobalSetLayout != VK_NULL_HANDLE)
             setLayouts = { _vulkanGlobalSetLayout };
-        
+
         _pipelineLayout.setLayoutCount = setLayouts.size();
         _pipelineLayout.pSetLayouts = setLayouts.size() != 0 ? setLayouts.data() : nullptr;
 
@@ -233,13 +357,13 @@ namespace s3dl
         #endif
     }
     
-    void PipelineLayout::createVulkanGlobalDescriptorSets(const Swapchain& swapchain)
+    void PipelineLayout::createVulkanGlobalDescriptorSets()
     {
         destroyVulkanGlobalDescriptorSets();
 
-        _vulkanGlobalDescriptorSets.resize(swapchain.getImageCount());
+        _vulkanGlobalDescriptorSets.resize(_swapchainImageCount);
 
-        std::vector<VkDescriptorSetLayout> setLayouts(swapchain.getImageCount(), _vulkanGlobalSetLayout);
+        std::vector<VkDescriptorSetLayout> setLayouts(_swapchainImageCount, _vulkanGlobalSetLayout);
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.pNext = nullptr;
@@ -252,20 +376,53 @@ namespace s3dl
             throw std::runtime_error("Failed to allocate descriptor sets. VkResult: " + std::to_string(result));
     }
     
-    void PipelineLayout::createGlobalBuffers(const Swapchain& swapchain)
+    void PipelineLayout::createGlobalBuffers()
     {
+        destroyGlobalBuffers();
 
+        uint32_t n;
+        n = _globalBindings.size() - 1;
+        uint32_t totalSize = _globalBindings[n].offset + _globalBindings[n].size * _globalBindings[n].count;
+        
+        _globalData.resize(totalSize, 0);
+        _globalBuffers.resize(_swapchainImageCount);
+
+        for (int i(0); i < _swapchainImageCount; i++)
+            _globalBuffers[i] = new Buffer(totalSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     }
     
-    void PipelineLayout::createVulkanDrawablesDescriptorSets(const Drawable& drawable, const Swapchain& swapchain)
+    void PipelineLayout::createVulkanDrawablesDescriptorSets(const Drawable& drawable)
     {
-        // Attention à l'initialisation de l'unordered map -> On peut pas resize un vect qui n'a pas été créé !
-        // Donc s'occuper de savoir à quel moment on créer toutes les ressources pour un nouveau mesh...
+        destroyVulkanDrawablesDescriptorSets(drawable);
+
+        _vulkanDrawablesDescriptorSets[&drawable].resize(_swapchainImageCount);
+
+        std::vector<VkDescriptorSetLayout> setLayouts(_swapchainImageCount, _vulkanDrawablesSetLayout);
+        VkDescriptorSetAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.pNext = nullptr;
+        allocInfo.descriptorPool = _vulkanDescriptorPool;
+        allocInfo.descriptorSetCount = setLayouts.size();
+        allocInfo.pSetLayouts = setLayouts.data();
+
+        VkResult result = vkAllocateDescriptorSets(Device::Active->getVulkanDevice(), &allocInfo, _vulkanDrawablesDescriptorSets[&drawable].data());
+        if (result != VK_SUCCESS)
+            throw std::runtime_error("Failed to allocate descriptor sets. VkResult: " + std::to_string(result));
     }
     
-    void PipelineLayout::createDrawablesBuffers(const Drawable& drawable, const Swapchain& swapchain)
+    void PipelineLayout::createDrawablesBuffers(const Drawable& drawable)
     {
+        destroyDrawablesBuffers(drawable);
 
+        uint32_t n;
+        n = _drawablesBindings.size() - 1;
+        uint32_t totalSize = _drawablesBindings[n].offset + _drawablesBindings[n].size * _drawablesBindings[n].count;
+        
+        _drawablesData[&drawable].resize(totalSize, 0);
+        _drawablesBuffers[&drawable].resize(_swapchainImageCount);
+
+        for (int i(0); i < _swapchainImageCount; i++)
+            _drawablesBuffers[&drawable][i] = new Buffer(totalSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     }
 
     void PipelineLayout::destroyVulkanDescriptorPool()
@@ -289,7 +446,7 @@ namespace s3dl
             vkDestroyDescriptorSetLayout(Device::Active->getVulkanDevice(), _vulkanGlobalSetLayout, nullptr);
 
             #ifndef NDEBUG
-            std::clog << "<S3DL Debug> VkDescriptorSetLayouts successfully destroyed." << std::endl;
+            std::clog << "<S3DL Debug> VkDescriptorSetLayout successfully destroyed." << std::endl;
             #endif
         }
 
@@ -303,7 +460,7 @@ namespace s3dl
             vkDestroyDescriptorSetLayout(Device::Active->getVulkanDevice(), _vulkanDrawablesSetLayout, nullptr);
 
             #ifndef NDEBUG
-            std::clog << "<S3DL Debug> VkDescriptorSetLayouts successfully destroyed." << std::endl;
+            std::clog << "<S3DL Debug> VkDescriptorSetLayout successfully destroyed." << std::endl;
             #endif
         }
 
@@ -331,16 +488,71 @@ namespace s3dl
     
     void PipelineLayout::destroyGlobalBuffers()
     {
-
+        for (int i(0); i < _globalBuffers.size(); i++)
+            delete _globalBuffers[i];
+        
+        _globalBuffers.clear();
     }
     
-    void PipelineLayout::destroyVulkanDrawablesDescriptorSets()
+    void PipelineLayout::destroyVulkanDrawablesDescriptorSets(const Drawable& drawable)
     {
-        _vulkanDrawablesDescriptorSets.clear();
+        _vulkanDrawablesDescriptorSets[&drawable].clear();
     }
     
-    void PipelineLayout::destroyDrawablesBuffers()
+    void PipelineLayout::destroyDrawablesBuffers(const Drawable& drawable)
     {
+        for (int i(0); i < _drawablesBuffers[&drawable].size(); i++)
+            delete _drawablesBuffers[&drawable][i];
+        
+        _drawablesBuffers[&drawable].clear();
+    }
 
+    void PipelineLayout::computeBuffersOffsets()
+    {
+        uint32_t offset;
+
+        offset = 0;
+        for (int i(0); i < _globalBindings.size(); i++)
+        {
+            _globalBindings[i].offset = offset;
+            offset += _globalBindings[i].size * _globalBindings[i].count;
+            offset += (_alignment - offset) % _alignment;
+        }
+
+        offset = 0;
+        for (int i(0); i < _drawablesBindings.size(); i++)
+        {
+            _drawablesBindings[i].offset = offset;
+            offset += _drawablesBindings[i].size * _drawablesBindings[i].count;
+            offset += (_alignment - offset) % _alignment;
+        }
+    }
+
+    void PipelineLayout::computeUpdateNeeds()
+    {
+        _globalNeedsUpdate.clear();
+        _drawablesNeedsUpdate.clear();
+
+        _globalNeedsUpdate.resize(_globalBindings.size());
+        for (int i(0); i < _globalNeedsUpdate.size(); i++)
+            _globalNeedsUpdate[i].resize(_swapchainImageCount, true);
+        
+        _drawablesNeedsUpdate.resize(_drawablesBindings.size());
+    }
+
+    void PipelineLayout::addDrawable(const Drawable& drawable)
+    {
+        if (_drawablesData.count(&drawable) == 0)
+        {
+            _drawablesData[&drawable] = {};
+            _vulkanDrawablesDescriptorSets[&drawable] = {};
+            _drawablesBuffers[&drawable] = {};
+
+            createVulkanDrawablesDescriptorSets(drawable);
+            createDrawablesBuffers(drawable);
+
+            for (int i(0); i < _drawablesNeedsUpdate.size(); i++)
+                _drawablesNeedsUpdate[i][&drawable].resize(_swapchainImageCount, true);
+        }
     }
 }

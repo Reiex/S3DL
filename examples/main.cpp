@@ -33,20 +33,11 @@ int main_example()
     
     // Extract, configure and lock pipeline layout
     s3dl::PipelineLayout* layout = pipeline->getPipelineLayout();
-    layout->lock(swapchain);
-    
-    /*
 
     layout->declareGlobalUniform(0, sizeof(float));
     layout->declareDrawablesUniform(0, sizeof(s3dl::vec4));
 
     layout->lock(swapchain);
-
-    layout->setGlobalUniform(0, 3.1415926);
-    layout->setDrawablesUniform(meshA, 0, s3dl::vec4{1.0, 1.0, 0.0, 1.0});
-    layout->setDrawablesUniform(meshB, 0, s3dl::vec4{0.0, 0.0, 1.0, 1.0});
-
-    */
 
     // Create framebuffer
     s3dl::Framebuffer framebuffer(swapchain, renderPass);
@@ -80,15 +71,19 @@ int main_example()
             0, 1, 2, 2, 3, 0
         });
 
-
     while (!window.shouldClose())
     {
         glfwPollEvents();
 
+        layout->setGlobalUniform(0, 3.1415926f);
+
         window.beginRenderPass(renderPass, framebuffer, clearValues);
         window.bindPipeline(pipeline);
-        
+
+        layout->setDrawablesUniform(meshA, 0, s3dl::vec4{1.0, 0.0, 0.0, 1.0});
         window.draw(meshA);
+        
+        layout->setDrawablesUniform(meshB, 0, s3dl::vec4{0.0, 0.0, 1.0, 1.0});
         window.draw(meshB);
 
         // window.beginNextSubpass();
