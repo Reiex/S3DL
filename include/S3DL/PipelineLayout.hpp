@@ -32,6 +32,7 @@ namespace s3dl
             void declareGlobalUniformSampler(uint32_t binding, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
             void declareDrawablesUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
             void declareDrawablesUniformArray(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareDrawablesUniformSampler(uint32_t binding, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
 
             void lock(const Swapchain& swapchain);
             void unlock();
@@ -40,10 +41,12 @@ namespace s3dl
             void setGlobalUniform(uint32_t binding, const T& value);
             template<typename T>
             void setGlobalUniformArray(uint32_t binding, const T* values, uint32_t count, uint32_t startIndex = 0);
+            void setGlobalUniformSampler(uint32_t binding, const Texture& texture);
             template<typename T>
             void setDrawablesUniform(const Drawable& drawable, uint32_t binding, const T& value);
             template<typename T>
             void setDrawablesUniformArray(const Drawable& drawable, uint32_t binding, const T* values, uint32_t count, uint32_t startIndex = 0);
+            void setDrawablesUniformSampler(const Drawable& drawable, uint32_t binding, const Texture& texture);
 
             VkPipelineLayout getVulkanPipelineLayout() const;
 
@@ -83,9 +86,7 @@ namespace s3dl
             void addDrawable(const Drawable& drawable);
 
             std::vector<DescriptorSetLayoutBindingState> _globalBindings;
-            std::vector<std::vector<bool>> _globalNeedsUpdate;
             std::vector<DescriptorSetLayoutBindingState> _drawablesBindings;
-            std::vector<std::unordered_map<const Drawable*, std::vector<bool>>> _drawablesNeedsUpdate;
 
             std::vector<VkDescriptorSetLayoutBinding> _globalBindingsLayouts;
             std::vector<VkDescriptorSetLayoutBinding> _drawablesBindingsLayouts;
@@ -102,6 +103,11 @@ namespace s3dl
             std::vector<uint8_t> _globalData;
             std::unordered_map<const Drawable*, std::vector<uint8_t>> _drawablesData;
             uint32_t _alignment;
+            std::vector<const Texture*> _globalSamplers;
+            std::unordered_map<const Drawable*, std::vector<const Texture*>> _drawablesSamplers;
+            
+            std::vector<std::vector<bool>> _globalNeedsUpdate;
+            std::vector<std::unordered_map<const Drawable*, std::vector<bool>>> _drawablesNeedsUpdate;
 
             std::array<VkDescriptorPoolSize, 2> _descriptorPoolSizes;
             VkDescriptorPoolCreateInfo _descriptorPool;
@@ -109,6 +115,7 @@ namespace s3dl
 
             std::vector<VkDescriptorSet> _vulkanGlobalDescriptorSets;
             std::unordered_map<const Drawable*, std::vector<VkDescriptorSet>> _vulkanDrawablesDescriptorSets;
+
             std::vector<Buffer*> _globalBuffers;
             std::unordered_map<const Drawable*, std::vector<Buffer*>> _drawablesBuffers;
 

@@ -1,6 +1,5 @@
 #include <S3DL/S3DL.hpp>
 
-
 int main_example()
 {
     // Init context
@@ -36,6 +35,7 @@ int main_example()
 
     layout->declareGlobalUniform(0, sizeof(float));
     layout->declareDrawablesUniform(0, sizeof(s3dl::vec4));
+    layout->declareDrawablesUniformSampler(1);
 
     layout->lock(swapchain);
 
@@ -53,23 +53,33 @@ int main_example()
     s3dl::Mesh<s3dl::Vertex> meshA(
         {
             {{-0.5f, -0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 1.f, 1.f, 1.f}},
-            {{0.5f, -0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 0.f, 0.f, 1.f}},
-            {{0.5f, 0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 1.f, 0.f, 1.f}},
-            {{-0.5f, 0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 0.f, 1.f, 1.f}}
+            {{0.5f, -0.5f, 0.f}, {1.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 0.f, 0.f, 1.f}},
+            {{0.5f, 0.5f, 0.f}, {1.f, 1.f}, {0.f, 0.f, -1.f}, {0.f, 1.f, 0.f, 1.f}},
+            {{-0.5f, 0.5f, 0.f}, {0.f, 1.f}, {0.f, 0.f, -1.f}, {0.f, 0.f, 1.f, 1.f}}
         },
         {
             0, 1, 2, 2, 3, 0
-        });
+        }
+    );
     s3dl::Mesh<s3dl::Vertex> meshB(
         {
             {{-0.9f, -0.9f, 0.5f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 0.f, 0.f, 1.f}},
-            {{0.9f, -0.9f, 0.5f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 1.f, 1.f, 1.f}},
-            {{0.9f, 0.9f, 0.5f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 0.f, 1.f, 1.f}},
-            {{-0.9f, 0.9f, 0.5f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 1.f, 0.f, 1.f}}
+            {{0.9f, -0.9f, 0.5f}, {1.f, 0.f}, {0.f, 0.f, -1.f}, {0.f, 1.f, 1.f, 1.f}},
+            {{0.9f, 0.9f, 0.5f}, {1.f, 1.f}, {0.f, 0.f, -1.f}, {1.f, 0.f, 1.f, 1.f}},
+            {{-0.9f, 0.9f, 0.5f}, {0.f, 1.f}, {0.f, 0.f, -1.f}, {1.f, 1.f, 0.f, 1.f}}
         },
         {
             0, 1, 2, 2, 3, 0
-        });
+        }
+    );
+    
+    // Load textures
+    s3dl::TextureData textureDataA("testA.png");
+    s3dl::Texture textureA(textureDataA);
+    
+    s3dl::TextureData textureDataB("testB.png");
+    s3dl::Texture textureB(textureDataB);
+
 
     while (!window.shouldClose())
     {
@@ -81,9 +91,11 @@ int main_example()
         window.bindPipeline(pipeline);
 
         layout->setDrawablesUniform(meshA, 0, s3dl::vec4{1.0, 0.0, 0.0, 1.0});
+        layout->setDrawablesUniformSampler(meshA, 1, textureA);
         window.draw(meshA);
         
         layout->setDrawablesUniform(meshB, 0, s3dl::vec4{0.0, 0.0, 1.0, 1.0});
+        layout->setDrawablesUniformSampler(meshB, 1, textureB);
         window.draw(meshB);
 
         // window.beginNextSubpass();

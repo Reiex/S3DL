@@ -99,6 +99,35 @@ namespace s3dl
         _drawablesBindings[i].offset = 0;
     }
     
+    void PipelineLayout::declareDrawablesUniformSampler(uint32_t binding, VkShaderStageFlags shaderStage)
+    {
+        if (_locked)
+            throw std::runtime_error("Cannot declare uniform while pipeline layout is locked.");
+        
+        int i(0);
+        for (; i < _drawablesBindingsLayouts.size(); i++)
+            if (_drawablesBindingsLayouts[i].binding == binding)
+                break;
+        
+        if (i == _drawablesBindingsLayouts.size())
+        {
+            VkDescriptorSetLayoutBinding layoutBinding{};
+            layoutBinding.binding = binding;
+
+            _drawablesBindingsLayouts.push_back(layoutBinding);
+            _drawablesBindings.push_back(DescriptorSetLayoutBindingState{});
+        }
+
+        _drawablesBindingsLayouts[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        _drawablesBindingsLayouts[i].descriptorCount = 1;
+        _drawablesBindingsLayouts[i].stageFlags = shaderStage;
+        _drawablesBindingsLayouts[i].pImmutableSamplers = nullptr;
+        
+        _drawablesBindings[i].size = 0;
+        _drawablesBindings[i].count = 1;
+        _drawablesBindings[i].offset = 0;
+    }
+
     void PipelineLayout::lock(const Swapchain& swapchain)
     {
         _swapchainImageCount = swapchain.getImageCount();
@@ -134,6 +163,28 @@ namespace s3dl
         _locked = false;
     }
     
+    void PipelineLayout::setGlobalUniformSampler(uint32_t binding, const Texture& texture)
+    {
+        if (!_locked)
+            throw std::runtime_error("Cannot set uniform value while pipeline layout is not locked.");
+
+        _globalSamplers[binding] = &texture;
+
+        for (int i(0); i < _swapchainImageCount; i++)
+            _globalNeedsUpdate[binding][i] = true;
+    }
+
+    void PipelineLayout::setDrawablesUniformSampler(const Drawable& drawable, uint32_t binding, const Texture& texture)
+    {
+        if (!_locked)
+            throw std::runtime_error("Cannot set uniform value while pipeline layout is not locked.");
+
+        _drawablesSamplers[&drawable][binding] = &texture;
+
+        for (int i(0); i < _swapchainImageCount; i++)
+            _drawablesNeedsUpdate[binding][&drawable][i] = true;
+    }
+
     VkPipelineLayout PipelineLayout::getVulkanPipelineLayout() const
     {
         return _vulkanPipelineLayout;
@@ -188,28 +239,31 @@ namespace s3dl
         {
             if (_globalNeedsUpdate[i][frame])
             {
+                bufferInfos.push_back({});
+                imageInfos.push_back({});
+
                 switch (_globalBindingsLayouts[i].descriptorType)
                 {
                     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-
+                    {
                         VkDescriptorBufferInfo bufferInfo{};
                         bufferInfo.buffer = _globalBuffers[frame]->getVulkanBuffer();
                         bufferInfo.offset = _globalBindings[i].offset;
                         bufferInfo.range = _globalBindings[i].size;
 
-                        bufferInfos.push_back(bufferInfo);
+                        bufferInfos[i] = bufferInfo;
                         break;
-
+                    }
                     case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-
+                    {
                         VkDescriptorImageInfo imageInfo{};
                         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        imageInfo.imageView = VK_NULL_HANDLE; // TODO
-                        imageInfo.sampler = VK_NULL_HANDLE; // TODO
+                        imageInfo.imageView = _globalSamplers[i]->getVulkanImageView();
+                        imageInfo.sampler = _globalSamplers[i]->getVulkanSampler();
 
-                        imageInfos.push_back(imageInfo);
+                        imageInfos[i] = imageInfo;
                         break;
-
+                    }
                     default:
                         break;
                 }
@@ -249,11 +303,6 @@ namespace s3dl
                         break;
                 }
 
-                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                descriptorWrite.pBufferInfo = &bufferInfos[descriptorWrites.size()];
-                descriptorWrite.pImageInfo = nullptr;
-                descriptorWrite.pTexelBufferView = nullptr;
-
                 descriptorWrites.push_back(descriptorWrite);
                 _globalNeedsUpdate[i][frame] = false;
             }
@@ -278,19 +327,43 @@ namespace s3dl
         _drawablesBuffers[&drawable][frame]->setData(_drawablesData[&drawable].data(), _drawablesData[&drawable].size());
 
         std::vector<VkDescriptorBufferInfo> bufferInfos;
-        std::vector<VkWriteDescriptorSet> descriptorWrites;
+        std::vector<VkDescriptorImageInfo> imageInfos;
         for (int i(0); i < _drawablesBindings.size(); i++)
         {
             if (_drawablesNeedsUpdate[i][&drawable][frame])
             {
-                VkDescriptorBufferInfo bufferInfo{};
-                bufferInfo.buffer = _drawablesBuffers[&drawable][frame]->getVulkanBuffer();
-                bufferInfo.offset = _drawablesBindings[i].offset;
-                bufferInfo.range = _drawablesBindings[i].size;
+                bufferInfos.push_back({});
+                imageInfos.push_back({});
 
-                bufferInfos.push_back(bufferInfo);
+                switch (_drawablesBindingsLayouts[i].descriptorType)
+                {
+                    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                    {
+                        VkDescriptorBufferInfo bufferInfo{};
+                        bufferInfo.buffer = _drawablesBuffers[&drawable][frame]->getVulkanBuffer();
+                        bufferInfo.offset = _drawablesBindings[i].offset;
+                        bufferInfo.range = _drawablesBindings[i].size;
+
+                        bufferInfos[i] = bufferInfo;
+                        break;
+                    }
+                    case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+                    {
+                        VkDescriptorImageInfo imageInfo{};
+                        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                        imageInfo.imageView = _drawablesSamplers[&drawable][i]->getVulkanImageView();
+                        imageInfo.sampler = _drawablesSamplers[&drawable][i]->getVulkanSampler();
+
+                        imageInfos[i] = imageInfo;
+                        break;
+                    }
+                    default:
+                        break;
+                }
             }
         }
+
+        std::vector<VkWriteDescriptorSet> descriptorWrites;
         for (int i(0); i < _drawablesBindings.size(); i++)
         {
             if (_drawablesNeedsUpdate[i][&drawable][frame])
@@ -300,11 +373,28 @@ namespace s3dl
                 descriptorWrite.dstSet = _vulkanDrawablesDescriptorSets[&drawable][frame];
                 descriptorWrite.dstBinding = i;
                 descriptorWrite.dstArrayElement = 0;
-                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 descriptorWrite.descriptorCount = _drawablesBindings[i].count;
-                descriptorWrite.pBufferInfo = &bufferInfos[descriptorWrites.size()];
+                descriptorWrite.pBufferInfo = nullptr;
                 descriptorWrite.pImageInfo = nullptr;
                 descriptorWrite.pTexelBufferView = nullptr;
+
+                switch (_drawablesBindingsLayouts[i].descriptorType)
+                {
+                    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+
+                        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        descriptorWrite.pBufferInfo = &bufferInfos[descriptorWrites.size()];
+                        break;
+
+                    case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+
+                        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        descriptorWrite.pImageInfo = &imageInfos[descriptorWrites.size()];
+                        break;
+
+                    default:
+                        break;
+                }
 
                 descriptorWrites.push_back(descriptorWrite);
                 _drawablesNeedsUpdate[i][&drawable][frame] = false;
@@ -464,6 +554,8 @@ namespace s3dl
 
         for (int i(0); i < _swapchainImageCount; i++)
             _globalBuffers[i] = new Buffer(totalSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    
+        _globalSamplers.resize(_globalBindings.size(), nullptr);
     }
     
     void PipelineLayout::createVulkanDrawablesDescriptorSets(const Drawable& drawable)
@@ -498,6 +590,8 @@ namespace s3dl
 
         for (int i(0); i < _swapchainImageCount; i++)
             _drawablesBuffers[&drawable][i] = new Buffer(totalSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    
+        _drawablesSamplers[&drawable].resize(_drawablesBindings.size(), nullptr);
     }
 
     void PipelineLayout::destroyVulkanDescriptorPool()
@@ -566,7 +660,9 @@ namespace s3dl
         for (int i(0); i < _globalBuffers.size(); i++)
             delete _globalBuffers[i];
         
+        _globalData.clear();
         _globalBuffers.clear();
+        _globalSamplers.clear();
     }
     
     void PipelineLayout::destroyVulkanDrawablesDescriptorSets(const Drawable& drawable)
@@ -579,7 +675,9 @@ namespace s3dl
         for (int i(0); i < _drawablesBuffers[&drawable].size(); i++)
             delete _drawablesBuffers[&drawable][i];
         
+        _drawablesData[&drawable].clear();
         _drawablesBuffers[&drawable].clear();
+        _drawablesSamplers[&drawable].clear();
     }
 
     void PipelineLayout::computeBuffersOffsets()
