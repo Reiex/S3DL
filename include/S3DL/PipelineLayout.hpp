@@ -56,8 +56,9 @@ namespace s3dl
 
             static const uint32_t DESCRIPTOR_POOL_SIZE = UINT16_MAX;
 
-            PipelineLayout();
+            PipelineLayout(const std::vector<bool>& attachmentsBitmap);
 
+            void attachmentUpdate(const Swapchain& swapchain, std::vector<VkImageView> attachmentsViews);
             void globalUpdate(const Swapchain& swapchain);
             void drawableUpdate(const Drawable& drawable, const Swapchain& swapchain);
             void bind(const Drawable& drawable, const Swapchain& swapchain);
@@ -66,6 +67,7 @@ namespace s3dl
             void createVulkanGlobalDescriptorSetLayout();
             void createVulkanDrawablesDescriptorSetLayout();
             void createVulkanPipelineLayout();
+            void createVulkanAttachmentsDescriptorSets();
             void createVulkanGlobalDescriptorSets();
             void createGlobalBuffers();
             void createVulkanDrawablesDescriptorSets(const Drawable& drawable);
@@ -75,6 +77,7 @@ namespace s3dl
             void destroyVulkanGlobalDescriptorSetLayout();
             void destroyVulkanDrawablesDescriptorSetLayout();
             void destroyVulkanPipelineLayout();
+            void destroyVulkanAttachmentsDescriptorSets();
             void destroyVulkanGlobalDescriptorSets();
             void destroyGlobalBuffers();
             void destroyVulkanDrawablesDescriptorSets(const Drawable& drawable);
@@ -88,9 +91,11 @@ namespace s3dl
             std::vector<DescriptorSetLayoutBindingState> _globalBindings;
             std::vector<DescriptorSetLayoutBindingState> _drawablesBindings;
 
+            std::vector<VkDescriptorSetLayoutBinding> _attachmentsBindingsLayouts;
             std::vector<VkDescriptorSetLayoutBinding> _globalBindingsLayouts;
             std::vector<VkDescriptorSetLayoutBinding> _drawablesBindingsLayouts;
 
+            VkDescriptorSetLayout _vulkanAttachmentsSetLayout;
             VkDescriptorSetLayout _vulkanGlobalSetLayout;
             VkDescriptorSetLayout _vulkanDrawablesSetLayout;
 
@@ -109,10 +114,11 @@ namespace s3dl
             std::vector<std::vector<bool>> _globalNeedsUpdate;
             std::vector<std::unordered_map<const Drawable*, std::vector<bool>>> _drawablesNeedsUpdate;
 
-            std::array<VkDescriptorPoolSize, 2> _descriptorPoolSizes;
+            std::array<VkDescriptorPoolSize, 3> _descriptorPoolSizes;
             VkDescriptorPoolCreateInfo _descriptorPool;
             VkDescriptorPool _vulkanDescriptorPool;
 
+            std::vector<VkDescriptorSet> _vulkanAttachmentsDescriptorSets;
             std::vector<VkDescriptorSet> _vulkanGlobalDescriptorSets;
             std::unordered_map<const Drawable*, std::vector<VkDescriptorSet>> _vulkanDrawablesDescriptorSets;
 

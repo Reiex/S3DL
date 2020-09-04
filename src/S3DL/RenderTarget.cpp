@@ -9,7 +9,9 @@ namespace s3dl
         _hasVulkanSurface(hasVulkanSurface),
         _surface(VK_NULL_HANDLE),
 
-        _currentRenderPass(nullptr)
+        _currentRenderPass(nullptr),
+        _currentFramebuffer(nullptr),
+        _currentPipeline(nullptr)
     {
     }
 
@@ -23,6 +25,7 @@ namespace s3dl
     {
         endRenderPass();
         _currentRenderPass = &renderPass;
+        _currentFramebuffer = &framebuffer;
 
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -40,6 +43,8 @@ namespace s3dl
     {
         _currentPipeline = pipeline;
         vkCmdBindPipeline(_swapchain->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getVulkanPipeline());
+
+        _currentPipeline->getPipelineLayout()->attachmentUpdate(*_swapchain, _currentFramebuffer->getCurrentImageViews());
         _currentPipeline->getPipelineLayout()->globalUpdate(*_swapchain);
     }
 

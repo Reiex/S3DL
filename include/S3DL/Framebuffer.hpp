@@ -15,6 +15,7 @@ namespace s3dl
 
             Framebuffer& operator=(const Framebuffer& framebuffer) = delete;
 
+            const std::vector<VkImageView>& getCurrentImageViews() const;
             VkFramebuffer getCurrentFramebuffer() const;
 
             ~Framebuffer();

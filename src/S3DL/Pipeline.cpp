@@ -174,7 +174,12 @@ namespace s3dl
         
         // Pipeline layout
 
-        _pipelineLayout = new PipelineLayout();
+        std::vector<bool> attachmentsBitmap(renderPass._attachments.size(), false);
+        for (int i(0); i < renderPass._inputReferences.size(); i++)
+            for (int j(0); j < renderPass._inputReferences[i].size(); j++)
+                attachmentsBitmap[renderPass._inputReferences[i][j].attachment] = true;
+            
+        _pipelineLayout = new PipelineLayout(attachmentsBitmap);
 
         // Pipeline creation
         

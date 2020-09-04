@@ -99,6 +99,11 @@ namespace s3dl
         std::clog << "<S3DL Debug> " << _vulkanFramebuffers.size() << " VkFramebuffers successfully created." << std::endl;
         #endif
     }
+    
+    const std::vector<VkImageView>& Framebuffer::getCurrentImageViews() const
+    {
+        return _vulkanAttachments[_swapchain->_currentImage];
+    }
 
     VkFramebuffer Framebuffer::getCurrentFramebuffer() const
     {

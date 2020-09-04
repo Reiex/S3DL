@@ -19,25 +19,33 @@ int main_example()
 
     // Create render pass
     s3dl::Attachment render(swapchain, VK_ATTACHMENT_LOAD_OP_CLEAR);
+    s3dl::Attachment color(VK_FORMAT_R8G8B8A8_SRGB, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     s3dl::Attachment depth(VK_FORMAT_D24_UNORM_S8_UINT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-    s3dl::Subpass subpass({}, {&render}, {}, &depth);
-    s3dl::Dependency dependency(VK_SUBPASS_EXTERNAL, 0);
-    s3dl::RenderPass renderPass({&render, &depth}, {subpass}, {dependency});
+    s3dl::Subpass subpassA({}, {&color}, {}, &depth);
+    s3dl::Subpass subpassB({&color, &depth}, {&render}, {});
+    s3dl::Dependency dependencyA(VK_SUBPASS_EXTERNAL, 0);
+    s3dl::Dependency dependencyB(0, 1);
+    s3dl::RenderPass renderPass({&render, &color, &depth}, {subpassA, subpassB}, {dependencyA, dependencyB});
     
     // Create and configure pipeline from render pass
-    s3dl::Shader shader("vertex.spv", "fragment.spv");
-    s3dl::Pipeline* pipeline = renderPass.getNewPipeline(0, shader, window);
-    pipeline->setVertexInput({ s3dl::Vertex::getBindingDescription() }, s3dl::Vertex::getAttributeDescriptions());
-    pipeline->setDepthTest(true, true);
+    s3dl::Shader shaderA("vertex.spv", "fragment.spv");
+    s3dl::Pipeline* pipelineA = renderPass.getNewPipeline(0, shaderA, window);
+    pipelineA->setVertexInput({ s3dl::Vertex::getBindingDescription() }, s3dl::Vertex::getAttributeDescriptions());
+    pipelineA->setDepthTest(true, true);
+
+    s3dl::Shader shaderB("subpassVertex.spv", "subpassFragment.spv");
+    s3dl::Pipeline* pipelineB = renderPass.getNewPipeline(1, shaderB, window);
+    pipelineB->setVertexInput({ s3dl::Vertex::getBindingDescription() }, s3dl::Vertex::getAttributeDescriptions());
     
     // Extract, configure and lock pipeline layout
-    s3dl::PipelineLayout* layout = pipeline->getPipelineLayout();
-
-    layout->declareGlobalUniform(0, sizeof(float));
-    layout->declareDrawablesUniform(0, sizeof(s3dl::vec4));
-    layout->declareDrawablesUniformSampler(1);
-
-    layout->lock(swapchain);
+    s3dl::PipelineLayout* layoutA = pipelineA->getPipelineLayout();
+    layoutA->declareGlobalUniform(0, sizeof(float));
+    layoutA->declareDrawablesUniform(0, sizeof(s3dl::vec4));
+    layoutA->declareDrawablesUniformSampler(1);
+    layoutA->lock(swapchain);
+    
+    s3dl::PipelineLayout* layoutB = pipelineB->getPipelineLayout();
+    layoutB->lock(swapchain);
 
     // Create framebuffer
     s3dl::Framebuffer framebuffer(swapchain, renderPass);
@@ -45,6 +53,7 @@ int main_example()
     std::vector<VkClearValue> clearValues;
     VkClearValue clearValue{};
     clearValue.color = { 0.02f, 0.05f, 0.1f, 1.f };
+    clearValues.push_back(clearValue);
     clearValues.push_back(clearValue);
     clearValue.depthStencil = { 1.f, 0 };
     clearValues.push_back(clearValue);
@@ -85,25 +94,34 @@ int main_example()
     {
         glfwPollEvents();
 
-        layout->setGlobalUniform(0, 3.1415926f);
+        layoutA->setGlobalUniform(0, 3.1415926f);
 
         window.beginRenderPass(renderPass, framebuffer, clearValues);
-        window.bindPipeline(pipeline);
+        window.bindPipeline(pipelineA);
 
-        layout->setDrawablesUniform(meshA, 0, s3dl::vec4{1.0, 0.0, 0.0, 1.0});
-        layout->setDrawablesUniformSampler(meshA, 1, textureA);
+        layoutA->setDrawablesUniform(meshA, 0, s3dl::vec4{1.0, 0.0, 0.0, 1.0});
+        layoutA->setDrawablesUniformSampler(meshA, 1, textureA);
         window.draw(meshA);
         
-        layout->setDrawablesUniform(meshB, 0, s3dl::vec4{0.0, 0.0, 1.0, 1.0});
-        layout->setDrawablesUniformSampler(meshB, 1, textureB);
+        layoutA->setDrawablesUniform(meshB, 0, s3dl::vec4{0.0, 0.0, 1.0, 1.0});
+        layoutA->setDrawablesUniformSampler(meshB, 1, textureB);
         window.draw(meshB);
 
-        // window.beginNextSubpass();
-        // window.bindPipeline(pipelineB);
+        window.beginNextSubpass();
+        window.bindPipeline(pipelineB);
 
-        // window.subpassDraw();
+        window.draw(meshB);
 
         window.display();
+
+        /*
+
+        Regler le probleme des VK_IMAGE_LAYOUT:
+
+        Trouver comment préciser au pipelineLayout lors du draw comment déterminer l'image layout des attachments.
+        Et trouver pourquoi c'est VK_IMAGE_LAYOUT_GENERAL...
+
+        */
     }
 
     swapchain.waitIdle();
