@@ -37,18 +37,15 @@ s3dl::Mesh<s3dl::Vertex>* load_model()
         }
     }
 
-    return new s3dl::Mesh<s3dl::Vertex>(
-        {
-            {{-0.5f, -0.5f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 1.f, 1.f, 1.f}},
-            {{0.5f, -0.5f, 0.f}, {1.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 0.f, 0.f, 1.f}},
-            {{0.5f, 0.5f, 0.f}, {1.f, 1.f}, {0.f, 0.f, -1.f}, {0.f, 1.f, 0.f, 1.f}},
-            {{-0.5f, 0.5f, 0.f}, {0.f, 1.f}, {0.f, 0.f, -1.f}, {0.f, 0.f, 1.f, 1.f}}
-        },
-        {
-            0, 1, 2, 2, 3, 0
-        }
-    );
+    return new s3dl::Mesh<s3dl::Vertex>(vertices, indices);
 }
+
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
 
 int main_viking_room()
 {
@@ -89,6 +86,8 @@ int main_viking_room()
     
     // Extract, configure and lock pipeline layout
     s3dl::PipelineLayout* layoutA = pipelineA->getPipelineLayout();
+    layoutA->declareDrawablesUniformSampler(0);
+    layoutA->declareDrawablesUniform(1, sizeof(UniformBufferObject));
     layoutA->lock(swapchain);
     s3dl::PipelineLayout* layoutB = pipelineB->getPipelineLayout();
     layoutB->lock(swapchain);
@@ -106,10 +105,30 @@ int main_viking_room()
 
     // Create meshes
     s3dl::Mesh<s3dl::Vertex>* mesh = load_model();
+    s3dl::Mesh<s3dl::Vertex> screen(
+        {
+            {{-1.f, -1.f, 0.f}, {0.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 1.f, 1.f, 1.f}},
+            {{ 1.f, -1.f, 0.f}, {1.f, 0.f}, {0.f, 0.f, -1.f}, {1.f, 0.f, 0.f, 1.f}},
+            {{ 1.f,  1.f, 0.f}, {1.f, 1.f}, {0.f, 0.f, -1.f}, {0.f, 1.f, 0.f, 1.f}},
+            {{-1.f,  1.f, 0.f}, {0.f, 1.f}, {0.f, 0.f, -1.f}, {0.f, 0.f, 1.f, 1.f}}
+        },
+        {
+            0, 1, 2, 2, 3, 0
+        }
+    );
     
     // Load textures
     s3dl::TextureData textureData("examples/images/viking_room.png");
     s3dl::Texture texture(textureData);
+    layoutA->setDrawablesUniformSampler(*mesh, 0, texture);
+
+    float t = 0;
+    UniformBufferObject ubo;
+    ubo.model = glm::rotate(glm::mat4(1.0f), t * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj = glm::perspective(glm::radians(45.0f), 1.25f, 0.1f, 10.0f);
+    ubo.proj[1][1] *= -1;
+    layoutA->setDrawablesUniform(*mesh, 1, ubo);
 
     while (!window.shouldClose())
     {
@@ -118,19 +137,24 @@ int main_viking_room()
         window.beginRenderPass(renderPass, framebuffer, clearValues);
         window.bindPipeline(pipelineA);
 
+        ubo.model = glm::rotate(glm::mat4(1.0f), t * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        layoutA->setDrawablesUniform(*mesh, 1, ubo);
+
         window.draw(*mesh);
 
         window.beginNextSubpass();
         window.bindPipeline(pipelineB);
 
-        window.draw(*mesh);
+        window.draw(screen);
 
         window.display();
 
-        break;
+        t += 1.f/6000.f;
     }
 
     swapchain.waitIdle();
+
+    delete mesh;
 
     return 0;
 }

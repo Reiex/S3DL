@@ -186,6 +186,7 @@ namespace s3dl
         if (!_locked)
             throw std::runtime_error("Cannot set uniform value while pipeline layout is not locked.");
 
+        addDrawable(drawable);
         _drawablesSamplers[&drawable][binding] = &texture;
 
         for (int i(0); i < _swapchainImageCount; i++)
@@ -306,7 +307,8 @@ namespace s3dl
 
         uint32_t frame = swapchain.getCurrentImage();
 
-        _globalBuffers[frame]->setData(_globalData.data(), _globalData.size());
+        if (_globalData.size() != 0)
+            _globalBuffers[frame]->setData(_globalData.data(), _globalData.size());
 
         std::vector<VkDescriptorBufferInfo> bufferInfos;
         std::vector<VkDescriptorImageInfo> imageInfos;
@@ -399,17 +401,18 @@ namespace s3dl
 
         uint32_t frame = swapchain.getCurrentImage();
 
-        _drawablesBuffers[&drawable][frame]->setData(_drawablesData[&drawable].data(), _drawablesData[&drawable].size());
+        if (_drawablesData[&drawable].size() != 0)
+            _drawablesBuffers[&drawable][frame]->setData(_drawablesData[&drawable].data(), _drawablesData[&drawable].size());
 
         std::vector<VkDescriptorBufferInfo> bufferInfos;
         std::vector<VkDescriptorImageInfo> imageInfos;
         for (int i(0); i < _drawablesBindings.size(); i++)
         {
+            bufferInfos.push_back({});
+            imageInfos.push_back({});
+            
             if (_drawablesNeedsUpdate[i][&drawable][frame])
             {
-                bufferInfos.push_back({});
-                imageInfos.push_back({});
-
                 switch (_drawablesBindingsLayouts[i].descriptorType)
                 {
                     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
@@ -458,13 +461,13 @@ namespace s3dl
                     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
 
                         descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                        descriptorWrite.pBufferInfo = &bufferInfos[descriptorWrites.size()];
+                        descriptorWrite.pBufferInfo = &bufferInfos[i];
                         break;
 
                     case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
 
                         descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        descriptorWrite.pImageInfo = &imageInfos[descriptorWrites.size()];
+                        descriptorWrite.pImageInfo = &imageInfos[i];
                         break;
 
                     default:
@@ -485,15 +488,13 @@ namespace s3dl
         if (!_locked)
             throw std::runtime_error("Cannot draw using a pipeline while its pipeline layout is not locked.");
 
-        if (_globalBindings.size() == 0 && _drawablesBindings.size() == 0)
-            return;
-
         int i = swapchain.getCurrentImage();
 
         std::vector<VkDescriptorSet> descriptorSets;
         descriptorSets.push_back(_vulkanAttachmentsDescriptorSets[i]);
         descriptorSets.push_back(_vulkanGlobalDescriptorSets[i]);
-        descriptorSets.push_back(_vulkanDrawablesDescriptorSets[&drawable][i]);
+        if (_drawablesBindings.size() != 0)
+            descriptorSets.push_back(_vulkanDrawablesDescriptorSets[&drawable][i]);
 
         vkCmdBindDescriptorSets(swapchain.getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, _vulkanPipelineLayout, 0, descriptorSets.size(), descriptorSets.data(), 0, nullptr);
     }
@@ -641,18 +642,21 @@ namespace s3dl
 
         if (_globalBindings.size() == 0)
             return;
+    
+        _globalSamplers.resize(_globalBindings.size(), nullptr);
 
         uint32_t n;
         n = _globalBindings.size() - 1;
         uint32_t totalSize = _globalBindings[n].offset + _globalBindings[n].size * _globalBindings[n].count;
         
+        if (totalSize == 0)
+            return;
+
         _globalData.resize(totalSize, 0);
         _globalBuffers.resize(_swapchainImageCount);
 
         for (int i(0); i < _swapchainImageCount; i++)
             _globalBuffers[i] = new Buffer(totalSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    
-        _globalSamplers.resize(_globalBindings.size(), nullptr);
     }
     
     void PipelineLayout::createVulkanDrawablesDescriptorSets(const Drawable& drawable)
@@ -680,18 +684,21 @@ namespace s3dl
 
         if (_drawablesBindings.size() == 0)
             return;
+    
+        _drawablesSamplers[&drawable].resize(_drawablesBindings.size(), nullptr);
 
         uint32_t n;
         n = _drawablesBindings.size() - 1;
         uint32_t totalSize = _drawablesBindings[n].offset + _drawablesBindings[n].size * _drawablesBindings[n].count;
+        
+        if (totalSize == 0)
+            return;
         
         _drawablesData[&drawable].resize(totalSize, 0);
         _drawablesBuffers[&drawable].resize(_swapchainImageCount);
 
         for (int i(0); i < _swapchainImageCount; i++)
             _drawablesBuffers[&drawable][i] = new Buffer(totalSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    
-        _drawablesSamplers[&drawable].resize(_drawablesBindings.size(), nullptr);
     }
 
     void PipelineLayout::destroyVulkanDescriptorPool()
