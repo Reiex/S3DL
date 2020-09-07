@@ -15,6 +15,7 @@ namespace s3dl
             TextureData();
             TextureData(const TextureData& texture);
             TextureData(unsigned int width, unsigned int height, const Color& initialColor = {0, 0, 0, 255});
+            TextureData(unsigned int width, unsigned int height, const unsigned char* data);
             TextureData(const std::string& filename);
             // TextureData(unsigned int width, unsigned int height, unsigned char* data);
 

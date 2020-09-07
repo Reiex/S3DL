@@ -1,51 +1,54 @@
 #include "main.hpp"
 
-s3dl::Mesh<s3dl::Vertex>* load_model()
+namespace
 {
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
-
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, "examples/objs/viking_room.obj"))
-        throw std::runtime_error(warn + err);
-
-    std::vector<s3dl::Vertex> vertices;
-    std::vector<uint32_t> indices;
-    for (const auto& shape : shapes)
+    s3dl::Mesh<s3dl::Vertex>* load_model()
     {
-        for (const auto& index : shape.mesh.indices)
+        tinyobj::attrib_t attrib;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+        std::string warn, err;
+
+        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, "examples/objs/viking_room.obj"))
+            throw std::runtime_error(warn + err);
+
+        std::vector<s3dl::Vertex> vertices;
+        std::vector<uint32_t> indices;
+        for (const auto& shape : shapes)
         {
-            s3dl::Vertex vertex{};
+            for (const auto& index : shape.mesh.indices)
+            {
+                s3dl::Vertex vertex{};
 
-            vertex.position = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
-            };
+                vertex.position = {
+                    attrib.vertices[3 * index.vertex_index + 0],
+                    attrib.vertices[3 * index.vertex_index + 1],
+                    attrib.vertices[3 * index.vertex_index + 2]
+                };
 
-            vertex.texCoords = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.f - attrib.texcoords[2 * index.texcoord_index + 1]
-            };
+                vertex.texCoords = {
+                    attrib.texcoords[2 * index.texcoord_index + 0],
+                    1.f - attrib.texcoords[2 * index.texcoord_index + 1]
+                };
 
-            vertex.color = {1.0f, 1.0f, 1.0f, 1.0f};
+                vertex.color = {1.0f, 1.0f, 1.0f, 1.0f};
 
 
-            vertices.push_back(vertex);
-            indices.push_back(indices.size());
+                vertices.push_back(vertex);
+                indices.push_back(indices.size());
+            }
         }
+
+        return new s3dl::Mesh<s3dl::Vertex>(vertices, indices);
     }
 
-    return new s3dl::Mesh<s3dl::Vertex>(vertices, indices);
+    struct UniformBufferObject
+    {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+    };
 }
-
-struct UniformBufferObject
-{
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
-};
 
 int main_viking_room()
 {

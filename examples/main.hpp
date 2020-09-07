@@ -6,3 +6,4 @@
 #include "glm/gtc/matrix_transform.hpp"
 
 int main_viking_room();
+int main_master();

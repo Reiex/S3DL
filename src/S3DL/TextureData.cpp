@@ -22,6 +22,13 @@ namespace s3dl
                 _data[4*i + j] = initialColor[j];
     }
 
+    TextureData::TextureData(unsigned int width, unsigned int height, const unsigned char* data)
+    {
+        _size = {width, height};
+        _data = (unsigned char*) std::malloc(sizeof(unsigned char)*width*height*4);
+        std::memcpy(_data, data, width*height*4);
+    }
+
     TextureData::TextureData(const std::string& filename)
     {
         int x, y;

@@ -45,16 +45,17 @@ LIBRARY_OBJS = $(OBJ_LIBRARY_DIR)/Instance.o \
 TESTS_OBJS = $(OBJ_TESTS_DIR)/main.o
 EXAMPLES_OBJS = $(OBJ_EXAMPLES_DIR)/main.o \
 				$(OBJ_EXAMPLES_DIR)/viking_room.o \
+				$(OBJ_EXAMPLES_DIR)/master.o \
 			    $(OBJ_EXAMPLES_DIR)/tiny_obj_loader/tiny_obj_loader.o
 
 # Compiler
 CC = g++
 # Compiler options
-CFLAGS = -I$(INCLUDE_DIR) -g
+CFLAGS = -I$(INCLUDE_DIR) -g -I/home/reiex/4DViews/Dev/mvworkflow/PiEZo/Module
 # Linker options
 LDFLAGS = -L$(LIB_DIR) -Wl,-rpath=$(LIB_DIR)
 # Libraries linked
-LDLIBS = `pkg-config --static --libs glfw3` -lvulkan -lS3DL
+LDLIBS = `pkg-config --static --libs glfw3` -lvulkan -lS3DL -lagafar -l4dvcurt -lpomo -lmodule-bagel
 
 
 # Examples shaders sources directory

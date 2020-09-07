@@ -5,3 +5,6 @@ obj/
 lib/S3DL.pdb
 S3DLExamples
 S3DLTests
+
+examples/masters
+examples/master.cpp
