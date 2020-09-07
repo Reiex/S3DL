@@ -1,4 +1,4 @@
-#include <S3DL/S3DL.hpp>
+#include "main.hpp"
 
 int main_example()
 {
@@ -83,10 +83,10 @@ int main_example()
     );
     
     // Load textures
-    s3dl::TextureData textureDataA("testA.png");
+    s3dl::TextureData textureDataA("examples/images/testA.png");
     s3dl::Texture textureA(textureDataA);
     
-    s3dl::TextureData textureDataB("testB.png");
+    s3dl::TextureData textureDataB("examples/images/testB.png");
     s3dl::Texture textureB(textureDataB);
 
 
@@ -123,7 +123,7 @@ int main_example()
 
 int main()
 {
-    int exit_code = main_example();
+    int exit_code = main_viking_room();
 
     // system("pause");
 

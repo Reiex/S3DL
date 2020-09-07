@@ -43,7 +43,9 @@ LIBRARY_OBJS = $(OBJ_LIBRARY_DIR)/Instance.o \
 			   $(OBJ_LIBRARY_DIR)/Texture.o \
 			   $(OBJ_LIBRARY_DIR)/Framebuffer.o
 TESTS_OBJS = $(OBJ_TESTS_DIR)/main.o
-EXAMPLES_OBJS = $(OBJ_EXAMPLES_DIR)/main.o
+EXAMPLES_OBJS = $(OBJ_EXAMPLES_DIR)/main.o \
+				$(OBJ_EXAMPLES_DIR)/viking_room.o \
+			    $(OBJ_EXAMPLES_DIR)/tiny_obj_loader/tiny_obj_loader.o
 
 # Compiler
 CC = g++
@@ -107,7 +109,7 @@ tests: $(LIB_DIR) $(TESTS_OBJS)
 
 folders:
 	-rm -rf $(LIB_DIR) $(OBJ_DIR)
-	mkdir $(OBJ_DIR) $(OBJ_LIBRARY_DIR) $(OBJ_LIBRARY_DIR)/stb $(OBJ_TESTS_DIR) $(OBJ_EXAMPLES_DIR)
+	mkdir $(OBJ_DIR) $(OBJ_LIBRARY_DIR) $(OBJ_LIBRARY_DIR)/stb $(OBJ_TESTS_DIR) $(OBJ_EXAMPLES_DIR) $(OBJ_EXAMPLES_DIR)/tiny_obj_loader
 	mkdir $(LIB_DIR)
 
 
