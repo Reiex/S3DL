@@ -2,5 +2,6 @@
 .vscode/
 build/
 obj/
-vulkanExamples
 lib/S3DL.pdb
+S3DLExamples
+S3DLTests

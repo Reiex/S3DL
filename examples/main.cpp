@@ -28,12 +28,12 @@ int main_example()
     s3dl::RenderPass renderPass({&render, &color, &depth}, {subpassA, subpassB}, {dependencyA, dependencyB});
     
     // Create and configure pipeline from render pass
-    s3dl::Shader shaderA("vertex.spv", "fragment.spv");
+    s3dl::Shader shaderA("examples/spvs/main.vert.spv", "examples/spvs/main.frag.spv");
     s3dl::Pipeline* pipelineA = renderPass.getNewPipeline(0, shaderA, window);
     pipelineA->setVertexInput({ s3dl::Vertex::getBindingDescription() }, s3dl::Vertex::getAttributeDescriptions());
     pipelineA->setDepthTest(true, true);
 
-    s3dl::Shader shaderB("subpassVertex.spv", "subpassFragment.spv");
+    s3dl::Shader shaderB("examples/spvs/subpass.vert.spv", "examples/spvs/subpass.frag.spv");
     s3dl::Pipeline* pipelineB = renderPass.getNewPipeline(1, shaderB, window);
     pipelineB->setVertexInput({ s3dl::Vertex::getBindingDescription() }, s3dl::Vertex::getAttributeDescriptions());
     
@@ -113,15 +113,6 @@ int main_example()
         window.draw(meshB);
 
         window.display();
-
-        /*
-
-        Regler le probleme des VK_IMAGE_LAYOUT:
-
-        Trouver comment préciser au pipelineLayout lors du draw comment déterminer l'image layout des attachments.
-        Et trouver pourquoi c'est VK_IMAGE_LAYOUT_GENERAL...
-
-        */
     }
 
     swapchain.waitIdle();

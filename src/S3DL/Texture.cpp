@@ -125,11 +125,11 @@ namespace s3dl
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.image = _vulkanImage;
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        barrier.subresourceRange.baseMipLevel = 0;
-        barrier.subresourceRange.levelCount = 1;
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = 1;
+        barrier.subresourceRange.aspectMask = _imageView.subresourceRange.aspectMask;
+        barrier.subresourceRange.baseMipLevel = _imageView.subresourceRange.baseMipLevel;
+        barrier.subresourceRange.levelCount = _imageView.subresourceRange.levelCount;
+        barrier.subresourceRange.baseArrayLayer = _imageView.subresourceRange.baseArrayLayer;
+        barrier.subresourceRange.layerCount = _imageView.subresourceRange.layerCount;
 
         VkPipelineStageFlags sourceStage;
         VkPipelineStageFlags destinationStage;
@@ -137,6 +137,10 @@ namespace s3dl
         switch (_currentLayout)
         {
             case VK_IMAGE_LAYOUT_UNDEFINED:
+                sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+                barrier.srcAccessMask = 0;
+                break;
+            case VK_IMAGE_LAYOUT_GENERAL:
                 sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
                 barrier.srcAccessMask = 0;
                 break;
@@ -155,6 +159,10 @@ namespace s3dl
         switch (layout)
         {
             case VK_IMAGE_LAYOUT_UNDEFINED:
+                destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+                barrier.dstAccessMask = 0;
+                break;
+            case VK_IMAGE_LAYOUT_GENERAL:
                 destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 barrier.dstAccessMask = 0;
                 break;
@@ -217,7 +225,7 @@ namespace s3dl
     {
         return _vulkanImage;
     }
-
+    
     VkImageView Texture::getVulkanImageView() const
     {
         return _vulkanImageView;
