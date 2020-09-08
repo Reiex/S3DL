@@ -13,14 +13,18 @@ namespace s3dl
     {
         public:
 
-            Texture(const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags imageAspects);
-            Texture(const TextureData& textureData);
+            Texture(const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags imageAspects, TextureSampler sampler = TextureSampler());
             Texture(const Texture& texture) = delete;
 
             Texture& operator=(const Texture& texture) = delete;
 
-            void setLayout(VkImageLayout layout);
+            void fillFromTextureData(const TextureData& textureData);
+            void fillFromBuffer(const Buffer& buffer);
+            void fillFromTexture(const Texture& texture);
 
+            void setLayout(VkImageLayout layout) const;
+
+            TextureData getTextureData() const;
             const uvec2& getSize() const;
 
             VkImage getVulkanImage() const;
@@ -31,9 +35,7 @@ namespace s3dl
 
         private:
 
-            Texture();
-
-            void fillFromBuffer(VkBuffer buffer);
+            Texture(TextureSampler sampler);
 
             VkImageCreateInfo _image;
             VkImageViewCreateInfo _imageView;
@@ -45,6 +47,6 @@ namespace s3dl
             VkSampler _vulkanSampler;
 
             uvec2 _size;
-            VkImageLayout _currentLayout;
+            mutable VkImageLayout _currentLayout;
     };
 }

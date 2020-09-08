@@ -2,7 +2,7 @@
 
 namespace s3dl
 {
-    Texture::Texture(const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags imageAspects) : Texture()
+    Texture::Texture(const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags imageAspects, TextureSampler sampler) : Texture(sampler)
     {
         _size = size;
         _currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -83,22 +83,154 @@ namespace s3dl
         #endif
     }
 
-    Texture::Texture(const TextureData& textureData) : Texture(textureData.size(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT)
+    void Texture::fillFromTextureData(const TextureData& textureData)
     {
-        // Create staging buffer with image in it
-
         Buffer stagingBuffer(textureData.getRawSize(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         stagingBuffer.setData(textureData.getRawData(), textureData.getRawSize());
-
-        // Fill vulkan image
-
-        setLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        fillFromBuffer(stagingBuffer.getVulkanBuffer());
-        setLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        fillFromBuffer(stagingBuffer);
     }
 
-    void Texture::setLayout(VkImageLayout layout)
+    void Texture::fillFromBuffer(const Buffer& buffer)
     {
+        VkImageLayout layout = _currentLayout;
+        setLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+        // Start recording a command buffer
+
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandPool = Device::Active->getVulkanCommandPool();
+        allocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        vkAllocateCommandBuffers(Device::Active->getVulkanDevice(), &allocInfo, &commandBuffer);
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+        // Create copy command
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = {0, 0, 0};
+        region.imageExtent = {_size.x, _size.y, 1};
+
+        vkCmdCopyBufferToImage(commandBuffer, buffer.getVulkanBuffer(), _vulkanImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+        // Finish recording the command buffer and execute it
+
+        vkEndCommandBuffer(commandBuffer);
+
+        VkFence transferFence;
+        VkFenceCreateInfo fenceCreateInfo{};
+        fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        vkCreateFence(Device::Active->getVulkanDevice(), &fenceCreateInfo, nullptr, &transferFence);
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        vkResetFences(Device::Active->getVulkanDevice(), 1, &transferFence);
+        vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, transferFence);
+        
+        vkWaitForFences(Device::Active->getVulkanDevice(), 1, &transferFence, VK_TRUE, UINT64_MAX);
+
+        vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &commandBuffer);
+        vkDestroyFence(Device::Active->getVulkanDevice(), transferFence, nullptr);
+
+        if (layout != VK_IMAGE_LAYOUT_UNDEFINED)
+            setLayout(layout);
+    }
+    
+    void Texture::fillFromTexture(const Texture& texture)
+    {
+        VkImageLayout srcLayout = texture._currentLayout;
+        texture.setLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        VkImageLayout dstLayout = _currentLayout;
+        setLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+        // Start recording a command buffer
+
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandPool = Device::Active->getVulkanCommandPool();
+        allocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        vkAllocateCommandBuffers(Device::Active->getVulkanDevice(), &allocInfo, &commandBuffer);
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+        // Create copy command
+        
+        VkImageCopy copyInfo{};
+        copyInfo.srcSubresource.aspectMask = _imageView.subresourceRange.aspectMask;
+        copyInfo.srcSubresource.mipLevel = 0;
+        copyInfo.srcSubresource.baseArrayLayer = 0;
+        copyInfo.srcSubresource.layerCount = 1;
+        copyInfo.srcOffset = {0, 0, 0};
+        copyInfo.dstSubresource.aspectMask = _imageView.subresourceRange.aspectMask;
+        copyInfo.dstSubresource.mipLevel = 0;
+        copyInfo.dstSubresource.baseArrayLayer = 0;
+        copyInfo.dstSubresource.layerCount = 1;
+        copyInfo.dstOffset = {0, 0, 0};
+        copyInfo.extent = {_size.x, _size.y, 1};
+
+        vkCmdCopyImage(commandBuffer, texture._vulkanImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, _vulkanImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyInfo);
+
+        // Finish recording the command buffer and execute it
+
+        vkEndCommandBuffer(commandBuffer);
+
+        VkFence transferFence;
+        VkFenceCreateInfo fenceCreateInfo{};
+        fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        vkCreateFence(Device::Active->getVulkanDevice(), &fenceCreateInfo, nullptr, &transferFence);
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        vkResetFences(Device::Active->getVulkanDevice(), 1, &transferFence);
+        vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, transferFence);
+        
+        vkWaitForFences(Device::Active->getVulkanDevice(), 1, &transferFence, VK_TRUE, UINT64_MAX);
+
+        vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &commandBuffer);
+        vkDestroyFence(Device::Active->getVulkanDevice(), transferFence, nullptr);
+
+        if (srcLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+            texture.setLayout(srcLayout);
+        if (dstLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+            setLayout(dstLayout);
+    }
+
+    void Texture::setLayout(VkImageLayout layout) const
+    {
+        if (layout == _currentLayout)
+            return;
+
         // Start recording a command buffer
 
         VkCommandBufferAllocateInfo allocInfo{};
@@ -148,6 +280,10 @@ namespace s3dl
                 sourceStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
                 barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 break;
+            case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+                sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+                barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+                break;
             case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
                 sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                 barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -173,6 +309,10 @@ namespace s3dl
             case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
                 destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
                 barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                break;
+            case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+                destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+                barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
                 break;
             case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
                 destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -221,6 +361,92 @@ namespace s3dl
         _currentLayout = layout;
     }
 
+    TextureData Texture::getTextureData() const
+    {
+        // Create another texture if necessary
+        
+        VkImageLayout layout = _currentLayout;
+        setLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+        VkImage srcImage = _vulkanImage;
+        Texture* stagingTexture = nullptr;
+        if (_image.tiling != VK_IMAGE_TILING_LINEAR)
+        {
+            if (!(_image.usage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT))
+                throw std::runtime_error("Could not get texture data as the texture image tiling is not VK_IMAGE_TILING_LINEAR and VK_IMAGE_USAGE_TRANSFER_SRC_BIT is not activated.");
+
+            stagingTexture = new Texture(_size, _image.format, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, _imageView.subresourceRange.aspectMask);
+            stagingTexture->fillFromTexture(*this);
+            stagingTexture->setLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+            srcImage = stagingTexture->_vulkanImage;
+        }
+
+        // Start recording a command buffer
+
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandPool = Device::Active->getVulkanCommandPool();
+        allocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        vkAllocateCommandBuffers(Device::Active->getVulkanDevice(), &allocInfo, &commandBuffer);
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+        // Create command
+        
+        VkBufferImageCopy transferInfo{};
+        transferInfo.bufferOffset = 0;
+        transferInfo.bufferRowLength = 0;
+        transferInfo.bufferImageHeight = 0;
+        transferInfo.imageSubresource.aspectMask = _imageView.subresourceRange.aspectMask;
+        transferInfo.imageSubresource.mipLevel = 0;
+        transferInfo.imageSubresource.baseArrayLayer = 0;
+        transferInfo.imageSubresource.layerCount = 1;
+        transferInfo.imageOffset = {0, 0, 0};
+        transferInfo.imageExtent = {_size.x, _size.y, 1};
+
+        Buffer buffer(_size.x * _size.y * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        vkCmdCopyImageToBuffer(commandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer.getVulkanBuffer(), 1, &transferInfo);
+
+        // Finish recording the command buffer and execute it
+
+        vkEndCommandBuffer(commandBuffer);
+
+        VkFence transferFence;
+        VkFenceCreateInfo fenceCreateInfo{};
+        fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        vkCreateFence(Device::Active->getVulkanDevice(), &fenceCreateInfo, nullptr, &transferFence);
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        vkResetFences(Device::Active->getVulkanDevice(), 1, &transferFence);
+        vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, transferFence);
+        
+        vkWaitForFences(Device::Active->getVulkanDevice(), 1, &transferFence, VK_TRUE, UINT64_MAX);
+
+        vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &commandBuffer);
+        vkDestroyFence(Device::Active->getVulkanDevice(), transferFence, nullptr);
+
+        if (_image.tiling != VK_IMAGE_TILING_LINEAR)
+            delete stagingTexture;
+        
+        if (layout != VK_IMAGE_LAYOUT_UNDEFINED)
+            setLayout(layout);
+        
+        return TextureData(_size.x, _size.y, buffer.getData().data());
+    }
+
     const uvec2& Texture::getSize() const
     {
         return _size;
@@ -260,10 +486,8 @@ namespace s3dl
         #endif
     }
 
-    Texture::Texture() :
-        _image{},
-        _imageView{},
-        _sampler(),
+    Texture::Texture(TextureSampler sampler) :
+        _sampler(sampler),
 
         _vulkanImage(VK_NULL_HANDLE),
         _vulkanImageMemory(VK_NULL_HANDLE),
@@ -278,64 +502,5 @@ namespace s3dl
         VkResult result = vkCreateSampler(Device::Active->getVulkanDevice(), &_sampler.info, nullptr, &_vulkanSampler);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to create texture sampler. VkResult: " + std::to_string(result));
-    }
-
-    void Texture::fillFromBuffer(VkBuffer buffer)
-    {
-        // Start recording a command buffer
-
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = Device::Active->getVulkanCommandPool();
-        allocInfo.commandBufferCount = 1;
-
-        VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(Device::Active->getVulkanDevice(), &allocInfo, &commandBuffer);
-
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-        vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-        // Create copy command
-
-        VkBufferImageCopy region{};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 0;
-        region.bufferImageHeight = 0;
-        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        region.imageSubresource.mipLevel = 0;
-        region.imageSubresource.baseArrayLayer = 0;
-        region.imageSubresource.layerCount = 1;
-        region.imageOffset = {0, 0, 0};
-        region.imageExtent = {_size.x, _size.y, 1};
-
-        vkCmdCopyBufferToImage(commandBuffer, buffer, _vulkanImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-        // Finish recording the command buffer and execute it
-
-        vkEndCommandBuffer(commandBuffer);
-
-        VkFence transferFence;
-        VkFenceCreateInfo fenceCreateInfo{};
-        fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-        vkCreateFence(Device::Active->getVulkanDevice(), &fenceCreateInfo, nullptr, &transferFence);
-
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
-
-        vkResetFences(Device::Active->getVulkanDevice(), 1, &transferFence);
-        vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, transferFence);
-        
-        vkWaitForFences(Device::Active->getVulkanDevice(), 1, &transferFence, VK_TRUE, UINT64_MAX);
-
-        vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &commandBuffer);
-        vkDestroyFence(Device::Active->getVulkanDevice(), transferFence, nullptr);
     }
 }

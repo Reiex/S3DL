@@ -16,6 +16,7 @@ namespace s3dl
             Buffer& operator=(const Buffer& buffer) = delete;
 
             void setData(const void* data, uint64_t size, uint64_t offset = 0);
+            std::vector<uint8_t> getData() const;
 
             VkBuffer getVulkanBuffer() const;
             

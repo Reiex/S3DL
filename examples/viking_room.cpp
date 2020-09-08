@@ -122,7 +122,9 @@ int main_viking_room()
     
     // Load textures
     s3dl::TextureData textureData("examples/images/viking_room.png");
-    s3dl::Texture texture(textureData);
+    s3dl::Texture texture(textureData.size(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+    texture.fillFromTextureData(textureData);
+    texture.setLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     layoutA->setDrawablesUniformSampler(*mesh, 0, texture);
 
     float t = 0;

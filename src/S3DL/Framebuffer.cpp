@@ -31,7 +31,7 @@ namespace s3dl
             {
                 VkFormat format(renderPass._attachments[i].format);
                 VkImageTiling tiling(VK_IMAGE_TILING_OPTIMAL);
-                VkImageUsageFlags usage(0);
+                VkImageUsageFlags usage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
                 VkImageAspectFlags imageAspects(0);
 
                 for (int j(0); j < renderPass._inputReferences.size(); j++)

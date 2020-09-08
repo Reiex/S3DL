@@ -130,6 +130,23 @@ namespace s3dl
         }
     }
 
+    std::vector<uint8_t> Buffer::getData() const
+    {
+        // TODO: Les buffers qui sont pas host_visible
+
+        std::vector<uint8_t> data(_size);
+        void* handle;
+            
+        VkResult result = vkMapMemory(Device::Active->getVulkanDevice(), _deviceMemory, 0, _size, 0, &handle);
+        if (result != VK_SUCCESS)
+            throw std::runtime_error("Failed to map buffer to memory. VkResult: " + std::to_string(result));
+        
+        std::memcpy(data.data(), handle, _size);
+        vkUnmapMemory(Device::Active->getVulkanDevice(), _deviceMemory);
+
+        return data;
+    }
+
     VkBuffer Buffer::getVulkanBuffer() const
     {
         return _buffer;
