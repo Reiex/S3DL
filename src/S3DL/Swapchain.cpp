@@ -11,16 +11,16 @@ namespace s3dl
 
         PhysicalDevice::SwapChainSupportDetails swapChainSupport = Device::Active->getPhysicalDevice().swapSupport;
 
-        uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-        if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
-            imageCount = swapChainSupport.capabilities.maxImageCount;
+        _imageCount = swapChainSupport.capabilities.minImageCount + 1;
+        if (swapChainSupport.capabilities.maxImageCount > 0 && _imageCount > swapChainSupport.capabilities.maxImageCount)
+            _imageCount = swapChainSupport.capabilities.maxImageCount;
         
         // Create the swap chain
 
         VkSwapchainCreateInfoKHR createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = window.getVulkanSurface();
-        createInfo.minImageCount = imageCount;
+        createInfo.minImageCount = _imageCount;
         createInfo.imageFormat = _format.format;
         createInfo.imageColorSpace = _format.colorSpace;
         createInfo.imageExtent = _extent;
@@ -39,14 +39,14 @@ namespace s3dl
 
         // Extract the swap chain images
 
-        vkGetSwapchainImagesKHR(Device::Active->getVulkanDevice(), _swapChain, &imageCount, nullptr);
-        _images.resize(imageCount);
-        vkGetSwapchainImagesKHR(Device::Active->getVulkanDevice(), _swapChain, &imageCount, _images.data());
+        vkGetSwapchainImagesKHR(Device::Active->getVulkanDevice(), _swapChain, &_imageCount, nullptr);
+        _images.resize(_imageCount);
+        vkGetSwapchainImagesKHR(Device::Active->getVulkanDevice(), _swapChain, &_imageCount, _images.data());
 
         // Compute swap chain image views
         
-        _imageViews.resize(_images.size());
-        for (size_t i = 0; i < _images.size(); i++)
+        _imageViews.resize(_imageCount);
+        for (size_t i = 0; i < _imageCount; i++)
         {
             VkImageViewCreateInfo createInfo{};
 
@@ -70,10 +70,18 @@ namespace s3dl
         }
 
         #ifndef NDEBUG
-        std::clog << "<S3DL Debug> VkSwapChainKHR successfully created with " + std::to_string(imageCount) << " swap images." << std::endl;
+        std::clog << "<S3DL Debug> VkSwapChainKHR successfully created with " + std::to_string(_imageCount) << " swap images." << std::endl;
         #endif
 
         create(window);
+    }
+
+    Swapchain::Swapchain(const RenderTexture& texture)
+    {
+        _swapChain = VK_NULL_HANDLE;
+        _extent = {texture.getTargetSize().x, texture.getTargetSize().y};
+        _imageCount = 1;
+        create(texture);
     }
 
     VkSurfaceFormatKHR Swapchain::getFormat() const
@@ -93,7 +101,7 @@ namespace s3dl
 
     uint32_t Swapchain::getImageCount() const
     {
-        return _images.size();
+        return _imageCount;
     }
 
     VkCommandBuffer Swapchain::getCurrentCommandBuffer() const
@@ -111,7 +119,6 @@ namespace s3dl
         submitCommandBuffer(_currentImage);
         presentSurface(target, _currentImage);
 
-        vkResetFences(Device::Active->getVulkanDevice(), 1, &_acquireFence);
         _currentImage = getNextImage(target);
 
         vkWaitForFences(Device::Active->getVulkanDevice(), 1, &_renderFences[_currentImage], VK_TRUE, UINT64_MAX);
@@ -147,7 +154,8 @@ namespace s3dl
         for (int i(0); i < _imageViews.size(); i++)
             vkDestroyImageView(Device::Active->getVulkanDevice(), _imageViews[i], nullptr);
 
-        vkDestroySwapchainKHR(Device::Active->getVulkanDevice(), _swapChain, nullptr);
+        if (_swapChain != VK_NULL_HANDLE)
+            vkDestroySwapchainKHR(Device::Active->getVulkanDevice(), _swapChain, nullptr);
 
         #ifndef NDEBUG
         std::clog << "<S3DL Debug> VkSwapChainKHR successfully destroyed." << std::endl;
@@ -156,11 +164,9 @@ namespace s3dl
 
     void Swapchain::create(const RenderTarget& target)
     {
-        unsigned int imageCount = _images.size();
-
-        _renderFences.resize(imageCount);
-        _renderSemaphores.resize(imageCount);
-        _commandBuffers.resize(imageCount);
+        _renderFences.resize(_imageCount);
+        _renderSemaphores.resize(_imageCount);
+        _commandBuffers.resize(_imageCount);
 
         VkFenceCreateInfo fenceInfo{};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -176,7 +182,7 @@ namespace s3dl
         commandBufferInfo.commandBufferCount = 1;
 
         vkCreateFence(Device::Active->getVulkanDevice(), &fenceInfo, nullptr, &_acquireFence);
-        for (int i(0); i < imageCount; i++)
+        for (int i(0); i < _imageCount; i++)
         {
             vkCreateFence(Device::Active->getVulkanDevice(), &fenceInfo, nullptr, &_renderFences[i]);
             vkCreateSemaphore(Device::Active->getVulkanDevice(), &semaphoreInfo, nullptr, &_renderSemaphores[i]);
@@ -187,7 +193,6 @@ namespace s3dl
         std::clog << "<S3DL Debug> Swapchain update tools successfully created." << std::endl;
         #endif
 
-        vkResetFences(Device::Active->getVulkanDevice(), 1, &_acquireFence);
         _currentImage = getNextImage(target);
         startRecordingCommandBuffer(_currentImage);
     }
@@ -264,10 +269,12 @@ namespace s3dl
         if (target.hasVulkanSurface())
         {
             uint32_t index;
+            vkResetFences(Device::Active->getVulkanDevice(), 1, &_acquireFence);
             vkAcquireNextImageKHR(Device::Active->getVulkanDevice(), _swapChain, UINT64_MAX, VK_NULL_HANDLE, _acquireFence, &index);
             return index;
         }
 
-        return (_currentImage + 1) % _images.size();
+
+        return (_currentImage + 1) % _imageCount;
     }
 }

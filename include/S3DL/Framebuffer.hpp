@@ -10,11 +10,12 @@ namespace s3dl
     {
         public:
 
-            Framebuffer(const Swapchain& swapchain, const RenderPass& renderPass);
+            Framebuffer(const Swapchain& swapchain, const RenderPass& renderPass, const RenderTarget& target);
             Framebuffer(const Framebuffer& framebuffer) = delete;
 
             Framebuffer& operator=(const Framebuffer& framebuffer) = delete;
 
+            Texture* getTexture(uint32_t textureIndex);
             const std::vector<VkImageView>& getCurrentImageViews() const;
             VkFramebuffer getCurrentFramebuffer() const;
 

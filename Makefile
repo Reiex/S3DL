@@ -25,6 +25,7 @@ LIBRARY_OBJS = $(OBJ_LIBRARY_DIR)/Instance.o \
 			   $(OBJ_LIBRARY_DIR)/Window.o \
 			   $(OBJ_LIBRARY_DIR)/RenderTarget.o \
 			   $(OBJ_LIBRARY_DIR)/RenderWindow.o \
+			   $(OBJ_LIBRARY_DIR)/RenderTexture.o \
 			   $(OBJ_LIBRARY_DIR)/Device.o \
 			   $(OBJ_LIBRARY_DIR)/Swapchain.o \
 			   $(OBJ_LIBRARY_DIR)/Attachment.o \

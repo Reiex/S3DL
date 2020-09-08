@@ -10,7 +10,7 @@ namespace s3dl
     {
         public:
 
-            Attachment(const Swapchain& swapchain, VkAttachmentLoadOp loadOp);
+            static Attachment ScreenAttachment(const Swapchain& swapchain, VkAttachmentLoadOp loadOp);
             Attachment(VkFormat format, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp, VkImageLayout initialLayout, VkImageLayout finalLayout);
 
         private:

@@ -167,7 +167,7 @@ namespace s3dl
 
         // Extract indices of the different queue families that can be needed
 
-        QueueFamilies families;
+        QueueFamilies families{0, 0, false, false};
         for (int i(0); i < _physicalDevice.queueFamilies.size(); i++)
         {
             if (_physicalDevice.queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)

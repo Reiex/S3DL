@@ -21,6 +21,8 @@ namespace s3dl
 
             void setLayout(VkImageLayout layout);
 
+            const uvec2& getSize() const;
+
             VkImage getVulkanImage() const;
             VkImageView getVulkanImageView() const;
             VkSampler getVulkanSampler() const;

@@ -13,6 +13,7 @@ namespace s3dl
         public:
 
             Swapchain(const RenderWindow& window);
+            Swapchain(const RenderTexture& texture);
 
             VkSurfaceFormatKHR getFormat() const;
             VkExtent2D getExtent() const;
@@ -43,6 +44,7 @@ namespace s3dl
             VkSurfaceFormatKHR _format;
             VkExtent2D _extent;
 
+            uint32_t _imageCount;
             std::vector<VkImage> _images;
             std::vector<VkImageView> _imageViews;
 

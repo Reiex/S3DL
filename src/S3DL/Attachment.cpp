@@ -2,14 +2,12 @@
 
 namespace s3dl
 {
-    Attachment::Attachment(const Swapchain& swapchain, VkAttachmentLoadOp loadOp) :
-        _format(swapchain.getFormat().format),
-        _loadOp(loadOp),
-        _storeOp(VK_ATTACHMENT_STORE_OP_STORE),
-        _initialLayout(VK_IMAGE_LAYOUT_UNDEFINED),
-        _finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR),
-        _swapchain(&swapchain)
+    Attachment Attachment::ScreenAttachment(const Swapchain& swapchain, VkAttachmentLoadOp loadOp)
     {
+        Attachment attachment(swapchain.getFormat().format, loadOp, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+        attachment._swapchain = &swapchain;
+
+        return attachment;
     }
 
     Attachment::Attachment(VkFormat format, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp, VkImageLayout initialLayout, VkImageLayout finalLayout) :

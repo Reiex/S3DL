@@ -221,6 +221,11 @@ namespace s3dl
         _currentLayout = layout;
     }
 
+    const uvec2& Texture::getSize() const
+    {
+        return _size;
+    }
+
     VkImage Texture::getVulkanImage() const
     {
         return _vulkanImage;

@@ -2,17 +2,17 @@
 
 namespace s3dl
 {
-    Framebuffer::Framebuffer(const Swapchain& swapchain, const RenderPass& renderPass)
+    Framebuffer::Framebuffer(const Swapchain& swapchain, const RenderPass& renderPass, const RenderTarget& target)
     {
         _swapchain = &swapchain;
 
         _size = { swapchain._extent.width, swapchain._extent.height };
-        _framebuffers.resize(swapchain._images.size());
-        _vulkanFramebuffers.resize(swapchain._images.size());
+        _framebuffers.resize(swapchain._imageCount);
+        _vulkanFramebuffers.resize(swapchain._imageCount);
         _attachments.resize(renderPass._attachments.size());
         _attachmentsBelonging.resize(renderPass._attachments.size());
-        _vulkanAttachments.resize(swapchain._images.size());
-        for (int i(0); i < swapchain._images.size(); i++)
+        _vulkanAttachments.resize(swapchain._imageCount);
+        for (int i(0); i < swapchain._imageCount; i++)
             _vulkanAttachments[i].resize(renderPass._attachments.size());
 
         // Create texture for each attachment (except swapchain where image views are fetched from it)
@@ -24,7 +24,7 @@ namespace s3dl
                 _attachments[i] = nullptr;
                 _attachmentsBelonging[i] = false;
 
-                for (int j(0); j < swapchain._images.size(); j++)
+                for (int j(0); j < swapchain._imageCount; j++)
                     _vulkanAttachments[j][i] = swapchain._imageViews[j];
             }
             else
@@ -71,14 +71,14 @@ namespace s3dl
 
                 _attachments[i] = new Texture(_size, format, tiling, usage, imageAspects);
                 _attachmentsBelonging[i] = true;
-                for (int j(0); j < swapchain._images.size(); j++)
+                for (int j(0); j < swapchain._imageCount; j++)
                     _vulkanAttachments[j][i] = _attachments[i]->getVulkanImageView();
             }
         }
 
         // Create framebuffer
 
-        for (int i(0); i < swapchain._images.size(); i++)
+        for (int i(0); i < swapchain._imageCount; i++)
         {
             _framebuffers[i].sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             _framebuffers[i].pNext = nullptr;
@@ -100,6 +100,11 @@ namespace s3dl
         #endif
     }
     
+    Texture* Framebuffer::getTexture(uint32_t textureIndex)
+    {
+        return _attachments[textureIndex];
+    }
+
     const std::vector<VkImageView>& Framebuffer::getCurrentImageViews() const
     {
         return _vulkanAttachments[_swapchain->_currentImage];

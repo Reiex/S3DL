@@ -68,7 +68,7 @@ int main_viking_room()
     window.setSwapchain(swapchain);
 
     // Create render pass
-    s3dl::Attachment render(swapchain, VK_ATTACHMENT_LOAD_OP_CLEAR);
+    s3dl::Attachment render = s3dl::Attachment::ScreenAttachment(swapchain, VK_ATTACHMENT_LOAD_OP_CLEAR);
     s3dl::Attachment color(VK_FORMAT_R8G8B8A8_SRGB, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     s3dl::Attachment depth(VK_FORMAT_D24_UNORM_S8_UINT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     s3dl::Subpass subpassA({}, {&color}, {}, &depth);
@@ -96,7 +96,7 @@ int main_viking_room()
     layoutB->lock(swapchain);
 
     // Create framebuffer
-    s3dl::Framebuffer framebuffer(swapchain, renderPass);
+    s3dl::Framebuffer framebuffer(swapchain, renderPass, window);
     
     std::vector<VkClearValue> clearValues;
     VkClearValue clearValue{};
