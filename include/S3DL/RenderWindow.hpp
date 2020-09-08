@@ -28,7 +28,5 @@ namespace s3dl
             VkSurfaceFormatKHR getBestSwapSurfaceFormat() const;
 
             ~RenderWindow();
-
-        private:
     };
 }

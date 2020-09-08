@@ -9,6 +9,7 @@ namespace s3dl
     class Window;
     class RenderTarget;
     class RenderWindow;
+    class RenderTexture;
 
     class Device;
 
