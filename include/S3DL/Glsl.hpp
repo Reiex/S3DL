@@ -29,7 +29,7 @@ namespace s3dl
     };
 
     template<typename T, unsigned int n, typename C>
-    std::ostream& operator<<(std::ostream& stream, _vec<T, n, C>& v);
+    std::ostream& operator<<(std::ostream& stream, const _vec<T, n, C>& v);
 
     template<typename C>
     C cross(const _vec<float, 3, C>& u, const _vec<float, 3, C>& v);

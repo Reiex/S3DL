@@ -4,7 +4,7 @@
 namespace s3dl
 {
     template<typename T, unsigned int n, typename C>
-    std::ostream& operator<<(std::ostream& stream, _vec<T, n, C> const& v)
+    std::ostream& operator<<(std::ostream& stream, const _vec<T, n, C>& v)
     {
         for (int i(0); i < n-1; i++)
             stream << v[i] << " ";
@@ -23,7 +23,7 @@ namespace s3dl
     }
 
     template<typename T, unsigned int n, typename C>
-    T const& _vec<T, n, C>::operator[](unsigned int i) const
+    const T& _vec<T, n, C>::operator[](unsigned int i) const
     {
         if (i >= n)
             throw std::range_error("Cannot access element " + std::to_string(i) + " of vec" + std::to_string(n));
@@ -32,7 +32,7 @@ namespace s3dl
     }
 
     template<typename T, unsigned int n, typename C>
-    C _vec<T, n, C>::operator+=(_vec<T, n, C> const& v)
+    C _vec<T, n, C>::operator+=(const _vec<T, n, C>& v)
     {
         for (int i(0); i < n; i++)
             (*this)[i] += v[i];
@@ -41,7 +41,7 @@ namespace s3dl
     }
 
     template<typename T, unsigned int n, typename C>
-    C _vec<T, n, C>::operator-=(_vec<T, n, C> const& v)
+    C _vec<T, n, C>::operator-=(const _vec<T, n, C>& v)
     {
         for (int i(0); i < n; i++)
             (*this)[i] -= v[i];
@@ -50,7 +50,7 @@ namespace s3dl
     }
 
     template<typename T, unsigned int n, typename C>
-    C _vec<T, n, C>::operator*=(_vec<T, n, C> const& v)
+    C _vec<T, n, C>::operator*=(const _vec<T, n, C>& v)
     {
         for (int i(0); i < n; i++)
             (*this)[i] *= v[i];
@@ -59,7 +59,7 @@ namespace s3dl
     }
 
     template<typename T, unsigned int n, typename C>
-    C _vec<T, n, C>::operator/=(_vec<T, n, C> const& v)
+    C _vec<T, n, C>::operator/=(const _vec<T, n, C>& v)
     {
         for (int i(0); i < n; i++)
             (*this)[i] /= v[i];
@@ -101,7 +101,7 @@ namespace s3dl
 
 
     template<typename C>
-    C cross(_vec<float, 3, C> const& u, _vec<float, 3, C> const& v)
+    C cross(const _vec<float, 3, C>& u, const _vec<float, 3, C>& v)
     {
         return C({u[1]*v[2] - u[2]*v[1],
                   u[2]*v[0] - u[2]*v[2],
@@ -109,7 +109,7 @@ namespace s3dl
     }
 
     template<unsigned int n, typename C>
-    float dot(_vec<float, n, C> const& u, _vec<float, n, C> const& v)
+    float dot(const _vec<float, n, C>& u, const _vec<float, n, C>& v)
     {
         float r;
         for (int i(0); i < n; i++)
@@ -117,25 +117,25 @@ namespace s3dl
     }
     
     template<unsigned int n, typename C>
-    float length(_vec<float, n, C> const& v)
+    float length(const _vec<float, n, C>& v)
     {
         return std::sqrt(dot(v, v));
     }
     
     template<unsigned int n, typename C>
-    float distance(_vec<float, n, C> const& u, _vec<float, n, C> const& v)
+    float distance(const _vec<float, n, C>& u, const _vec<float, n, C>& v)
     {
         return length(u - v);
     }
     
     template<unsigned int n, typename C>
-    C normalize(_vec<float, n, C> const& v)
+    C normalize(const _vec<float, n, C>& v)
     {
         return v/length(v);
     }
     
     template<unsigned int n, typename C>
-    C faceforward(_vec<float, n, C> const& u, _vec<float, n, C> const& v, _vec<float, n, C> const& w)
+    C faceforward(const _vec<float, n, C>& u, const _vec<float, n, C>& v, const _vec<float, n, C>& w)
     {
         if (dot(v, w) < 0)
             return n;
@@ -143,13 +143,13 @@ namespace s3dl
     }
     
     template<unsigned int n, typename C>
-    C reflect(_vec<float, n, C> const& u, _vec<float, n, C> const& v)
+    C reflect(const _vec<float, n, C>& u, const _vec<float, n, C>& v)
     {
         return u - 2.f * dot(u, v) * v;
     }
     
     template<unsigned int n, typename C>
-    C refract(_vec<float, n, C> const& u, _vec<float, n, C> const& v, float r)
+    C refract(const _vec<float, n, C>& u, const _vec<float, n, C>& v, float r)
     {
         float a = dot(u, v);
         float d = 1.0 - r * r * (1.0 - a * a);
@@ -161,7 +161,7 @@ namespace s3dl
     
 
     template<typename T, unsigned int n, typename C>
-    C operator+(_vec<T, n, C> const& u, _vec<T, n, C> const& v)
+    C operator+(const _vec<T, n, C>& u, const _vec<T, n, C>& v)
     {
         C w(u);
         w += v;
@@ -170,7 +170,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator-(_vec<T, n, C> const& u, _vec<T, n, C> const& v)
+    C operator-(const _vec<T, n, C>& u, const _vec<T, n, C>& v)
     {
         C w(u);
         w -= v;
@@ -179,7 +179,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator*(_vec<T, n, C> const& u, _vec<T, n, C> const& v)
+    C operator*(const _vec<T, n, C>& u, const _vec<T, n, C>& v)
     {
         C w(u);
         w *= v;
@@ -188,7 +188,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator/(_vec<T, n, C> const& u, _vec<T, n, C> const& v)
+    C operator/(const _vec<T, n, C>& u, const _vec<T, n, C>& v)
     {
         C w(u);
         w /= v;
@@ -197,7 +197,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator+(_vec<T, n, C> const& v, T x)
+    C operator+(const _vec<T, n, C>& v, T x)
     {
         C w(v);
         w += x;
@@ -206,7 +206,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator-(_vec<T, n, C> const& v, T x)
+    C operator-(const _vec<T, n, C>& v, T x)
     {
         C w(v);
         w -= x;
@@ -215,7 +215,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator*(_vec<T, n, C> const& v, T x)
+    C operator*(const _vec<T, n, C>& v, T x)
     {
         C w(v);
         w *= x;
@@ -224,7 +224,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator/(_vec<T, n, C> const& v, T x)
+    C operator/(const _vec<T, n, C>& v, T x)
     {
         C w(v);
         w /= x;
@@ -233,7 +233,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator+(T x, _vec<T, n, C> const& v)
+    C operator+(T x, const _vec<T, n, C>& v)
     {
         C w(v);
         w += x;
@@ -242,7 +242,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator-(T x, _vec<T, n, C> const& v)
+    C operator-(T x, const _vec<T, n, C>& v)
     {
         C w(v);
         w -= x;
@@ -251,7 +251,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator*(T x, _vec<T, n, C> const& v)
+    C operator*(T x, const _vec<T, n, C>& v)
     {
         C w(v);
         w *= x;
@@ -260,7 +260,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int n, typename C>
-    C operator/(T x, _vec<T, n, C> const& v)
+    C operator/(T x, const _vec<T, n, C>& v)
     {
         C w(v);
         w /= x;
@@ -289,7 +289,7 @@ namespace s3dl
     }
     
     template<typename T>
-    _vec2<T>::_vec2(_vec<T, 2, _vec2<T>> const& v) : _vec2(v[0], v[1])
+    _vec2<T>::_vec2(const _vec<T, 2, _vec2<T>>& v) : _vec2(v[0], v[1])
     {
     }
 
@@ -314,17 +314,17 @@ namespace s3dl
     }
     
     template<typename T>
-    _vec3<T>::_vec3(_vec<T, 3, _vec3<T>> const& v) : _vec3(v[0], v[1], v[2])
+    _vec3<T>::_vec3(const _vec<T, 3, _vec3<T>>& v) : _vec3(v[0], v[1], v[2])
     {
     }
 
     template<typename T>
-    _vec3<T>::_vec3(_vec2<T> const& v, T zValue) : _vec3(v.x, v.y, zValue)
+    _vec3<T>::_vec3(const _vec2<T>& v, T zValue) : _vec3(v.x, v.y, zValue)
     {
     }
 
     template<typename T>
-    _vec3<T>::_vec3(T xValue, _vec2<T> const& v) : _vec3(xValue, v.x, v.y)
+    _vec3<T>::_vec3(T xValue, const _vec2<T>& v) : _vec3(xValue, v.x, v.y)
     {
     }
 
@@ -350,37 +350,37 @@ namespace s3dl
     }
     
     template<typename T>
-    _vec4<T>::_vec4(_vec<T, 4, _vec4<T>> const& v) : _vec4(v[0], v[1], v[2], v[3])
+    _vec4<T>::_vec4(const _vec<T, 4, _vec4<T>>& v) : _vec4(v[0], v[1], v[2], v[3])
     {
     }
 
     template<typename T>
-    _vec4<T>::_vec4(_vec2<T> const& v, T zValue, T wValue) : _vec4(v.x, v.y, zValue, wValue)
+    _vec4<T>::_vec4(const _vec2<T>& v, T zValue, T wValue) : _vec4(v.x, v.y, zValue, wValue)
     {
     }
 
     template<typename T>
-    _vec4<T>::_vec4(T xValue, _vec2<T> const& v, T wValue) : _vec4(xValue, v.x, v.y, wValue)
+    _vec4<T>::_vec4(T xValue, const _vec2<T>& v, T wValue) : _vec4(xValue, v.x, v.y, wValue)
     {
     }
 
     template<typename T>
-    _vec4<T>::_vec4(T xValue, T yValue, _vec2<T> const& v) : _vec4(xValue, yValue, v.x, v.y)
+    _vec4<T>::_vec4(T xValue, T yValue, const _vec2<T>& v) : _vec4(xValue, yValue, v.x, v.y)
     {
     }
 
     template<typename T>
-    _vec4<T>::_vec4(_vec2<T> const& u, _vec2<T> const& v) : _vec4(u.x, u.y, v.x, v.y)
+    _vec4<T>::_vec4(const _vec2<T>& u, const _vec2<T>& v) : _vec4(u.x, u.y, v.x, v.y)
     {
     }
 
     template<typename T>
-    _vec4<T>::_vec4(_vec3<T> const& v, T wValue) : _vec4(v.x, v.y, v.z, wValue)
+    _vec4<T>::_vec4(const _vec3<T>& v, T wValue) : _vec4(v.x, v.y, v.z, wValue)
     {
     }
 
     template<typename T>
-    _vec4<T>::_vec4(T xValue, _vec3<T> const& v) : _vec4(xValue, v.x, v.y, v.z)
+    _vec4<T>::_vec4(T xValue, const _vec3<T>& v) : _vec4(xValue, v.x, v.y, v.z)
     {
     }
 
@@ -431,7 +431,7 @@ namespace s3dl
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    C const& _mat<T, m, n, C, D>::operator[](unsigned int i) const
+    const C& _mat<T, m, n, C, D>::operator[](unsigned int i) const
     {
         if (i >= n)
             throw std::range_error("Cannot access column " + std::to_string(i) + " of mat" + std::to_string(n) + "x" + std::to_string(m) + ".");
@@ -440,7 +440,7 @@ namespace s3dl
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator+=(_mat<T, m, n, C, D> const& M)
+    _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator+=(const _mat<T, m, n, C, D>& M)
     {
         for (int i(0); i < n; i++)
             (*this)[i] += M[i];
@@ -449,7 +449,7 @@ namespace s3dl
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator-=(_mat<T, m, n, C, D> const& M)
+    _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator-=(const _mat<T, m, n, C, D>& M)
     {
         for (int i(0); i < n; i++)
             (*this)[i] -= M[i];
@@ -458,7 +458,7 @@ namespace s3dl
     }
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator/=(_mat<T, m, n, C, D> const& M)
+    _mat<T, m, n, C, D> _mat<T, m, n, C, D>::operator/=(const _mat<T, m, n, C, D>& M)
     {
         for (int i(0); i < n; i++)
             (*this)[i] /= M[i];
@@ -504,7 +504,7 @@ namespace s3dl
 
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    std::ostream& operator<<(std::ostream& stream, _mat<T, m, n, C, D> const& M)
+    std::ostream& operator<<(std::ostream& stream, const _mat<T, m, n, C, D>& M)
     {
         for (int i(0); i < m; i++)
         {
@@ -521,7 +521,7 @@ namespace s3dl
     
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, n, m, D, C> transpose(_mat<T, m, n, C, D> const& M)
+    _mat<T, n, m, D, C> transpose(const _mat<T, m, n, C, D>& M)
     {
         _mat<T, n, m, D, C> R;
 
@@ -534,7 +534,7 @@ namespace s3dl
     
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator+(_mat<T, m, n, C, D> const& A, _mat<T, m, n, C, D> const& B)
+    _mat<T, m, n, C, D> operator+(const _mat<T, m, n, C, D>& A, const _mat<T, m, n, C, D>& B)
     {
         _mat<T, m, n, C, D> R(A);
         R += B;
@@ -542,7 +542,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator-(_mat<T, m, n, C, D> const& A, _mat<T, m, n, C, D> const& B)
+    _mat<T, m, n, C, D> operator-(const _mat<T, m, n, C, D>& A, const _mat<T, m, n, C, D>& B)
     {
         _mat<T, m, n, C, D> R(A);
         R -= B;
@@ -550,7 +550,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int m, unsigned int n, unsigned int p, typename C, typename D, typename F>
-    _mat<T, m, p, C, F> operator*(_mat<T, m, n, C, D> const& A, _mat<T, n, p, D, F> const& B)
+    _mat<T, m, p, C, F> operator*(const _mat<T, m, n, C, D>& A, const _mat<T, n, p, D, F>& B)
     {
         _mat<T, m, p, C, F> R;
 
@@ -568,7 +568,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator/(_mat<T, m, n, C, D> const& A, _mat<T, m, n, C, D> const& B)
+    _mat<T, m, n, C, D> operator/(const _mat<T, m, n, C, D>& A, const _mat<T, m, n, C, D>& B)
     {
         _mat<T, m, n, C, D> R(A);
         R /= B;
@@ -577,7 +577,7 @@ namespace s3dl
     
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator+(_mat<T, m, n, C, D> const& M, T x)
+    _mat<T, m, n, C, D> operator+(const _mat<T, m, n, C, D>& M, T x)
     {
         _mat<T, m, n, C, D> R(M);
         R += x;
@@ -585,7 +585,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator-(_mat<T, m, n, C, D> const& M, T x)
+    _mat<T, m, n, C, D> operator-(const _mat<T, m, n, C, D>& M, T x)
     {
         _mat<T, m, n, C, D> R(M);
         R -= x;
@@ -593,7 +593,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator*(_mat<T, m, n, C, D> const& M, T x)
+    _mat<T, m, n, C, D> operator*(const _mat<T, m, n, C, D>& M, T x)
     {
         _mat<T, m, n, C, D> R(M);
         R *= x;
@@ -601,7 +601,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator/(_mat<T, m, n, C, D> const& M, T x)
+    _mat<T, m, n, C, D> operator/(const _mat<T, m, n, C, D>& M, T x)
     {
         _mat<T, m, n, C, D> R(M);
         R /= x;
@@ -609,25 +609,25 @@ namespace s3dl
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator+(T x, _mat<T, m, n, C, D> const& M)
+    _mat<T, m, n, C, D> operator+(T x, const _mat<T, m, n, C, D>& M)
     {
         return M + x;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator-(T x, _mat<T, m, n, C, D> const& M)
+    _mat<T, m, n, C, D> operator-(T x, const _mat<T, m, n, C, D>& M)
     {
         return -(M - x);
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator*(T x, _mat<T, m, n, C, D> const& M)
+    _mat<T, m, n, C, D> operator*(T x, const _mat<T, m, n, C, D>& M)
     {
         return M * x;
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    _mat<T, m, n, C, D> operator/(T x, _mat<T, m, n, C, D> const& M)
+    _mat<T, m, n, C, D> operator/(T x, const _mat<T, m, n, C, D>& M)
     {
         _mat<T, m, n, C, D> R;
         for (int i(0); i < m; i++)
@@ -639,7 +639,7 @@ namespace s3dl
     
 
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    C operator*(_mat<T, m, n, C, D> const& M, D const& v)
+    C operator*(const _mat<T, m, n, C, D>& M, const D& v)
     {
         C r(0);
         for (int i(0); i < m; i++)
@@ -650,7 +650,7 @@ namespace s3dl
     }
     
     template<typename T, unsigned int m, unsigned int n, typename C, typename D>
-    D operator*(C const& v, _mat<T, m, n, C, D> const& M)
+    D operator*(const C& v, const _mat<T, m, n, C, D>& M)
     {
         D r(0);
         for (int i(0); i < m; i++)
