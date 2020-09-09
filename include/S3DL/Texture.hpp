@@ -22,6 +22,7 @@ namespace s3dl
             void fillFromBuffer(const Buffer& buffer);
             void fillFromTexture(const Texture& texture);
 
+            void updateLayoutState(VkImageLayout layout) const;
             void setLayout(VkImageLayout layout) const;
 
             TextureData getTextureData() const;

@@ -132,17 +132,97 @@ namespace s3dl
 
     std::vector<uint8_t> Buffer::getData() const
     {
-        // TODO: Les buffers qui sont pas host_visible
-
         std::vector<uint8_t> data(_size);
-        void* handle;
+        VkResult result;
+        if (_properties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+        {
+            void* handle;
+                
+            result = vkMapMemory(Device::Active->getVulkanDevice(), _deviceMemory, 0, _size, 0, &handle);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to map buffer to memory. VkResult: " + std::to_string(result));
             
-        VkResult result = vkMapMemory(Device::Active->getVulkanDevice(), _deviceMemory, 0, _size, 0, &handle);
-        if (result != VK_SUCCESS)
-            throw std::runtime_error("Failed to map buffer to memory. VkResult: " + std::to_string(result));
-        
-        std::memcpy(data.data(), handle, _size);
-        vkUnmapMemory(Device::Active->getVulkanDevice(), _deviceMemory);
+            std::memcpy(data.data(), handle, _size);
+            vkUnmapMemory(Device::Active->getVulkanDevice(), _deviceMemory);
+        }
+        else
+        {
+            // Create a staging buffer
+
+            Buffer stagingBuffer(_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+            // Create a command buffer for data transfer
+
+            VkCommandBufferAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            allocInfo.commandPool = Device::Active->getVulkanCommandPool();
+            allocInfo.commandBufferCount = 1;
+
+            VkCommandBuffer commandBuffer;
+            result = vkAllocateCommandBuffers(Device::Active->getVulkanDevice(), &allocInfo, &commandBuffer);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to allocate command buffer for Buffer memory transfer. VkResult: " + std::to_string(result));
+
+            // Record transfer command
+
+            VkCommandBufferBeginInfo beginInfo{};
+            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+            result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to start recording command buffer for Buffer memory transfer. VkResult: " + std::to_string(result));
+
+            VkBufferCopy copyRegion{};
+            copyRegion.srcOffset = 0;
+            copyRegion.dstOffset = 0;
+            copyRegion.size = _size;
+            vkCmdCopyBuffer(commandBuffer, _buffer, stagingBuffer._buffer, 1, &copyRegion);
+
+            result = vkEndCommandBuffer(commandBuffer);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to end recording command buffer for Buffer memory transfer. VkResult: " + std::to_string(result));
+
+            // Create fence to wait for transfer to end
+
+            VkFence transferFence;
+            VkFenceCreateInfo fenceCreateInfo{};
+            fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+            fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+            result = vkCreateFence(Device::Active->getVulkanDevice(), &fenceCreateInfo, nullptr, &transferFence);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to create fence for Buffer memory transfer. VkResult: " + std::to_string(result));
+
+            // Submit command and wait its end with the fence
+
+            VkSubmitInfo submitInfo{};
+            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submitInfo.commandBufferCount = 1;
+            submitInfo.pCommandBuffers = &commandBuffer;
+
+            vkResetFences(Device::Active->getVulkanDevice(), 1, &transferFence);
+            vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, transferFence);
+
+            vkWaitForFences(Device::Active->getVulkanDevice(), 1, &transferFence, VK_TRUE, UINT64_MAX);
+
+            // Free command buffer and fence (the staging buffer is freed using Buffer class)
+
+            vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &commandBuffer);
+            vkDestroyFence(Device::Active->getVulkanDevice(), transferFence, nullptr);
+
+            // Retrieve data
+
+            void* handle;
+                
+            result = vkMapMemory(Device::Active->getVulkanDevice(), stagingBuffer._deviceMemory, 0, _size, 0, &handle);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to map buffer to memory. VkResult: " + std::to_string(result));
+            
+            std::memcpy(data.data(), handle, _size);
+            vkUnmapMemory(Device::Active->getVulkanDevice(), stagingBuffer._deviceMemory);
+        }
 
         return data;
     }

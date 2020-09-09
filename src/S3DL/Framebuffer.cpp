@@ -2,7 +2,7 @@
 
 namespace s3dl
 {
-    Framebuffer::Framebuffer(const Swapchain& swapchain, const RenderPass& renderPass, const RenderTarget& target)
+    Framebuffer::Framebuffer(const Swapchain& swapchain, const RenderPass& renderPass, const RenderTarget& target, VkImageUsageFlags additionalAttachmentsUsages)
     {
         _swapchain = &swapchain;
 
@@ -31,7 +31,7 @@ namespace s3dl
             {
                 VkFormat format(renderPass._attachments[i].format);
                 VkImageTiling tiling(VK_IMAGE_TILING_OPTIMAL);
-                VkImageUsageFlags usage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+                VkImageUsageFlags usage(additionalAttachmentsUsages);
                 VkImageAspectFlags imageAspects(0);
 
                 for (int j(0); j < renderPass._inputReferences.size(); j++)

@@ -10,7 +10,7 @@ namespace s3dl
     {
         public:
 
-            Framebuffer(const Swapchain& swapchain, const RenderPass& renderPass, const RenderTarget& target);
+            Framebuffer(const Swapchain& swapchain, const RenderPass& renderPass, const RenderTarget& target, VkImageUsageFlags additionalAttachmentsUsages = 0);
             Framebuffer(const Framebuffer& framebuffer) = delete;
 
             Framebuffer& operator=(const Framebuffer& framebuffer) = delete;

@@ -226,6 +226,11 @@ namespace s3dl
             setLayout(dstLayout);
     }
 
+    void Texture::updateLayoutState(VkImageLayout layout) const
+    {
+        _currentLayout = layout;
+    }
+
     void Texture::setLayout(VkImageLayout layout) const
     {
         if (layout == _currentLayout)
