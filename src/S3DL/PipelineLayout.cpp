@@ -333,6 +333,9 @@ namespace s3dl
                     }
                     case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
                     {
+                        if (_globalSamplers[i] == nullptr)
+                            throw std::runtime_error("Sampler at global binding " + std::to_string(i) + " declared but not set.");
+
                         VkDescriptorImageInfo imageInfo{};
                         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
                         imageInfo.imageView = _globalSamplers[i]->getVulkanImageView();
@@ -427,6 +430,9 @@ namespace s3dl
                     }
                     case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
                     {
+                        if (_drawablesSamplers[&drawable][i] == nullptr)
+                            throw std::runtime_error("Sampler at drawable binding " + std::to_string(i) + " declared but not set.");
+
                         VkDescriptorImageInfo imageInfo{};
                         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
                         imageInfo.imageView = _drawablesSamplers[&drawable][i]->getVulkanImageView();

@@ -45,8 +45,10 @@ LIBRARY_OBJS = $(OBJ_LIBRARY_DIR)/Instance.o \
 			   $(OBJ_LIBRARY_DIR)/Framebuffer.o
 TESTS_OBJS = $(OBJ_TESTS_DIR)/main.o
 EXAMPLES_OBJS = $(OBJ_EXAMPLES_DIR)/main.o \
+				$(OBJ_EXAMPLES_DIR)/master_tools.o \
 				$(OBJ_EXAMPLES_DIR)/viking_room.o \
-				$(OBJ_EXAMPLES_DIR)/master.o \
+				$(OBJ_EXAMPLES_DIR)/calibration.o \
+				$(OBJ_EXAMPLES_DIR)/geckos.o \
 			    $(OBJ_EXAMPLES_DIR)/tiny_obj_loader/tiny_obj_loader.o
 
 # Compiler
@@ -68,7 +70,9 @@ S_SPV_EXAMPLES_DIR = $(SRC_EXAMPLES_DIR)/spvs
 S_EXAMPLES_SPVS = $(S_SPV_EXAMPLES_DIR)/main.vert.spv \
 				  $(S_SPV_EXAMPLES_DIR)/main.frag.spv \
 				  $(S_SPV_EXAMPLES_DIR)/subpass.vert.spv \
-				  $(S_SPV_EXAMPLES_DIR)/subpass.frag.spv
+				  $(S_SPV_EXAMPLES_DIR)/subpass.frag.spv \
+				  $(S_SPV_EXAMPLES_DIR)/decoding.vert.spv \
+				  $(S_SPV_EXAMPLES_DIR)/decoding.frag.spv
 
 # Shader compiler
 S_CC = glslc

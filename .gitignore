@@ -6,5 +6,12 @@ lib/S3DL.pdb
 S3DLExamples
 S3DLTests
 
-examples/masters
-examples/master.cpp
+examples/calibrations
+examples/master_tools.hpp
+examples/master_tools.cpp
+examples/calibration.cpp
+examples/geckos.cpp
+examples/shaders/decoding.frag.glsl
+examples/shaders/decoding.vert.glsl
+examples/spvs/decoding.frag.spv
+examples/spvs/decoding.vert.spv
