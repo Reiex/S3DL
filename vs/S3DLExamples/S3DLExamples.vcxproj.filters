@@ -16,24 +16,44 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{3b32d030-8866-4f57-a5e7-8fcc51a489bd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\tiny_obj_loader">
+      <UniqueIdentifier>{44b78190-ac89-48ff-8a3a-b77e27a00d62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\tiny_obj_loader">
+      <UniqueIdentifier>{000b7d40-0fd8-4792-a048-c7d9f2c128c6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\examples\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\examples\viking_room.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\tiny_obj_loader\tiny_obj_loader.cpp">
+      <Filter>Source Files\tiny_obj_loader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\fragment.glsl">
+    <None Include="..\..\examples\shaders\main.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\subpassFragment.glsl">
+    <None Include="..\..\examples\shaders\main.vert.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\subpassVertex.glsl">
+    <None Include="..\..\examples\shaders\subpass.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\vertex.glsl">
+    <None Include="..\..\examples\shaders\subpass.vert.glsl">
       <Filter>Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\examples\main.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\tiny_obj_loader\tiny_obj_loader.hpp">
+      <Filter>Header Files\tiny_obj_loader</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

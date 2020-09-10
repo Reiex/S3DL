@@ -157,12 +157,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\examples\main.cpp" />
+    <ClCompile Include="..\..\examples\tiny_obj_loader\tiny_obj_loader.cpp" />
+    <ClCompile Include="..\..\examples\viking_room.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\fragment.glsl" />
-    <None Include="..\..\subpassFragment.glsl" />
-    <None Include="..\..\subpassVertex.glsl" />
-    <None Include="..\..\vertex.glsl" />
+    <None Include="..\..\examples\shaders\main.frag.glsl" />
+    <None Include="..\..\examples\shaders\main.vert.glsl" />
+    <None Include="..\..\examples\shaders\subpass.frag.glsl" />
+    <None Include="..\..\examples\shaders\subpass.vert.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\examples\main.hpp" />
+    <ClInclude Include="..\..\examples\tiny_obj_loader\tiny_obj_loader.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
