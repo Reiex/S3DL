@@ -281,9 +281,17 @@ namespace s3dl
                 sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
                 barrier.srcAccessMask = 0;
                 break;
+            case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+                sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                break;
             case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
                 sourceStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
                 barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                break;
+            case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+                sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
                 break;
             case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
                 sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -307,12 +315,16 @@ namespace s3dl
                 destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 barrier.dstAccessMask = 0;
                 break;
+            case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+                destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                break;
             case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
                 destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
                 barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 break;
             case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-                destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                destinationStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
                 barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
                 break;
             case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
@@ -366,25 +378,10 @@ namespace s3dl
         _currentLayout = layout;
     }
 
-    TextureData Texture::getTextureData() const
+    TextureData Texture::getTextureData(VkImageAspectFlagBits aspect) const
     {
-        // Create another texture if necessary
-        
         VkImageLayout layout = _currentLayout;
         setLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-
-        VkImage srcImage = _vulkanImage;
-        Texture* stagingTexture = nullptr;
-        if (_image.tiling != VK_IMAGE_TILING_LINEAR)
-        {
-            if (!(_image.usage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT))
-                throw std::runtime_error("Could not get texture data as the texture image tiling is not VK_IMAGE_TILING_LINEAR and VK_IMAGE_USAGE_TRANSFER_SRC_BIT is not activated.");
-
-            stagingTexture = new Texture(_size, _image.format, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, _imageView.subresourceRange.aspectMask);
-            stagingTexture->fillFromTexture(*this);
-            stagingTexture->setLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-            srcImage = stagingTexture->_vulkanImage;
-        }
 
         // Start recording a command buffer
 
@@ -409,7 +406,7 @@ namespace s3dl
         transferInfo.bufferOffset = 0;
         transferInfo.bufferRowLength = 0;
         transferInfo.bufferImageHeight = 0;
-        transferInfo.imageSubresource.aspectMask = _imageView.subresourceRange.aspectMask;
+        transferInfo.imageSubresource.aspectMask = aspect;
         transferInfo.imageSubresource.mipLevel = 0;
         transferInfo.imageSubresource.baseArrayLayer = 0;
         transferInfo.imageSubresource.layerCount = 1;
@@ -417,7 +414,7 @@ namespace s3dl
         transferInfo.imageExtent = {_size.x, _size.y, 1};
 
         Buffer buffer(_size.x * _size.y * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        vkCmdCopyImageToBuffer(commandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer.getVulkanBuffer(), 1, &transferInfo);
+        vkCmdCopyImageToBuffer(commandBuffer, _vulkanImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer.getVulkanBuffer(), 1, &transferInfo);
 
         // Finish recording the command buffer and execute it
 
@@ -442,9 +439,6 @@ namespace s3dl
 
         vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &commandBuffer);
         vkDestroyFence(Device::Active->getVulkanDevice(), transferFence, nullptr);
-
-        if (_image.tiling != VK_IMAGE_TILING_LINEAR)
-            delete stagingTexture;
         
         if (layout != VK_IMAGE_LAYOUT_UNDEFINED)
             setLayout(layout);

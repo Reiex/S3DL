@@ -15,3 +15,11 @@ examples/shaders/decoding.frag.glsl
 examples/shaders/decoding.vert.glsl
 examples/spvs/decoding.frag.spv
 examples/spvs/decoding.vert.spv
+examples/shaders/depth.frag.glsl
+examples/shaders/depth.vert.glsl
+examples/spvs/depth.frag.spv
+examples/spvs/depth.vert.spv
+examples/shaders/fusion.frag.glsl
+examples/shaders/fusion.vert.glsl
+examples/spvs/fusion.frag.spv
+examples/spvs/fusion.vert.spv

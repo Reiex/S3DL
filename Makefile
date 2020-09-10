@@ -72,7 +72,9 @@ S_EXAMPLES_SPVS = $(S_SPV_EXAMPLES_DIR)/main.vert.spv \
 				  $(S_SPV_EXAMPLES_DIR)/subpass.vert.spv \
 				  $(S_SPV_EXAMPLES_DIR)/subpass.frag.spv \
 				  $(S_SPV_EXAMPLES_DIR)/decoding.vert.spv \
-				  $(S_SPV_EXAMPLES_DIR)/decoding.frag.spv
+				  $(S_SPV_EXAMPLES_DIR)/decoding.frag.spv \
+				  $(S_SPV_EXAMPLES_DIR)/depth.vert.spv \
+				  $(S_SPV_EXAMPLES_DIR)/depth.frag.spv
 
 # Shader compiler
 S_CC = glslc

@@ -239,9 +239,17 @@ namespace s3dl
         submitInfo.pWaitDstStageMask = waitStages;
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &_commandBuffers[index];
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &_renderSemaphores[index];
-
+        if (_swapChain == VK_NULL_HANDLE)
+        {
+            submitInfo.signalSemaphoreCount = 0;
+            submitInfo.pSignalSemaphores = nullptr;
+        }
+        else
+        {
+            submitInfo.signalSemaphoreCount = 1;
+            submitInfo.pSignalSemaphores = &_renderSemaphores[index];
+        }
+        
         VkResult result = vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, _renderFences[index]);
         if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to submit draw command buffer. VkResult: " + std::to_string(result));

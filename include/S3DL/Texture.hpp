@@ -25,7 +25,7 @@ namespace s3dl
             void updateLayoutState(VkImageLayout layout) const;
             void setLayout(VkImageLayout layout) const;
 
-            TextureData getTextureData() const;
+            TextureData getTextureData(VkImageAspectFlagBits aspect = VK_IMAGE_ASPECT_COLOR_BIT) const;
             const uvec2& getSize() const;
 
             VkImage getVulkanImage() const;

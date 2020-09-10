@@ -64,7 +64,7 @@ namespace s3dl
                         if (renderPass._subpasses[j].pDepthStencilAttachment->attachment == i)
                         {
                             usage = usage | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-                            imageAspects = imageAspects | VK_IMAGE_ASPECT_DEPTH_BIT;
+                            imageAspects = imageAspects | VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
                         }
                     }
                 }
