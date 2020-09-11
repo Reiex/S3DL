@@ -2,7 +2,7 @@
 
 namespace s3dl
 {
-    Texture::Texture(const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags imageAspects, TextureSampler sampler) : Texture(sampler)
+    Texture::Texture(const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags imageAspects, TextureSampler sampler, unsigned int layerCount) : Texture(sampler)
     {
         _size = size;
         _currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -18,7 +18,7 @@ namespace s3dl
         _image.extent.height = _size.y;
         _image.extent.depth = 1;
         _image.mipLevels = 1;
-        _image.arrayLayers = 1;
+        _image.arrayLayers = layerCount;
         _image.samples = VK_SAMPLE_COUNT_1_BIT;
         _image.tiling = tiling;
         _image.usage = usage;
@@ -62,7 +62,10 @@ namespace s3dl
         _imageView.pNext = nullptr;
         _imageView.flags = 0;
         _imageView.image = _vulkanImage;
-        _imageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        if (layerCount > 1)
+            _imageView.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        else
+            _imageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
         _imageView.format = format;
         _imageView.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         _imageView.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -72,7 +75,7 @@ namespace s3dl
         _imageView.subresourceRange.baseMipLevel = 0;
         _imageView.subresourceRange.levelCount = 1;
         _imageView.subresourceRange.baseArrayLayer = 0;
-        _imageView.subresourceRange.layerCount = 1;
+        _imageView.subresourceRange.layerCount = layerCount;
 
         result = vkCreateImageView(Device::Active->getVulkanDevice(), &_imageView, nullptr, &_vulkanImageView);
         if (result != VK_SUCCESS)
@@ -81,16 +84,47 @@ namespace s3dl
         #ifndef NDEBUG
         std::clog << "<S3DL Debug> VkImage, VkImageMemory, VkImageView & VkSampler successfully created." << std::endl;
         #endif
+
+        // Immonde tweak qui doit être supprimé !
+
+        _vulkanImmondeView = VK_NULL_HANDLE;
+        if (imageAspects == (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT))
+        {
+            VkImageViewCreateInfo info{};
+
+            info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            info.pNext = nullptr;
+            info.flags = 0;
+            info.image = _vulkanImage;
+            if (layerCount > 1)
+                info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            else
+                info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            info.format = format;
+            info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+            info.subresourceRange.baseMipLevel = 0;
+            info.subresourceRange.levelCount = 1;
+            info.subresourceRange.baseArrayLayer = 0;
+            info.subresourceRange.layerCount = layerCount;
+
+            result = vkCreateImageView(Device::Active->getVulkanDevice(), &info, nullptr, &_vulkanImmondeView);
+            if (result != VK_SUCCESS)
+                throw std::runtime_error("Failed to create texture image view. VkResult: " + std::to_string(result));
+        }
     }
 
-    void Texture::fillFromTextureData(const TextureData& textureData)
+    void Texture::fillFromTextureData(const TextureData& textureData, unsigned int layer)
     {
         Buffer stagingBuffer(textureData.getRawSize(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         stagingBuffer.setData(textureData.getRawData(), textureData.getRawSize());
-        fillFromBuffer(stagingBuffer);
+        fillFromBuffer(stagingBuffer, layer);
     }
 
-    void Texture::fillFromBuffer(const Buffer& buffer)
+    void Texture::fillFromBuffer(const Buffer& buffer, unsigned int layer)
     {
         VkImageLayout layout = _currentLayout;
         setLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -120,7 +154,7 @@ namespace s3dl
         region.bufferImageHeight = 0;
         region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         region.imageSubresource.mipLevel = 0;
-        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.baseArrayLayer = layer;
         region.imageSubresource.layerCount = 1;
         region.imageOffset = {0, 0, 0};
         region.imageExtent = {_size.x, _size.y, 1};
@@ -155,7 +189,7 @@ namespace s3dl
             setLayout(layout);
     }
     
-    void Texture::fillFromTexture(const Texture& texture)
+    void Texture::fillFromTexture(const Texture& texture, unsigned int srcLayer, unsigned int dstLayer)
     {
         VkImageLayout srcLayout = texture._currentLayout;
         texture.setLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
@@ -184,12 +218,12 @@ namespace s3dl
         VkImageCopy copyInfo{};
         copyInfo.srcSubresource.aspectMask = _imageView.subresourceRange.aspectMask;
         copyInfo.srcSubresource.mipLevel = 0;
-        copyInfo.srcSubresource.baseArrayLayer = 0;
+        copyInfo.srcSubresource.baseArrayLayer = srcLayer;
         copyInfo.srcSubresource.layerCount = 1;
         copyInfo.srcOffset = {0, 0, 0};
         copyInfo.dstSubresource.aspectMask = _imageView.subresourceRange.aspectMask;
         copyInfo.dstSubresource.mipLevel = 0;
-        copyInfo.dstSubresource.baseArrayLayer = 0;
+        copyInfo.dstSubresource.baseArrayLayer = dstLayer;
         copyInfo.dstSubresource.layerCount = 1;
         copyInfo.dstOffset = {0, 0, 0};
         copyInfo.extent = {_size.x, _size.y, 1};
@@ -378,7 +412,7 @@ namespace s3dl
         _currentLayout = layout;
     }
 
-    TextureData Texture::getTextureData(VkImageAspectFlagBits aspect) const
+    TextureData Texture::getTextureData(VkImageAspectFlagBits aspect, unsigned int layer) const
     {
         VkImageLayout layout = _currentLayout;
         setLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
@@ -408,7 +442,7 @@ namespace s3dl
         transferInfo.bufferImageHeight = 0;
         transferInfo.imageSubresource.aspectMask = aspect;
         transferInfo.imageSubresource.mipLevel = 0;
-        transferInfo.imageSubresource.baseArrayLayer = 0;
+        transferInfo.imageSubresource.baseArrayLayer = layer;
         transferInfo.imageSubresource.layerCount = 1;
         transferInfo.imageOffset = {0, 0, 0};
         transferInfo.imageExtent = {_size.x, _size.y, 1};
@@ -461,6 +495,11 @@ namespace s3dl
         return _vulkanImageView;
     }
 
+    VkImageView Texture::getVulkanImmondeView() const
+    {
+        return _vulkanImmondeView;
+    }
+
     VkSampler Texture::getVulkanSampler() const
     {
         return _vulkanSampler;
@@ -470,6 +509,9 @@ namespace s3dl
     {
         if (_vulkanImageView != VK_NULL_HANDLE)
             vkDestroyImageView(Device::Active->getVulkanDevice(), _vulkanImageView, nullptr);
+        
+        if (_vulkanImmondeView != VK_NULL_HANDLE)
+            vkDestroyImageView(Device::Active->getVulkanDevice(), _vulkanImmondeView, nullptr);
         
         if (_vulkanImageMemory != VK_NULL_HANDLE)
             vkFreeMemory(Device::Active->getVulkanDevice(), _vulkanImageMemory, nullptr);

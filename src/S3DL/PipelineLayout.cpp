@@ -338,7 +338,10 @@ namespace s3dl
 
                         VkDescriptorImageInfo imageInfo{};
                         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        imageInfo.imageView = _globalSamplers[i]->getVulkanImageView();
+                        if (_globalSamplers[i]->getVulkanImmondeView() != VK_NULL_HANDLE)
+                            imageInfo.imageView = _globalSamplers[i]->getVulkanImmondeView();
+                        else
+                            imageInfo.imageView = _globalSamplers[i]->getVulkanImageView();
                         imageInfo.sampler = _globalSamplers[i]->getVulkanSampler();
 
                         imageInfos[i] = imageInfo;
