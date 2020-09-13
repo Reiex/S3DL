@@ -72,7 +72,10 @@ namespace s3dl
                 _attachments[i] = new Texture(_size, format, tiling, usage, imageAspects);
                 _attachmentsBelonging[i] = true;
                 for (int j(0); j < swapchain._imageCount; j++)
-                    _vulkanAttachments[j][i] = _attachments[i]->getVulkanImageView();
+                    if (_attachments[i]->getVulkanImmondeView() != VK_NULL_HANDLE)
+                        _vulkanAttachments[j][i] = _attachments[i]->getVulkanImmondeView();
+                    else
+                        _vulkanAttachments[j][i] = _attachments[i]->getVulkanImageView();
             }
         }
 
