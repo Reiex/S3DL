@@ -35,7 +35,6 @@
 #include <S3DL/stb/stb_image.hpp>
 #include <S3DL/stb/stb_image_write.hpp>
 #include <S3DL/TextureData.hpp>
-#include <S3DL/TextureSampler.hpp>
 #include <S3DL/Texture.hpp>
 
 #include <S3DL/Framebuffer.hpp>

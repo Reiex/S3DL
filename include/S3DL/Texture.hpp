@@ -2,6 +2,7 @@
 
 #include <string>
 #include <cstring>
+#include <cstdint>
 
 #include <vulkan/vulkan.h>
 
@@ -9,47 +10,35 @@
 
 namespace s3dl
 {
-    class Texture
-    {
-        public:
+	class TextureSampler
+	{
+		public:
 
-            Texture(const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags imageAspects, TextureSampler sampler = TextureSampler(), unsigned int layerCount = 1);
-            Texture(const Texture& texture) = delete;
+			TextureSampler();
+			TextureSampler(const TextureSampler& sampler) = delete;
 
-            Texture& operator=(const Texture& texture) = delete;
+			TextureSampler& operator=(const TextureSampler& sampler) = delete;
 
-            void fillFromTextureData(const TextureData& textureData, unsigned int layer = 0);
-            void fillFromBuffer(const Buffer& buffer, unsigned int layer = 0);
-            void fillFromTexture(const Texture& texture, unsigned int srcLayer = 0, unsigned int dstLayer = 0);
+			VkSampler getVulkanSampler() const;
 
-            void updateLayoutState(VkImageLayout layout) const;
-            void setLayout(VkImageLayout layout) const;
+		private:
 
-            TextureData getTextureData(VkImageAspectFlagBits aspect = VK_IMAGE_ASPECT_COLOR_BIT, unsigned int layer = 0) const;
-            const uvec2& getSize() const;
+			VkSamplerCreateInfo _sampler;
+			mutable bool _vulkanSamplerComputed;
+			mutable VkSampler _vulkanSampler;
+	};
 
-            VkImage getVulkanImage() const;
-            VkImageView getVulkanImageView() const;
-            VkImageView getVulkanImmondeView() const;
-            VkSampler getVulkanSampler() const;
+	class TextureArray
+	{
+		public:
 
-            ~Texture();
+			TextureArray(const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, uint32_t layerCount);
 
-        private:
+		private:
+	};
 
-            Texture(TextureSampler sampler);
+	class Texture: public TextureArray
+	{
 
-            VkImageCreateInfo _image;
-            VkImageViewCreateInfo _imageView;
-            TextureSampler _sampler;
-
-            VkImage _vulkanImage;
-            VkDeviceMemory _vulkanImageMemory;
-            VkImageView _vulkanImageView;
-            VkImageView _vulkanImmondeView;
-            VkSampler _vulkanSampler;
-
-            uvec2 _size;
-            mutable VkImageLayout _currentLayout;
-    };
+	};
 }
