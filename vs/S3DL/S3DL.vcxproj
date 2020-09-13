@@ -180,7 +180,6 @@
     <ClCompile Include="..\..\src\S3DL\Swapchain.cpp" />
     <ClCompile Include="..\..\src\S3DL\Texture.cpp" />
     <ClCompile Include="..\..\src\S3DL\TextureData.cpp" />
-    <ClCompile Include="..\..\src\S3DL\TextureSampler.cpp" />
     <ClCompile Include="..\..\src\S3DL\Vertex.cpp" />
     <ClCompile Include="..\..\src\S3DL\Window.cpp" />
   </ItemGroup>
@@ -211,7 +210,6 @@
     <ClInclude Include="..\..\include\S3DL\Swapchain.hpp" />
     <ClInclude Include="..\..\include\S3DL\Texture.hpp" />
     <ClInclude Include="..\..\include\S3DL\TextureData.hpp" />
-    <ClInclude Include="..\..\include\S3DL\TextureSampler.hpp" />
     <ClInclude Include="..\..\include\S3DL\types.hpp" />
     <ClInclude Include="..\..\include\S3DL\Vertex.hpp" />
     <ClInclude Include="..\..\include\S3DL\Window.hpp" />
