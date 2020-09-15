@@ -104,6 +104,41 @@ namespace s3dl
         return _view;
     }
 
+    std::size_t TextureViewParameters::Hasher::operator()(const TextureViewParameters& x) const
+    {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().viewType);
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().format);
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.r);
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.g);
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.b);
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.a);
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.aspectMask);
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.baseMipLevel);
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.levelCount);
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.baseArrayLayer);
+        boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.layerCount);
+
+        return seed;
+    }
+
+    bool TextureViewParameters::Comparator::operator()(const TextureViewParameters& x, const TextureViewParameters& y) const
+    {
+        return (
+            x.getVulkanImageViewCreateInfo().viewType                        == y.getVulkanImageViewCreateInfo().viewType                        &&
+            x.getVulkanImageViewCreateInfo().format                          == y.getVulkanImageViewCreateInfo().format                          &&
+            x.getVulkanImageViewCreateInfo().components.r                    == y.getVulkanImageViewCreateInfo().components.r                    &&
+            x.getVulkanImageViewCreateInfo().components.g                    == y.getVulkanImageViewCreateInfo().components.g                    &&
+            x.getVulkanImageViewCreateInfo().components.b                    == y.getVulkanImageViewCreateInfo().components.b                    &&
+            x.getVulkanImageViewCreateInfo().components.a                    == y.getVulkanImageViewCreateInfo().components.a                    &&
+            x.getVulkanImageViewCreateInfo().subresourceRange.aspectMask     == y.getVulkanImageViewCreateInfo().subresourceRange.aspectMask     &&
+            x.getVulkanImageViewCreateInfo().subresourceRange.baseMipLevel   == y.getVulkanImageViewCreateInfo().subresourceRange.baseMipLevel   &&
+            x.getVulkanImageViewCreateInfo().subresourceRange.levelCount     == y.getVulkanImageViewCreateInfo().subresourceRange.levelCount     &&
+            x.getVulkanImageViewCreateInfo().subresourceRange.baseArrayLayer == y.getVulkanImageViewCreateInfo().subresourceRange.baseArrayLayer &&
+            x.getVulkanImageViewCreateInfo().subresourceRange.layerCount     == y.getVulkanImageViewCreateInfo().subresourceRange.layerCount
+        );
+    }
+
     TextureArray::TextureArray(const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, uint32_t layerCount) :
         _size(size),
         _layerCount(layerCount),

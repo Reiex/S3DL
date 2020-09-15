@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <array>
 #include <unordered_map>
-#include <boost>
+#include <boost/functional/hash.hpp>
 
 #include <vulkan/vulkan.h>
 
@@ -39,7 +39,7 @@ namespace s3dl
     class TextureViewParameters
     {
         public:
-
+            TextureViewParameters(const TextureViewParameters& ) = default;
             TextureViewParameters(VkImageAspectFlags aspects, std::array<uint32_t, 2> layerRange = {0, 1});
 
             void setFormat(VkFormat format);
@@ -47,6 +47,16 @@ namespace s3dl
             void setComponentMapping(VkComponentSwizzle r, VkComponentSwizzle g, VkComponentSwizzle b, VkComponentSwizzle a = VK_COMPONENT_SWIZZLE_IDENTITY);
 
             const VkImageViewCreateInfo& getVulkanImageViewCreateInfo() const;
+
+            struct Hasher
+            {
+                size_t operator()(const TextureViewParameters& x) const;
+            };
+
+            struct Comparator
+            {
+                bool operator()(const TextureViewParameters& x, const TextureViewParameters& y) const;
+            };
 
         private:
 
@@ -93,7 +103,7 @@ namespace s3dl
 
             VkDeviceMemory _vulkanImageMemory;
             VkImage _vulkanImage;
-            std::unordered_map<TextureViewParameters, VkImageView> _vulkanImageViews;
+            std::unordered_map<TextureViewParameters, VkImageView, TextureViewParameters::Hasher, TextureViewParameters::Comparator> _vulkanImageViews;
             const TextureSampler* _sampler;
             bool _deleteSampler;
 
@@ -127,51 +137,5 @@ namespace s3dl
             VkSampler getVulkanSampler() const;
 
             ~Texture();
-    };
-}
-
-namespace std
-{
-    template <>
-    struct hash<s3dl::TextureViewParameters>
-    {
-        size_t operator()(const s3dl::TextureViewParameters& x) const
-        {
-            std::size_t seed = 0;
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().viewType);
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().format);
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.r);
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.g);
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.b);
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.a);
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.aspectMask);
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.baseMipLevel);
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.levelCount);
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.baseArrayLayer);
-            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.layerCount);
-
-            return seed;
-        }
-    };
-
-    template<>
-    struct equal_to<s3dl::TextureViewParameters>
-    {
-        bool operator()(const s3dl::TextureViewParameters& x, const s3dl::TextureViewParameters& y) const
-        {
-            return (
-                x.getVulkanImageViewCreateInfo().viewType                        == y.getVulkanImageViewCreateInfo().viewType                        &&
-                x.getVulkanImageViewCreateInfo().format                          == y.getVulkanImageViewCreateInfo().format                          &&
-                x.getVulkanImageViewCreateInfo().components.r                    == y.getVulkanImageViewCreateInfo().components.r                    &&
-                x.getVulkanImageViewCreateInfo().components.g                    == y.getVulkanImageViewCreateInfo().components.g                    &&
-                x.getVulkanImageViewCreateInfo().components.b                    == y.getVulkanImageViewCreateInfo().components.b                    &&
-                x.getVulkanImageViewCreateInfo().components.a                    == y.getVulkanImageViewCreateInfo().components.a                    &&
-                x.getVulkanImageViewCreateInfo().subresourceRange.aspectMask     == y.getVulkanImageViewCreateInfo().subresourceRange.aspectMask     &&
-                x.getVulkanImageViewCreateInfo().subresourceRange.baseMipLevel   == y.getVulkanImageViewCreateInfo().subresourceRange.baseMipLevel   &&
-                x.getVulkanImageViewCreateInfo().subresourceRange.levelCount     == y.getVulkanImageViewCreateInfo().subresourceRange.levelCount     &&
-                x.getVulkanImageViewCreateInfo().subresourceRange.baseArrayLayer == y.getVulkanImageViewCreateInfo().subresourceRange.baseArrayLayer &&
-                x.getVulkanImageViewCreateInfo().subresourceRange.layerCount     == y.getVulkanImageViewCreateInfo().subresourceRange.layerCount
-            );
-        }
     };
 }
