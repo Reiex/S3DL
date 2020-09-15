@@ -82,6 +82,8 @@ namespace s3dl
 
         protected:
 
+            static VkImageAspectFlags getAvailableAspects(VkFormat format);
+
             uvec2 _size;
             uint32_t _layerCount;
             VkFormat _format;
