@@ -33,13 +33,22 @@ namespace s3dl
         return _vulkanSampler;
     }
 
+    TextureSampler::~TextureSampler()
+    {
+        destroyVulkanSampler();
+    }
+
     void TextureSampler::createVulkanSampler() const
     {
         destroyVulkanSampler();
 
         VkResult result = vkCreateSampler(Device::Active->getVulkanDevice(), &_sampler, nullptr, &_vulkanSampler);
         if (result != VK_SUCCESS)
-            throw std::runtime_error("Failed to create texture sampler. VkResult: " + std::to_string(result));
+            throw std::runtime_error("Failed to create VkSampler. VkResult: " + std::to_string(result));
+        
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> VkSampler successfully created." << std::endl;
+        #endif
     }
 
     void TextureSampler::destroyVulkanSampler() const
@@ -111,6 +120,8 @@ namespace s3dl
 
         _currentLayout(VK_IMAGE_LAYOUT_UNDEFINED)
     {
+        // Create vulkan image
+
         VkImageCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         createInfo.pNext = nullptr;
@@ -130,52 +141,186 @@ namespace s3dl
         createInfo.pQueueFamilyIndices = nullptr;
         createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-        // VkResult result = vkCreateImage(Device::Active->getVulkanDevice(), &createInfo, nullptr, &_vulkanImage);
-        // if (result != VK_SUCCESS)
-        //     throw std::runtime_error("Failed to create image. VkResult: " + std::to_string(result));
+        VkResult result = vkCreateImage(Device::Active->getVulkanDevice(), &createInfo, nullptr, &_vulkanImage);
+        if (result != VK_SUCCESS)
+            throw std::runtime_error("Failed to create image. VkResult: " + std::to_string(result));
 
-        // VkMemoryRequirements memRequirements;
-        // vkGetImageMemoryRequirements(Device::Active->getVulkanDevice(), _vulkanImage, &memRequirements);
+        // Allocate memory for image
 
-        // const VkPhysicalDeviceMemoryProperties& memProperties = Device::Active->getPhysicalDevice().memoryProperties;
-        // uint32_t index(0);
-        // for (; index < memProperties.memoryTypeCount; index++)
-        //     if ((memRequirements.memoryTypeBits & (1 << index)) && (memProperties.memoryTypes[index].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-        //         break;
+        VkMemoryRequirements memRequirements;
+        vkGetImageMemoryRequirements(Device::Active->getVulkanDevice(), _vulkanImage, &memRequirements);
+
+        const VkPhysicalDeviceMemoryProperties& memProperties = Device::Active->getPhysicalDevice().memoryProperties;
+        uint32_t index(0);
+        for (; index < memProperties.memoryTypeCount; index++)
+            if ((memRequirements.memoryTypeBits & (1 << index)) && (memProperties.memoryTypes[index].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+                break;
         
-        // if (index == memProperties.memoryTypeCount)
-        //     throw std::runtime_error("Failed to find suitable memory type for image creation.");
+        if (index == memProperties.memoryTypeCount)
+            throw std::runtime_error("Failed to find suitable memory type for image creation.");
 
-        // VkMemoryAllocateInfo allocInfo{};
-        // allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        // allocInfo.allocationSize = memRequirements.size;
-        // allocInfo.memoryTypeIndex = index;
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = index;
 
-        // result = vkAllocateMemory(Device::Active->getVulkanDevice(), &allocInfo, nullptr, &_vulkanImageMemory);
-        // if (result != VK_SUCCESS)
-        //     throw std::runtime_error("Failed to allocate image memory. VkResult: " + std::to_string(result));
+        result = vkAllocateMemory(Device::Active->getVulkanDevice(), &allocInfo, nullptr, &_vulkanImageMemory);
+        if (result != VK_SUCCESS)
+            throw std::runtime_error("Failed to allocate image memory. VkResult: " + std::to_string(result));
 
-        // vkBindImageMemory(Device::Active->getVulkanDevice(), _vulkanImage, _vulkanImageMemory, 0);
+        vkBindImageMemory(Device::Active->getVulkanDevice(), _vulkanImage, _vulkanImageMemory, 0);
+        
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> VkImage successfully created and allocated." << std::endl;
+        #endif
     }
 
     void TextureArray::fillFromTextureData(const TextureData& textureData, uint32_t layer)
     {
-
+        Buffer stagingBuffer(textureData.getRawSize(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        stagingBuffer.setData(textureData.getRawData(), textureData.getRawSize());
+        fillFromBuffer(stagingBuffer, layer, 1);
     }
 
     void TextureArray::fillFromBuffer(const Buffer& buffer, uint32_t firstLayer, uint32_t layerCount)
     {
+        VkImageLayout layout = _currentLayout;
+        setLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
+        // Start recording a command buffer
+
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandPool = Device::Active->getVulkanCommandPool();
+        allocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        vkAllocateCommandBuffers(Device::Active->getVulkanDevice(), &allocInfo, &commandBuffer);
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+        // Create copy command
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = firstLayer;
+        region.imageSubresource.layerCount = layerCount;
+        region.imageOffset = {0, 0, 0};
+        region.imageExtent = {_size.x, _size.y, 1};
+
+        vkCmdCopyBufferToImage(commandBuffer, buffer.getVulkanBuffer(), _vulkanImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+        // Finish recording the command buffer and execute it
+
+        vkEndCommandBuffer(commandBuffer);
+
+        VkFence transferFence;
+        VkFenceCreateInfo fenceCreateInfo{};
+        fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        vkCreateFence(Device::Active->getVulkanDevice(), &fenceCreateInfo, nullptr, &transferFence);
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        vkResetFences(Device::Active->getVulkanDevice(), 1, &transferFence);
+        vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, transferFence);
+        
+        vkWaitForFences(Device::Active->getVulkanDevice(), 1, &transferFence, VK_TRUE, UINT64_MAX);
+
+        vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &commandBuffer);
+        vkDestroyFence(Device::Active->getVulkanDevice(), transferFence, nullptr);
+
+        if (layout != VK_IMAGE_LAYOUT_UNDEFINED)
+            setLayout(layout);
     }
 
     void TextureArray::fillFromTextureArray(const TextureArray& textureArray, uint32_t srcFirstLayer, uint32_t dstFirstLayer, uint32_t layerCount)
     {
+        // VkImageLayout srcLayout = textureArray._currentLayout;
+        // textureArray.setLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        // VkImageLayout dstLayout = _currentLayout;
+        // setLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
+        // // Start recording a command buffer
+
+        // VkCommandBufferAllocateInfo allocInfo{};
+        // allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        // allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        // allocInfo.commandPool = Device::Active->getVulkanCommandPool();
+        // allocInfo.commandBufferCount = 1;
+
+        // VkCommandBuffer commandBuffer;
+        // vkAllocateCommandBuffers(Device::Active->getVulkanDevice(), &allocInfo, &commandBuffer);
+
+        // VkCommandBufferBeginInfo beginInfo{};
+        // beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        // beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        // vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+        // // Create copy command
+        
+        // VkImageCopy copyInfo{};
+        // copyInfo.srcSubresource.aspectMask = _imageView.subresourceRange.aspectMask;
+        // copyInfo.srcSubresource.mipLevel = 0;
+        // copyInfo.srcSubresource.baseArrayLayer = srcLayer;
+        // copyInfo.srcSubresource.layerCount = 1;
+        // copyInfo.srcOffset = {0, 0, 0};
+        // copyInfo.dstSubresource.aspectMask = _imageView.subresourceRange.aspectMask;
+        // copyInfo.dstSubresource.mipLevel = 0;
+        // copyInfo.dstSubresource.baseArrayLayer = dstLayer;
+        // copyInfo.dstSubresource.layerCount = 1;
+        // copyInfo.dstOffset = {0, 0, 0};
+        // copyInfo.extent = {_size.x, _size.y, 1};
+
+        // vkCmdCopyImage(commandBuffer, texture._vulkanImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, _vulkanImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyInfo);
+
+        // // Finish recording the command buffer and execute it
+
+        // vkEndCommandBuffer(commandBuffer);
+
+        // VkFence transferFence;
+        // VkFenceCreateInfo fenceCreateInfo{};
+        // fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        // fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        // vkCreateFence(Device::Active->getVulkanDevice(), &fenceCreateInfo, nullptr, &transferFence);
+
+        // VkSubmitInfo submitInfo{};
+        // submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        // submitInfo.commandBufferCount = 1;
+        // submitInfo.pCommandBuffers = &commandBuffer;
+
+        // vkResetFences(Device::Active->getVulkanDevice(), 1, &transferFence);
+        // vkQueueSubmit(Device::Active->getVulkanGraphicsQueue(), 1, &submitInfo, transferFence);
+        
+        // vkWaitForFences(Device::Active->getVulkanDevice(), 1, &transferFence, VK_TRUE, UINT64_MAX);
+
+        // vkFreeCommandBuffers(Device::Active->getVulkanDevice(), Device::Active->getVulkanCommandPool(), 1, &commandBuffer);
+        // vkDestroyFence(Device::Active->getVulkanDevice(), transferFence, nullptr);
+
+        // if (srcLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+        //     texture.setLayout(srcLayout);
+        // if (dstLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+        //     setLayout(dstLayout);
     }
 
     void TextureArray::fillFromTexture(const Texture& texture, uint32_t dstLayer)
     {
-
+        // TODO
     }
 
     void TextureArray::setSampler(const TextureSampler& sampler)
@@ -220,7 +365,29 @@ namespace s3dl
 
     TextureArray::~TextureArray()
     {
+        for (std::pair<const TextureViewParameters, VkImageView>& imageView: _vulkanImageViews)
+        {
+            if (imageView.second != VK_NULL_HANDLE)
+            {
+                vkDestroyImageView(Device::Active->getVulkanDevice(), imageView.second, nullptr);
+                #ifndef NDEBUG
+                std::clog << "<S3DL Debug> VkImageView successfully destroyed." << std::endl;
+                #endif
+            }
+        }
 
+        if (_deleteSampler)
+            delete _sampler;
+
+        if (_vulkanImageMemory != VK_NULL_HANDLE)
+            vkFreeMemory(Device::Active->getVulkanDevice(), _vulkanImageMemory, nullptr);
+        
+        if (_vulkanImage != VK_NULL_HANDLE)
+            vkDestroyImage(Device::Active->getVulkanDevice(), _vulkanImage, nullptr);
+        
+        #ifndef NDEBUG
+        std::clog << "<S3DL Debug> VkImage successfully freed and destroyed." << std::endl;
+        #endif
     }
 
     Texture::Texture(const uvec2& size, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage)

@@ -23,6 +23,8 @@ namespace s3dl
 
             VkSampler getVulkanSampler() const;
 
+            ~TextureSampler();
+
         private:
 
             void createVulkanSampler() const;
