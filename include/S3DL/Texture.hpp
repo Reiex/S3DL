@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <array>
 #include <unordered_map>
+#include <boost>
 
 #include <vulkan/vulkan.h>
 
@@ -45,7 +46,7 @@ namespace s3dl
             void setViewType(VkImageViewType viewType);
             void setComponentMapping(VkComponentSwizzle r, VkComponentSwizzle g, VkComponentSwizzle b, VkComponentSwizzle a = VK_COMPONENT_SWIZZLE_IDENTITY);
 
-            VkImageViewCreateInfo getVulkanImageViewCreateInfo() const;
+            const VkImageViewCreateInfo& getVulkanImageViewCreateInfo() const;
 
         private:
 
@@ -71,11 +72,11 @@ namespace s3dl
             void updateLayoutState(VkImageLayout layout) const;
             void setLayout(VkImageLayout layout) const;
 
-            TextureData getTextureData(uint32_t layer = 0) const;
+            TextureData getTextureData(uint32_t layer) const;
             const uvec2& getSize() const;
 
             VkImage getVulkanImage() const;
-            VkImageView getVulkanImageView(TextureViewParameters viewParameters) const;
+            VkImageView getVulkanImageView(const TextureViewParameters& viewParameters) const;
             VkSampler getVulkanSampler() const;
 
             ~TextureArray();
@@ -93,7 +94,7 @@ namespace s3dl
             VkDeviceMemory _vulkanImageMemory;
             VkImage _vulkanImage;
             std::unordered_map<TextureViewParameters, VkImageView> _vulkanImageViews;
-            TextureSampler* _sampler;
+            const TextureSampler* _sampler;
             bool _deleteSampler;
 
             mutable VkImageLayout _currentLayout;
@@ -109,7 +110,7 @@ namespace s3dl
             Texture& operator=(const Texture& texture) = delete;
 
             void fillFromTextureData(const TextureData& textureData);
-            void fillFromBuffer(const Buffer& buffer, uint32_t firstLayer);
+            void fillFromBuffer(const Buffer& buffer);
             void fillFromTextureArray(const TextureArray& textureArray, uint32_t srcLayer);
             void fillFromTexture(const Texture& texture);
 
@@ -122,9 +123,55 @@ namespace s3dl
             const uvec2& getSize() const;
 
             VkImage getVulkanImage() const;
-            VkImageView getVulkanImageView(TextureViewParameters viewParameters) const;
+            VkImageView getVulkanImageView(const TextureViewParameters& viewParameters) const;
             VkSampler getVulkanSampler() const;
 
             ~Texture();
+    };
+}
+
+namespace std
+{
+    template <>
+    struct hash<s3dl::TextureViewParameters>
+    {
+        size_t operator()(const s3dl::TextureViewParameters& x) const
+        {
+            std::size_t seed = 0;
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().viewType);
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().format);
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.r);
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.g);
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.b);
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().components.a);
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.aspectMask);
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.baseMipLevel);
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.levelCount);
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.baseArrayLayer);
+            boost::hash_combine(seed, x.getVulkanImageViewCreateInfo().subresourceRange.layerCount);
+
+            return seed;
+        }
+    };
+
+    template<>
+    struct equal_to<s3dl::TextureViewParameters>
+    {
+        bool operator()(const s3dl::TextureViewParameters& x, const s3dl::TextureViewParameters& y) const
+        {
+            return (
+                x.getVulkanImageViewCreateInfo().viewType                        == y.getVulkanImageViewCreateInfo().viewType                        &&
+                x.getVulkanImageViewCreateInfo().format                          == y.getVulkanImageViewCreateInfo().format                          &&
+                x.getVulkanImageViewCreateInfo().components.r                    == y.getVulkanImageViewCreateInfo().components.r                    &&
+                x.getVulkanImageViewCreateInfo().components.g                    == y.getVulkanImageViewCreateInfo().components.g                    &&
+                x.getVulkanImageViewCreateInfo().components.b                    == y.getVulkanImageViewCreateInfo().components.b                    &&
+                x.getVulkanImageViewCreateInfo().components.a                    == y.getVulkanImageViewCreateInfo().components.a                    &&
+                x.getVulkanImageViewCreateInfo().subresourceRange.aspectMask     == y.getVulkanImageViewCreateInfo().subresourceRange.aspectMask     &&
+                x.getVulkanImageViewCreateInfo().subresourceRange.baseMipLevel   == y.getVulkanImageViewCreateInfo().subresourceRange.baseMipLevel   &&
+                x.getVulkanImageViewCreateInfo().subresourceRange.levelCount     == y.getVulkanImageViewCreateInfo().subresourceRange.levelCount     &&
+                x.getVulkanImageViewCreateInfo().subresourceRange.baseArrayLayer == y.getVulkanImageViewCreateInfo().subresourceRange.baseArrayLayer &&
+                x.getVulkanImageViewCreateInfo().subresourceRange.layerCount     == y.getVulkanImageViewCreateInfo().subresourceRange.layerCount
+            );
+        }
     };
 }
