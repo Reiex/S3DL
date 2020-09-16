@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <cstring>
 #include <array>
+#include <utility>
 
 #include <vulkan/vulkan.h>
 
@@ -44,13 +45,13 @@ namespace s3dl
             template<typename T>
             void setGlobalUniformArray(uint32_t binding, const T* values, uint32_t count, uint32_t startIndex = 0);
             void setGlobalUniformSampler(uint32_t binding, const Texture& texture);
-            void setGlobalUniformSamplerArray(uint32_t binding, const TextureArray& textureArray);
+            void setGlobalUniformSamplerArray(uint32_t binding, const TextureArray& textureArray, std::array<uint32_t, 2> layerRange);
             template<typename T>
             void setDrawablesUniform(const Drawable& drawable, uint32_t binding, const T& value);
             template<typename T>
             void setDrawablesUniformArray(const Drawable& drawable, uint32_t binding, const T* values, uint32_t count, uint32_t startIndex = 0);
             void setDrawablesUniformSampler(const Drawable& drawable, uint32_t binding, const Texture& texture);
-            void setDrawablesUniformSamplerArray(const Drawable& drawable, uint32_t binding, const TextureArray& textureArray);
+            void setDrawablesUniformSamplerArray(const Drawable& drawable, uint32_t binding, const TextureArray& textureArray, std::array<uint32_t, 2> layerRange);
 
             VkPipelineLayout getVulkanPipelineLayout() const;
 
@@ -92,7 +93,7 @@ namespace s3dl
 
             void addDrawable(const Drawable& drawable);
 
-            static TextureViewParameters getDescriptorViewParameters(VkFormat format);
+            static TextureViewParameters getDescriptorViewParameters(VkFormat format, std::array<uint32_t, 2> layerRange = {0, 1});
 
             std::vector<DescriptorSetLayoutBindingState> _globalBindings;
             std::vector<DescriptorSetLayoutBindingState> _drawablesBindings;
@@ -114,8 +115,8 @@ namespace s3dl
             std::vector<uint8_t> _globalData;
             std::unordered_map<const Drawable*, std::vector<uint8_t>> _drawablesData;
             uint32_t _alignment;
-            std::vector<const Texture*> _globalSamplers;
-            std::unordered_map<const Drawable*, std::vector<const Texture*>> _drawablesSamplers;
+            std::vector<std::pair<VkImageView, VkSampler>> _globalSamplers;
+            std::unordered_map<const Drawable*, std::vector<std::pair<VkImageView, VkSampler>>> _drawablesSamplers;
             
             std::vector<std::vector<bool>> _globalNeedsUpdate;
             std::vector<std::unordered_map<const Drawable*, std::vector<bool>>> _drawablesNeedsUpdate;

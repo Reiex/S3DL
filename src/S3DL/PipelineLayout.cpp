@@ -67,7 +67,31 @@ namespace s3dl
 
     void PipelineLayout::declareGlobalUniformSamplerArray(uint32_t binding, VkShaderStageFlags shaderStage)
     {
+        if (_locked)
+            throw std::runtime_error("Cannot declare uniform while pipeline layout is locked.");
         
+        int i(0);
+        for (; i < _globalBindingsLayouts.size(); i++)
+            if (_globalBindingsLayouts[i].binding == binding)
+                break;
+        
+        if (i == _globalBindingsLayouts.size())
+        {
+            VkDescriptorSetLayoutBinding layoutBinding{};
+            layoutBinding.binding = binding;
+
+            _globalBindingsLayouts.push_back(layoutBinding);
+            _globalBindings.push_back(DescriptorSetLayoutBindingState{});
+        }
+
+        _globalBindingsLayouts[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        _globalBindingsLayouts[i].descriptorCount = 1;
+        _globalBindingsLayouts[i].stageFlags = shaderStage;
+        _globalBindingsLayouts[i].pImmutableSamplers = nullptr;
+        
+        _globalBindings[i].size = 0;
+        _globalBindings[i].count = 1;
+        _globalBindings[i].offset = 0;
     }
 
     void PipelineLayout::declareDrawablesUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage)
@@ -135,7 +159,31 @@ namespace s3dl
 
     void PipelineLayout::declareDrawablesUniformSamplerArray(uint32_t binding, VkShaderStageFlags shaderStage)
     {
+        if (_locked)
+            throw std::runtime_error("Cannot declare uniform while pipeline layout is locked.");
+        
+        int i(0);
+        for (; i < _drawablesBindingsLayouts.size(); i++)
+            if (_drawablesBindingsLayouts[i].binding == binding)
+                break;
+        
+        if (i == _drawablesBindingsLayouts.size())
+        {
+            VkDescriptorSetLayoutBinding layoutBinding{};
+            layoutBinding.binding = binding;
 
+            _drawablesBindingsLayouts.push_back(layoutBinding);
+            _drawablesBindings.push_back(DescriptorSetLayoutBindingState{});
+        }
+
+        _drawablesBindingsLayouts[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        _drawablesBindingsLayouts[i].descriptorCount = 1;
+        _drawablesBindingsLayouts[i].stageFlags = shaderStage;
+        _drawablesBindingsLayouts[i].pImmutableSamplers = nullptr;
+        
+        _drawablesBindings[i].size = 0;
+        _drawablesBindings[i].count = 1;
+        _drawablesBindings[i].offset = 0;
     }
 
     void PipelineLayout::lock(const Swapchain& swapchain)
@@ -185,15 +233,21 @@ namespace s3dl
         if (!_locked)
             throw std::runtime_error("Cannot set uniform value while pipeline layout is not locked.");
 
-        _globalSamplers[binding] = &texture;
+        _globalSamplers[binding] = {texture.getVulkanImageView(getDescriptorViewParameters(texture.getFormat())), texture.getVulkanSampler()};
 
         for (int i(0); i < _swapchainImageCount; i++)
             _globalNeedsUpdate[binding][i] = true;
     }
 
-    void PipelineLayout::setGlobalUniformSamplerArray(uint32_t binding, const TextureArray& textureArray)
+    void PipelineLayout::setGlobalUniformSamplerArray(uint32_t binding, const TextureArray& textureArray, std::array<uint32_t, 2> layerRange)
     {
+        if (!_locked)
+            throw std::runtime_error("Cannot set uniform value while pipeline layout is not locked.");
 
+        _globalSamplers[binding] = {textureArray.getVulkanImageView(getDescriptorViewParameters(textureArray.getFormat(), layerRange)), textureArray.getVulkanSampler()};
+
+        for (int i(0); i < _swapchainImageCount; i++)
+            _globalNeedsUpdate[binding][i] = true;
     }
 
     void PipelineLayout::setDrawablesUniformSampler(const Drawable& drawable, uint32_t binding, const Texture& texture)
@@ -202,15 +256,22 @@ namespace s3dl
             throw std::runtime_error("Cannot set uniform value while pipeline layout is not locked.");
 
         addDrawable(drawable);
-        _drawablesSamplers[&drawable][binding] = &texture;
+        _drawablesSamplers[&drawable][binding] = {texture.getVulkanImageView(getDescriptorViewParameters(texture.getFormat())), texture.getVulkanSampler()};
 
         for (int i(0); i < _swapchainImageCount; i++)
             _drawablesNeedsUpdate[binding][&drawable][i] = true;
     }
 
-    void PipelineLayout::setDrawablesUniformSamplerArray(const Drawable& drawable, uint32_t binding, const TextureArray& textureArray)
+    void PipelineLayout::setDrawablesUniformSamplerArray(const Drawable& drawable, uint32_t binding, const TextureArray& textureArray, std::array<uint32_t, 2> layerRange)
     {
+        if (!_locked)
+            throw std::runtime_error("Cannot set uniform value while pipeline layout is not locked.");
 
+        addDrawable(drawable);
+        _drawablesSamplers[&drawable][binding] = {textureArray.getVulkanImageView(getDescriptorViewParameters(textureArray.getFormat(), layerRange)), textureArray.getVulkanSampler()};
+
+        for (int i(0); i < _swapchainImageCount; i++)
+            _drawablesNeedsUpdate[binding][&drawable][i] = true;
     }
 
     VkPipelineLayout PipelineLayout::getVulkanPipelineLayout() const
@@ -353,13 +414,13 @@ namespace s3dl
                     }
                     case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
                     {
-                        if (_globalSamplers[i] == nullptr)
+                        if (_globalSamplers[i].first == VK_NULL_HANDLE)
                             throw std::runtime_error("Sampler at global binding " + std::to_string(i) + " declared but not set.");
 
                         VkDescriptorImageInfo imageInfo{};
                         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        imageInfo.imageView = _globalSamplers[i]->getVulkanImageView(getDescriptorViewParameters(_globalSamplers[i]->getFormat()));
-                        imageInfo.sampler = _globalSamplers[i]->getVulkanSampler();
+                        imageInfo.imageView = _globalSamplers[i].first;
+                        imageInfo.sampler = _globalSamplers[i].second;
 
                         imageInfos[i] = imageInfo;
                         break;
@@ -450,13 +511,13 @@ namespace s3dl
                     }
                     case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
                     {
-                        if (_drawablesSamplers[&drawable][i] == nullptr)
+                        if (_drawablesSamplers[&drawable][i].first == VK_NULL_HANDLE)
                             throw std::runtime_error("Sampler at drawable binding " + std::to_string(i) + " declared but not set.");
 
                         VkDescriptorImageInfo imageInfo{};
                         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        imageInfo.imageView = _drawablesSamplers[&drawable][i]->getVulkanImageView(getDescriptorViewParameters(_drawablesSamplers[&drawable][i]->getFormat()));
-                        imageInfo.sampler = _drawablesSamplers[&drawable][i]->getVulkanSampler();
+                        imageInfo.imageView = _drawablesSamplers[&drawable][i].first;
+                        imageInfo.sampler = _drawablesSamplers[&drawable][i].second;
 
                         imageInfos[i] = imageInfo;
                         break;
@@ -669,7 +730,7 @@ namespace s3dl
         if (_globalBindings.size() == 0)
             return;
     
-        _globalSamplers.resize(_globalBindings.size(), nullptr);
+        _globalSamplers.resize(_globalBindings.size(), {VK_NULL_HANDLE, VK_NULL_HANDLE});
 
         uint32_t n;
         n = _globalBindings.size() - 1;
@@ -711,7 +772,7 @@ namespace s3dl
         if (_drawablesBindings.size() == 0)
             return;
     
-        _drawablesSamplers[&drawable].resize(_drawablesBindings.size(), nullptr);
+        _drawablesSamplers[&drawable].resize(_drawablesBindings.size(), {VK_NULL_HANDLE, VK_NULL_HANDLE});
 
         uint32_t n;
         n = _drawablesBindings.size() - 1;
@@ -867,11 +928,11 @@ namespace s3dl
         }
     }
 
-    TextureViewParameters PipelineLayout::getDescriptorViewParameters(VkFormat format)
+    TextureViewParameters PipelineLayout::getDescriptorViewParameters(VkFormat format, std::array<uint32_t, 2> layerRange)
     {
         if (format == VK_FORMAT_D24_UNORM_S8_UINT)
-            return TextureViewParameters(VK_IMAGE_ASPECT_DEPTH_BIT);
+            return TextureViewParameters(VK_IMAGE_ASPECT_DEPTH_BIT, layerRange);
         
-        return TextureViewParameters(VK_IMAGE_ASPECT_COLOR_BIT);
+        return TextureViewParameters(VK_IMAGE_ASPECT_COLOR_BIT, layerRange);
     }
 }

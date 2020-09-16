@@ -47,6 +47,7 @@ EXAMPLES_OBJS = $(OBJ_EXAMPLES_DIR)/main.o \
 				$(OBJ_EXAMPLES_DIR)/master_tools.o \
 				$(OBJ_EXAMPLES_DIR)/viking_room.o \
 				$(OBJ_EXAMPLES_DIR)/calibration.o \
+				$(OBJ_EXAMPLES_DIR)/geckos.o \
 			    $(OBJ_EXAMPLES_DIR)/tiny_obj_loader/tiny_obj_loader.o
 
 # Compiler
