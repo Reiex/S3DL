@@ -44,7 +44,9 @@ LIBRARY_OBJS = $(OBJ_LIBRARY_DIR)/Instance.o \
 			   $(OBJ_LIBRARY_DIR)/Framebuffer.o
 TESTS_OBJS = $(OBJ_TESTS_DIR)/main.o
 EXAMPLES_OBJS = $(OBJ_EXAMPLES_DIR)/main.o \
+				$(OBJ_EXAMPLES_DIR)/master_tools.o \
 				$(OBJ_EXAMPLES_DIR)/viking_room.o \
+				$(OBJ_EXAMPLES_DIR)/calibration.o \
 			    $(OBJ_EXAMPLES_DIR)/tiny_obj_loader/tiny_obj_loader.o
 
 # Compiler

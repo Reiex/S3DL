@@ -30,9 +30,11 @@ namespace s3dl
             void declareGlobalUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
             void declareGlobalUniformArray(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
             void declareGlobalUniformSampler(uint32_t binding, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareGlobalUniformSamplerArray(uint32_t binding, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
             void declareDrawablesUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
             void declareDrawablesUniformArray(uint32_t binding, uint32_t size, uint32_t count, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
             void declareDrawablesUniformSampler(uint32_t binding, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
+            void declareDrawablesUniformSamplerArray(uint32_t binding, VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS);
 
             void lock(const Swapchain& swapchain);
             void unlock();
@@ -42,11 +44,13 @@ namespace s3dl
             template<typename T>
             void setGlobalUniformArray(uint32_t binding, const T* values, uint32_t count, uint32_t startIndex = 0);
             void setGlobalUniformSampler(uint32_t binding, const Texture& texture);
+            void setGlobalUniformSamplerArray(uint32_t binding, const TextureArray& textureArray);
             template<typename T>
             void setDrawablesUniform(const Drawable& drawable, uint32_t binding, const T& value);
             template<typename T>
             void setDrawablesUniformArray(const Drawable& drawable, uint32_t binding, const T* values, uint32_t count, uint32_t startIndex = 0);
             void setDrawablesUniformSampler(const Drawable& drawable, uint32_t binding, const Texture& texture);
+            void setDrawablesUniformSamplerArray(const Drawable& drawable, uint32_t binding, const TextureArray& textureArray);
 
             VkPipelineLayout getVulkanPipelineLayout() const;
 

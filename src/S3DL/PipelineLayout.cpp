@@ -65,6 +65,11 @@ namespace s3dl
         _globalBindings[i].offset = 0;
     }
 
+    void PipelineLayout::declareGlobalUniformSamplerArray(uint32_t binding, VkShaderStageFlags shaderStage)
+    {
+        
+    }
+
     void PipelineLayout::declareDrawablesUniform(uint32_t binding, uint32_t size, VkShaderStageFlags shaderStage)
     {
         declareDrawablesUniformArray(binding, size, 1, shaderStage);
@@ -128,6 +133,11 @@ namespace s3dl
         _drawablesBindings[i].offset = 0;
     }
 
+    void PipelineLayout::declareDrawablesUniformSamplerArray(uint32_t binding, VkShaderStageFlags shaderStage)
+    {
+
+    }
+
     void PipelineLayout::lock(const Swapchain& swapchain)
     {
         _swapchainImageCount = swapchain.getImageCount();
@@ -181,6 +191,11 @@ namespace s3dl
             _globalNeedsUpdate[binding][i] = true;
     }
 
+    void PipelineLayout::setGlobalUniformSamplerArray(uint32_t binding, const TextureArray& textureArray)
+    {
+
+    }
+
     void PipelineLayout::setDrawablesUniformSampler(const Drawable& drawable, uint32_t binding, const Texture& texture)
     {
         if (!_locked)
@@ -191,6 +206,11 @@ namespace s3dl
 
         for (int i(0); i < _swapchainImageCount; i++)
             _drawablesNeedsUpdate[binding][&drawable][i] = true;
+    }
+
+    void PipelineLayout::setDrawablesUniformSamplerArray(const Drawable& drawable, uint32_t binding, const TextureArray& textureArray)
+    {
+
     }
 
     VkPipelineLayout PipelineLayout::getVulkanPipelineLayout() const
