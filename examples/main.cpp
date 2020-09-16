@@ -7,7 +7,7 @@ int main()
     // exit_code = main_calibration();
     // exit_code = main_geckos();
 
-    system("pause");
+    // system("pause");
 
     return exit_code;
 }

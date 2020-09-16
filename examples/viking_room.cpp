@@ -122,7 +122,7 @@ int main_viking_room()
     
     // Load textures
     s3dl::TextureData textureData("examples/images/viking_room.png");
-    s3dl::Texture texture(textureData.size(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+    s3dl::Texture texture(textureData.size(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
     texture.fillFromTextureData(textureData);
     texture.setLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     layoutA->setDrawablesUniformSampler(*mesh, 0, texture);
@@ -133,7 +133,6 @@ int main_viking_room()
     ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj = glm::perspective(glm::radians(45.0f), 1.25f, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
-    layoutA->setDrawablesUniform(*mesh, 1, ubo);
 
     while (!window.shouldClose())
     {

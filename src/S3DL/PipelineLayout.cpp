@@ -338,10 +338,7 @@ namespace s3dl
 
                         VkDescriptorImageInfo imageInfo{};
                         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        if (_globalSamplers[i]->getVulkanImmondeView() != VK_NULL_HANDLE)
-                            imageInfo.imageView = _globalSamplers[i]->getVulkanImmondeView();
-                        else
-                            imageInfo.imageView = _globalSamplers[i]->getVulkanImageView();
+                        imageInfo.imageView = _globalSamplers[i]->getVulkanImageView(getDescriptorViewParameters(_globalSamplers[i]->getFormat()));
                         imageInfo.sampler = _globalSamplers[i]->getVulkanSampler();
 
                         imageInfos[i] = imageInfo;
@@ -438,10 +435,7 @@ namespace s3dl
 
                         VkDescriptorImageInfo imageInfo{};
                         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        if (_drawablesSamplers[&drawable][i]->getVulkanImmondeView() != VK_NULL_HANDLE)
-                            imageInfo.imageView = _drawablesSamplers[&drawable][i]->getVulkanImmondeView();
-                        else
-                            imageInfo.imageView = _drawablesSamplers[&drawable][i]->getVulkanImageView();
+                        imageInfo.imageView = _drawablesSamplers[&drawable][i]->getVulkanImageView(getDescriptorViewParameters(_drawablesSamplers[&drawable][i]->getFormat()));
                         imageInfo.sampler = _drawablesSamplers[&drawable][i]->getVulkanSampler();
 
                         imageInfos[i] = imageInfo;
@@ -851,5 +845,13 @@ namespace s3dl
             for (int i(0); i < _drawablesNeedsUpdate.size(); i++)
                 _drawablesNeedsUpdate[i][&drawable].resize(_swapchainImageCount, true);
         }
+    }
+
+    TextureViewParameters PipelineLayout::getDescriptorViewParameters(VkFormat format)
+    {
+        if (format == VK_FORMAT_D24_UNORM_S8_UINT)
+            return TextureViewParameters(VK_IMAGE_ASPECT_DEPTH_BIT);
+        
+        return TextureViewParameters(VK_IMAGE_ASPECT_COLOR_BIT);
     }
 }

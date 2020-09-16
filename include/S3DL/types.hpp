@@ -56,6 +56,8 @@ namespace s3dl
     typedef _vec4<unsigned char> Color;
     class TextureData;
     class TextureSampler;
+    class TextureViewParameters;
+    class TextureArray;
     class Texture;
 
     class Framebuffer;

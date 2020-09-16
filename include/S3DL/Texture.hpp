@@ -39,6 +39,7 @@ namespace s3dl
     class TextureViewParameters
     {
         public:
+
             TextureViewParameters(const TextureViewParameters& ) = default;
             TextureViewParameters(VkImageAspectFlags aspects, std::array<uint32_t, 2> layerRange = {0, 1});
 
@@ -82,6 +83,8 @@ namespace s3dl
             void updateLayoutState(VkImageLayout layout) const;
             void setLayout(VkImageLayout layout) const;
 
+            VkFormat getFormat() const;
+
             TextureData getTextureData(uint32_t layer) const;
             const uvec2& getSize() const;
 
@@ -103,7 +106,7 @@ namespace s3dl
 
             VkDeviceMemory _vulkanImageMemory;
             VkImage _vulkanImage;
-            std::unordered_map<TextureViewParameters, VkImageView, TextureViewParameters::Hasher, TextureViewParameters::Comparator> _vulkanImageViews;
+            mutable std::unordered_map<TextureViewParameters, VkImageView, TextureViewParameters::Hasher, TextureViewParameters::Comparator> _vulkanImageViews;
             const TextureSampler* _sampler;
             bool _deleteSampler;
 
@@ -129,6 +132,8 @@ namespace s3dl
             void updateLayoutState(VkImageLayout layout) const;
             void setLayout(VkImageLayout layout) const;
 
+            VkFormat getFormat() const;
+
             TextureData getTextureData() const;
             const uvec2& getSize() const;
 
@@ -137,5 +142,7 @@ namespace s3dl
             VkSampler getVulkanSampler() const;
 
             ~Texture();
+        
+        friend TextureArray;
     };
 }

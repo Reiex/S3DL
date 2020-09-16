@@ -40,15 +40,11 @@ LIBRARY_OBJS = $(OBJ_LIBRARY_DIR)/Instance.o \
 			   $(OBJ_LIBRARY_DIR)/stb/stb_image.o \
 			   $(OBJ_LIBRARY_DIR)/stb/stb_image_write.o \
 			   $(OBJ_LIBRARY_DIR)/TextureData.o \
-			   $(OBJ_LIBRARY_DIR)/TextureSampler.o \
 			   $(OBJ_LIBRARY_DIR)/Texture.o \
 			   $(OBJ_LIBRARY_DIR)/Framebuffer.o
 TESTS_OBJS = $(OBJ_TESTS_DIR)/main.o
 EXAMPLES_OBJS = $(OBJ_EXAMPLES_DIR)/main.o \
-				$(OBJ_EXAMPLES_DIR)/master_tools.o \
 				$(OBJ_EXAMPLES_DIR)/viking_room.o \
-				$(OBJ_EXAMPLES_DIR)/calibration.o \
-				$(OBJ_EXAMPLES_DIR)/geckos.o \
 			    $(OBJ_EXAMPLES_DIR)/tiny_obj_loader/tiny_obj_loader.o
 
 # Compiler
@@ -113,6 +109,8 @@ S3DL: $(LIB_DIR)
 
 examples: $(S_EXAMPLES_SPVS) $(LIB_DIR) $(EXAMPLES_OBJS)
 	$(CC) $(EXAMPLES_OBJS) -o S3DLExamples $(LDFLAGS) $(LDLIBS)
+
+shaders_examples: $(S_EXAMPLES_SPVS)
 
 tests: $(LIB_DIR) $(TESTS_OBJS)
 	$(CC) $(TESTS_OBJS) -o S3DLTests $(LDFLAGS) $(LDLIBS)

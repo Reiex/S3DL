@@ -7,21 +7,23 @@ namespace s3dl
         _vulkanSampler(VK_NULL_HANDLE)
     {
         _sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        _sampler.pNext = nullptr;
+        _sampler.flags = 0;
         _sampler.magFilter = VK_FILTER_NEAREST;
         _sampler.minFilter = VK_FILTER_NEAREST;
+        _sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         _sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         _sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         _sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        _sampler.mipLodBias = 0.0f;
         _sampler.anisotropyEnable = VK_TRUE;
         _sampler.maxAnisotropy = 16.0f;
-        _sampler.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-        _sampler.unnormalizedCoordinates = VK_FALSE;
         _sampler.compareEnable = VK_FALSE;
         _sampler.compareOp = VK_COMPARE_OP_ALWAYS;
-        _sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        _sampler.mipLodBias = 0.0f;
         _sampler.minLod = 0.0f;
         _sampler.maxLod = 0.0f;
+        _sampler.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        _sampler.unnormalizedCoordinates = VK_FALSE;
     }
 
     VkSampler TextureSampler::getVulkanSampler() const
@@ -48,6 +50,8 @@ namespace s3dl
         #ifndef NDEBUG
         std::clog << "<S3DL Debug> VkSampler successfully created." << std::endl;
         #endif
+        
+        _vulkanSamplerComputed = true;
     }
 
     void TextureSampler::destroyVulkanSampler() const
@@ -354,7 +358,7 @@ namespace s3dl
 
     void TextureArray::fillFromTexture(const Texture& texture, uint32_t dstLayer)
     {
-        // TODO
+        fillFromTextureArray(texture, 0, dstLayer, 1);
     }
 
     void TextureArray::setSampler(const TextureSampler& sampler)
@@ -515,6 +519,11 @@ namespace s3dl
         _currentLayout = layout;
     }
 
+    VkFormat TextureArray::getFormat() const
+    {
+        return _format;
+    }
+
     TextureData TextureArray::getTextureData(uint32_t layer) const
     {
         VkImageLayout layout = _currentLayout;
@@ -600,6 +609,9 @@ namespace s3dl
             VkImageViewCreateInfo createInfo = viewParameters.getVulkanImageViewCreateInfo();
             VkImageView view(VK_NULL_HANDLE);
 
+            createInfo.image = _vulkanImage;
+            createInfo.format = _format;
+
             VkResult result = vkCreateImageView(Device::Active->getVulkanDevice(), &createInfo, nullptr, &view);
             if (result != VK_SUCCESS)
                 throw std::runtime_error("Failed to create texture image view. VkResult: " + std::to_string(result));
@@ -608,7 +620,7 @@ namespace s3dl
             std::clog << "<S3DL Debug> VkImageView successfully created." << std::endl;
             #endif
 
-            _vulkanImageViews.insert({viewParameters, view});
+            _vulkanImageViews.insert(std::pair<TextureViewParameters, VkImageView_T*>({viewParameters, view}));
         }
 
         return _vulkanImageViews.at(viewParameters);
@@ -697,6 +709,11 @@ namespace s3dl
     void Texture::setLayout(VkImageLayout layout) const
     {
         TextureArray::setLayout(layout);
+    }
+
+    VkFormat Texture::getFormat() const
+    {
+        return TextureArray::getFormat();
     }
 
     TextureData Texture::getTextureData() const

@@ -64,18 +64,15 @@ namespace s3dl
                         if (renderPass._subpasses[j].pDepthStencilAttachment->attachment == i)
                         {
                             usage = usage | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-                            imageAspects = imageAspects | VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+                            imageAspects = imageAspects | VK_IMAGE_ASPECT_DEPTH_BIT;
                         }
                     }
                 }
 
-                _attachments[i] = new Texture(_size, format, tiling, usage, imageAspects);
+                _attachments[i] = new Texture(_size, format, tiling, usage);
                 _attachmentsBelonging[i] = true;
                 for (int j(0); j < swapchain._imageCount; j++)
-                    if (_attachments[i]->getVulkanImmondeView() != VK_NULL_HANDLE)
-                        _vulkanAttachments[j][i] = _attachments[i]->getVulkanImmondeView();
-                    else
-                        _vulkanAttachments[j][i] = _attachments[i]->getVulkanImageView();
+                    _vulkanAttachments[j][i] = _attachments[i]->getVulkanImageView(imageAspects);
             }
         }
 

@@ -88,6 +88,8 @@ namespace s3dl
 
             void addDrawable(const Drawable& drawable);
 
+            static TextureViewParameters getDescriptorViewParameters(VkFormat format);
+
             std::vector<DescriptorSetLayoutBindingState> _globalBindings;
             std::vector<DescriptorSetLayoutBindingState> _drawablesBindings;
 
