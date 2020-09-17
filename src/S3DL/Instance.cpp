@@ -2,15 +2,29 @@
 
 namespace s3dl
 {
+    namespace
+    {
+        VKAPI_ATTR VkBool32 VKAPI_CALL defaultDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+        {
+            if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT && messageType != VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+                std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+
+            return VK_FALSE;
+        }
+    }
+
     unsigned int Instance::INSTANCE_COUNT = 0;
     const Instance* Instance::Active = nullptr;
 
-    Instance::Instance(const std::set<std::string>& additionalExtensions, const std::set<std::string>& additionalValidationLayers)
+    Instance::Instance(const std::set<std::string>& additionalExtensions, const std::set<std::string>& additionalValidationLayers) :
+        _instance(VK_NULL_HANDLE),
+        _debugMessenger(VK_NULL_HANDLE)
     {
-        std::set<const char*> extensions = {};
         #ifndef NDEBUG
+        std::set<const char*> extensions = { "VK_EXT_debug_utils" };
         std::set<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
         #else
+        std::set<const char*> extensions = {};
         std::set<const char*> validationLayers = {};
         #endif
 
@@ -102,6 +116,28 @@ namespace s3dl
         #ifndef NDEBUG
         std::clog << "<S3DL Debug> VkInstance successfully created." << std::endl;
         #endif
+
+        #ifndef NDEBUG
+        setDebugCallback(defaultDebugCallback, nullptr); 
+        #endif
+    }
+
+    void Instance::setDebugCallback(PFN_vkDebugUtilsMessengerCallbackEXT callback, void* pUserData)
+    {
+        VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        createInfo.pfnUserCallback = callback;
+        createInfo.pUserData = pUserData;
+
+        PFN_vkCreateDebugUtilsMessengerEXT CreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(_instance, "vkCreateDebugUtilsMessengerEXT");
+        if (CreateDebugUtilsMessengerEXT == nullptr)
+            throw std::runtime_error("VK_EXT_debug_utils extension not present.");
+        
+        VkResult result = CreateDebugUtilsMessengerEXT(_instance, &createInfo, nullptr, &_debugMessenger); 
+        if (result != VK_SUCCESS) 
+            throw std::runtime_error("Failed to create VkDebugUtilsMessengerEXT. VkResult: " + std::to_string(result));
     }
 
     void Instance::setActive() const
@@ -116,6 +152,12 @@ namespace s3dl
 
     Instance::~Instance()
     {
+        if (_debugMessenger != VK_NULL_HANDLE)
+        {
+            PFN_vkDestroyDebugUtilsMessengerEXT DestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(_instance, "vkDestroyDebugUtilsMessengerEXT");
+            DestroyDebugUtilsMessengerEXT(_instance, _debugMessenger, nullptr);
+        }
+
         if (Active == this)
             Active = nullptr;
 

@@ -27,6 +27,7 @@ namespace s3dl
 
             Instance& operator=(const Instance& instance) = delete;
 
+            void setDebugCallback(PFN_vkDebugUtilsMessengerCallbackEXT callback, void* pUserData);
             void setActive() const;
 
             VkInstance getVulkanInstance() const;
@@ -38,5 +39,6 @@ namespace s3dl
             static unsigned int INSTANCE_COUNT;
 
             VkInstance _instance;
+            VkDebugUtilsMessengerEXT _debugMessenger;
     };
 }
