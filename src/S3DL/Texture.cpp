@@ -620,7 +620,7 @@ namespace s3dl
             std::clog << "<S3DL Debug> VkImageView successfully created." << std::endl;
             #endif
 
-            _vulkanImageViews.insert(std::pair<TextureViewParameters, VkImageView_T*>({viewParameters, view}));
+            _vulkanImageViews.insert(std::pair<TextureViewParameters, VkImageView>({viewParameters, view}));
         }
 
         return _vulkanImageViews.at(viewParameters);
