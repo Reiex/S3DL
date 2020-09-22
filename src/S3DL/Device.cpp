@@ -20,8 +20,11 @@ namespace s3dl
 
         uint32_t deviceCount = 0;
         VkResult result = vkEnumeratePhysicalDevices(Instance::Active->getVulkanInstance(), &deviceCount, nullptr);
-        if (result != VK_SUCCESS || deviceCount == 0)
-            throw std::runtime_error("Failed to find GPUs with Vulkan support. VkResult: " + std::to_string(result));
+        if (result != VK_SUCCESS)
+            throw std::runtime_error("Failed to load list of physical devices. VkResult: " + std::to_string(result));
+
+        if (deviceCount == 0)
+            return std::vector<PhysicalDevice>();
 
         std::vector<VkPhysicalDevice> vulkanPhysicalDevices(deviceCount);
         vkEnumeratePhysicalDevices(Instance::Active->getVulkanInstance(), &deviceCount, vulkanPhysicalDevices.data());
@@ -89,6 +92,10 @@ namespace s3dl
     Device::Device(const RenderTarget& target, const std::set<std::string>& additionalExtensions)
     {
         std::vector<PhysicalDevice> availables = getAvailablePhysicalDevices(target);
+
+        if (availables.size() == 0)
+            throw std::runtime_error("Failed to find GPUs with Vulkan support.");
+
         create(target, availables[0], additionalExtensions);
     }
 
