@@ -23,6 +23,7 @@ namespace s3dl
 
             bool shouldClose() const;
             const uvec2& getWindowSize() const;
+            GLFWwindow* getWindowHandle();
 
             ~Window();
 

@@ -28,6 +28,11 @@ namespace s3dl
         return _windowSize;
     }
 
+    GLFWwindow* Window::getWindowHandle()
+    {
+        return _window;
+    }
+
     Window::~Window()
     {
         glfwDestroyWindow(_window);
